@@ -6,12 +6,11 @@ import tensorflow as tf
 import numpy as np
 import h5py
 
-from config importn_bar, buffer_size
+from config import n_bar, buffer_size
 
 
 class Dataset(tf.keras.Model):
-
-def __init__(self, batch_size):
+    def__init__(self, batch_size):
         super().__init__()
         self.batch_size = batch_size #Tiene que ser input porque no siempre es el mismo
 
@@ -90,4 +89,22 @@ def __init__(self, batch_size):
       dataset = dataset.shuffle(buffer_size=buffer_size).batch(self.batch_size, drop_remainder=False)
   
       return dataset
+
+
+    def load_data(self, data):
+        images, red = data.data0('Data3D-64.hdf5')
+        images_clean = data.replace_extreme_voxels(images, quit=20) #Quito los 20 valores extremos
+        delta = data.delta(images_clean)
+        forw = forward(delta)
+
+        norm_data, norm_red, max_desnorm, min_desnorm = data.normalizar_datos(forw, red) 
+        z_vals = norm_red.astype("float32") 
+
+        load_psd = np.load("PSD_desnorm.npz")
+        psd_mean = load_psd["mean"]
+        psd_sigma = load_psd["sigma_log"]
+        psd_max = load_psd["psd_max"]
+        psd_min = load_psd["psd_min"]
+
+        return norm_data, z_vals, psd_max, psd_min, psd_mean, psd_sigma, max_desnorm, min_desnorm
           
