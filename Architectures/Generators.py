@@ -10,7 +10,7 @@ import tensorflow as tf
 import os
 import numpy as np
 
-from config import latent_dim, num_classes, N, image_size, boxsize, mass
+from config import latent_dim, num_classes, N, image_size, boxsize, mass,embedding_dim
 
 class FiLMLayer(tf.keras.layers.Layer):
     def __init__(self, n_channels):
@@ -28,13 +28,15 @@ class FiLMLayer(tf.keras.layers.Layer):
         
 
 class Generator_film(tf.keras.Model):
-    def __init__(self, embedding_dim, filter1, filter2, filter3):
+    def __init__(self, filter1, filter2, filter3):
         super().__init__()
-        self.embedding_dim = embedding_dim
+        self.filter1 = filter1
+        self.filter2 = filter2
+        self.filter3 = filter3
 
         self.z_embedding = tf.keras.Sequential([
-            tf.keras.layers.Dense(self.embedding_dim),
-            tf.keras.layers.Dense(self.embedding_dim),
+            tf.keras.layers.Dense(embedding_dim),
+            tf.keras.layers.Dense(embedding_dim),
         ])
 
        #Cubo inicial y reshape
@@ -87,13 +89,15 @@ class Generator_film(tf.keras.Model):
 
 
 class Generator_film2(tf.keras.Model):
-    def __init__(self, embedding_dim, filter1, filter2, filter3, filter4):
+    def __init__(self, filter1, filter2, filter3, filter4):
         super().__init__()
-        self.embedding_dim = embedding_dim
+        self.filter1 = filter1
+        self.filter2 = filter2
+        self.filter3 = filter3
 
         self.z_embedding = tf.keras.Sequential([
-            tf.keras.layers.Dense(self.embedding_dim),
-            tf.keras.layers.Dense(self.embedding_dim),
+            tf.keras.layers.Dense(embedding_dim),
+            tf.keras.layers.Dense(embedding_dim),
         ])
 
         # Base
@@ -156,17 +160,16 @@ class Generator_film2(tf.keras.Model):
         
 
 class Generator_concat(tf.keras.Model): #TAL VEZ TENDRÍA QUE QUITAR BACHNORM
-    def __init__(self, embedding_dim, filter1, filter2, filter3):
+    def __init__(self, filter1, filter2, filter3):
         super().__init__()
-        self.embedding_dim = embedding_dim
         self.filter1 = filter1
         self.filter2 = filter2
         self.filter3 = filter3
         
         #Embedding de la condición
         self.z_embedding = tf.keras.Sequential([
-            tf.keras.layers.Dense(self.embedding_dim, activation='linear'),
-            tf.keras.layers.Dense(self.embedding_dim, activation='linear'),
+            tf.keras.layers.Dense(embedding_dim, activation='linear'),
+            tf.keras.layers.Dense(embedding_dim, activation='linear'),
         ])
 
         self.net = tf.keras.Sequential([
