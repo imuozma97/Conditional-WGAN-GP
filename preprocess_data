@@ -91,10 +91,10 @@ class Dataset(tf.keras.Model):
       return dataset
 
 
-    def load_data(self, data):
-        images, red = data.data0('Data3D-64.hdf5')
-        images_clean = data.replace_extreme_voxels(images, quit=20) #Quito los 20 valores extremos
-        delta = data.delta(images_clean)
+    def load_data(self):
+        images, red = self.data0('Data3D-64.hdf5')
+        images_clean = self.replace_extreme_voxels(images, quit=20) #Quito los 20 valores extremos
+        delta = self.delta(images_clean)
         forw = forward(delta)
 
         norm_data, norm_red, max_desnorm, min_desnorm = data.normalizar_datos(forw, red) 
