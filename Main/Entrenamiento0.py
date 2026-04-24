@@ -22,7 +22,7 @@ for gpu in gpus:
     tf.config.experimental.set_memory_growth(gpu, True)
 
 
-from dataset import Dataset
+from preprocess_data import Dataset
 from transforms import backward
 from config import embedding_dim, batch_size1, ncritic2
 from models.generators import Generator_film
