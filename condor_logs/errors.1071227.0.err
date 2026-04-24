@@ -1,0 +1,1 @@
+/lhome/ext/uv140/uv1402/miniconda3/envs/cuda-env/bin/python3: Error while finding module specification for 'Conditional-WGAN_GP-Main.Entrenamiento0.py' (ModuleNotFoundError: No module named 'Conditional-WGAN_GP-Main'). Try using 'Conditional-WGAN_GP-Main.Entrenamiento0' instead of 'Conditional-WGAN_GP-Main.Entrenamiento0.py' as the module name.

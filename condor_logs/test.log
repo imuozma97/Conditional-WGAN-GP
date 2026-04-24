@@ -1,0 +1,204 @@
+000 (1070969.000.000) 2026-04-24 12:17:58 Job submitted from host: <147.156.116.133:9618?addrs=147.156.116.133-9618&alias=cm02.ific.uv.es&noUDP&sock=schedd_3186712_f37e>
+...
+009 (1070967.000.000) 2026-04-24 12:18:08 Job was aborted.
+	via condor_rm (by user uv1402)
+...
+009 (1070968.000.000) 2026-04-24 12:18:10 Job was aborted.
+	via condor_rm (by user uv1402)
+...
+001 (1070969.000.000) 2026-04-24 12:18:16 Job executing on host: <147.156.116.148:9618?addrs=147.156.116.148-9618+[2001-720-1014-41--a-20]-9618&alias=mlwn06.ific.uv.es&noUDP&sock=startd_3679_1104>
+...
+006 (1070969.000.000) 2026-04-24 12:18:25 Image size of job updated: 26292
+	26  -  MemoryUsage of job (MB)
+	26292  -  ResidentSetSize of job (KB)
+...
+006 (1070969.000.000) 2026-04-24 12:18:38 Image size of job updated: 153564
+	26  -  MemoryUsage of job (MB)
+	26340  -  ResidentSetSize of job (KB)
+...
+005 (1070969.000.000) 2026-04-24 12:18:38 Job terminated.
+	(1) Normal termination (return value 1)
+		Usr 0 00:00:03, Sys 0 00:00:04  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:03, Sys 0 00:00:04  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated Assigned
+	   Cpus                 :        0        1        32 
+	   Disk (KB)            :        1        1 308066644 
+	   Gpus (Average)       :                 1         1 "GPU-359a0e7f-0227-4943-2b01-d46e1e18593a"
+	   Memory (MB)          :       26        1    231637 
+
+	Job terminated of its own accord at 2026-04-24T10:18:38Z.
+...
+000 (1070971.000.000) 2026-04-24 12:22:21 Job submitted from host: <147.156.116.133:9618?addrs=147.156.116.133-9618&alias=cm02.ific.uv.es&noUDP&sock=schedd_3186712_f37e>
+...
+001 (1070971.000.000) 2026-04-24 12:22:29 Job executing on host: <147.156.116.148:9618?addrs=147.156.116.148-9618+[2001-720-1014-41--a-20]-9618&alias=mlwn06.ific.uv.es&noUDP&sock=startd_3679_1104>
+...
+006 (1070971.000.000) 2026-04-24 12:22:35 Image size of job updated: 140576
+	0  -  MemoryUsage of job (MB)
+	0  -  ResidentSetSize of job (KB)
+...
+005 (1070971.000.000) 2026-04-24 12:22:35 Job terminated.
+	(1) Normal termination (return value 1)
+		Usr 0 00:00:03, Sys 0 00:00:02  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:03, Sys 0 00:00:02  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated Assigned
+	   Cpus                 :        0        1        32 
+	   Disk (KB)            :        1        1 308066644 
+	   Gpus (Average)       :                 1         1 "GPU-359a0e7f-0227-4943-2b01-d46e1e18593a"
+	   Memory (MB)          :        0        1    231637 
+
+	Job terminated of its own accord at 2026-04-24T10:22:35Z.
+...
+000 (1071221.000.000) 2026-04-24 23:28:02 Job submitted from host: <147.156.116.133:9618?addrs=147.156.116.133-9618&alias=cm02.ific.uv.es&noUDP&sock=schedd_3186712_f37e>
+...
+001 (1071221.000.000) 2026-04-24 23:28:12 Job executing on host: <147.156.116.132:9618?addrs=147.156.116.132-9618+[2001-720-1014-41--a-1f0]-9618&alias=mlwn02.ific.uv.es&noUDP&sock=startd_3900_a772>
+...
+006 (1071221.000.000) 2026-04-24 23:28:20 Image size of job updated: 17804
+	18  -  MemoryUsage of job (MB)
+	17804  -  ResidentSetSize of job (KB)
+...
+006 (1071221.000.000) 2026-04-24 23:28:38 Image size of job updated: 153768
+	18  -  MemoryUsage of job (MB)
+	17804  -  ResidentSetSize of job (KB)
+...
+005 (1071221.000.000) 2026-04-24 23:28:38 Job terminated.
+	(1) Normal termination (return value 1)
+		Usr 0 00:00:04, Sys 0 00:00:05  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:04, Sys 0 00:00:05  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated Assigned
+	   Cpus                 :        0        1        32 
+	   Disk (KB)            :        1        1 205377763 
+	   Gpus (Average)       :                 1         1 "GPU-a45442a7-b129-5ab9-7703-83598de90e12"
+	   Memory (MB)          :       18        1    231045 
+
+	Job terminated of its own accord at 2026-04-24T21:28:38Z.
+...
+000 (1071226.000.000) 2026-04-25 00:04:14 Job submitted from host: <147.156.116.133:9618?addrs=147.156.116.133-9618&alias=cm02.ific.uv.es&noUDP&sock=schedd_3186712_f37e>
+...
+001 (1071226.000.000) 2026-04-25 00:04:27 Job executing on host: <147.156.116.132:9618?addrs=147.156.116.132-9618+[2001-720-1014-41--a-1f0]-9618&alias=mlwn02.ific.uv.es&noUDP&sock=startd_3900_a772>
+...
+006 (1071226.000.000) 2026-04-25 00:04:36 Image size of job updated: 23836
+	24  -  MemoryUsage of job (MB)
+	23836  -  ResidentSetSize of job (KB)
+...
+006 (1071226.000.000) 2026-04-25 00:04:51 Image size of job updated: 139844
+	24  -  MemoryUsage of job (MB)
+	23836  -  ResidentSetSize of job (KB)
+...
+005 (1071226.000.000) 2026-04-25 00:04:51 Job terminated.
+	(1) Normal termination (return value 1)
+		Usr 0 00:00:03, Sys 0 00:00:03  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:03, Sys 0 00:00:03  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated Assigned
+	   Cpus                 :        0        1        32 
+	   Disk (KB)            :        1        1 205377763 
+	   Gpus (Average)       :                 1         1 "GPU-a45442a7-b129-5ab9-7703-83598de90e12"
+	   Memory (MB)          :       24        1    231045 
+
+	Job terminated of its own accord at 2026-04-24T22:04:51Z.
+...
+000 (1071227.000.000) 2026-04-25 00:21:07 Job submitted from host: <147.156.116.133:9618?addrs=147.156.116.133-9618&alias=cm02.ific.uv.es&noUDP&sock=schedd_3186712_f37e>
+...
+001 (1071227.000.000) 2026-04-25 00:21:08 Job executing on host: <147.156.116.132:9618?addrs=147.156.116.132-9618+[2001-720-1014-41--a-1f0]-9618&alias=mlwn02.ific.uv.es&noUDP&sock=startd_3900_a772>
+...
+006 (1071227.000.000) 2026-04-25 00:21:14 Image size of job updated: 24120
+	0  -  MemoryUsage of job (MB)
+	0  -  ResidentSetSize of job (KB)
+...
+005 (1071227.000.000) 2026-04-25 00:21:14 Job terminated.
+	(1) Normal termination (return value 1)
+		Usr 0 00:00:01, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:01, Sys 0 00:00:00  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated Assigned
+	   Cpus                 :        0        1        32 
+	   Disk (KB)            :        1        1 205377763 
+	   Gpus (Average)       :                 1         1 "GPU-a45442a7-b129-5ab9-7703-83598de90e12"
+	   Memory (MB)          :        0        1    231045 
+
+	Job terminated of its own accord at 2026-04-24T22:21:14Z.
+...
+000 (1071228.000.000) 2026-04-25 00:22:17 Job submitted from host: <147.156.116.133:9618?addrs=147.156.116.133-9618&alias=cm02.ific.uv.es&noUDP&sock=schedd_3186712_f37e>
+...
+001 (1071228.000.000) 2026-04-25 00:22:30 Job executing on host: <147.156.116.132:9618?addrs=147.156.116.132-9618+[2001-720-1014-41--a-1f0]-9618&alias=mlwn02.ific.uv.es&noUDP&sock=startd_3900_a772>
+...
+006 (1071228.000.000) 2026-04-25 00:22:39 Image size of job updated: 63248
+	62  -  MemoryUsage of job (MB)
+	63248  -  ResidentSetSize of job (KB)
+...
+006 (1071228.000.000) 2026-04-25 00:22:51 Image size of job updated: 157868
+	62  -  MemoryUsage of job (MB)
+	63304  -  ResidentSetSize of job (KB)
+...
+005 (1071228.000.000) 2026-04-25 00:22:51 Job terminated.
+	(1) Normal termination (return value 1)
+		Usr 0 00:00:03, Sys 0 00:00:03  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:03, Sys 0 00:00:03  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated Assigned
+	   Cpus                 :        0        1        32 
+	   Disk (KB)            :        1        1 205377763 
+	   Gpus (Average)       :                 1         1 "GPU-a45442a7-b129-5ab9-7703-83598de90e12"
+	   Memory (MB)          :       62        1    231045 
+
+	Job terminated of its own accord at 2026-04-24T22:22:51Z.
+...
+000 (1071229.000.000) 2026-04-25 00:24:55 Job submitted from host: <147.156.116.133:9618?addrs=147.156.116.133-9618&alias=cm02.ific.uv.es&noUDP&sock=schedd_3186712_f37e>
+...
+001 (1071229.000.000) 2026-04-25 00:24:57 Job executing on host: <147.156.116.132:9618?addrs=147.156.116.132-9618+[2001-720-1014-41--a-1f0]-9618&alias=mlwn02.ific.uv.es&noUDP&sock=startd_3900_a772>
+...
+006 (1071229.000.000) 2026-04-25 00:25:04 Image size of job updated: 124732
+	0  -  MemoryUsage of job (MB)
+	0  -  ResidentSetSize of job (KB)
+...
+005 (1071229.000.000) 2026-04-25 00:25:04 Job terminated.
+	(1) Normal termination (return value 1)
+		Usr 0 00:00:04, Sys 0 00:00:03  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:04, Sys 0 00:00:03  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated Assigned
+	   Cpus                 :        0        1        32 
+	   Disk (KB)            :        1        1 205377763 
+	   Gpus (Average)       :                 1         1 "GPU-a45442a7-b129-5ab9-7703-83598de90e12"
+	   Memory (MB)          :        0        1    231045 
+
+	Job terminated of its own accord at 2026-04-24T22:25:04Z.
+...
