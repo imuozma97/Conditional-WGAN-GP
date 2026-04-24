@@ -69,17 +69,18 @@ class Dataset(tf.keras.Model):
 
     
     
-    def normalizar_datos(self, images, redshifts):
+    def normalizar_datos(self, images):
 
         min_val = np.min(images)
         max_val = np.max(images)
             
         normalized_data = 2 * (images - min_val) / (max_val - min_val) - 1
         normalized_data = np.expand_dims(normalized_data, -1)
-            
-        red_norm = (redshifts - np.min(redshifts))/(np.max(redshifts)- np.min(redshifts))
-    
-        return normalized_data, red_norm, max_val, min_val
+
+        return normalized_data, max_val, min_val
+
+    def normalizar_z(self, redshifts):
+        return (redshifts - np.min(redshifts))/(np.max(redshifts)- np.min(redshifts)).astype("float32")
     
 
     
@@ -91,20 +92,41 @@ class Dataset(tf.keras.Model):
       return dataset
 
 
-    def load_data(self):
+    def load_data(self, data_mode):
+
         images, red = self.data0('Data3D-64.hdf5')
         images_clean = self.replace_extreme_voxels(images, quit=20) #Quito los 20 valores extremos
         delta = self.delta(images_clean)
         forw = forward(delta)
 
-        norm_data, norm_red, max_desnorm, min_desnorm = data.normalizar_datos(forw, red) 
-        z_vals = norm_red.astype("float32") 
+        z_vals = data.normalizar_z(red)
 
-        load_psd = np.load("PSD_desnorm.npz")
+        if data_mode == "norm":
+            norm_data, max_desnorm, min_desnorm = data.normalizar_datos(forw)
+            return norm_data, z_vals, max_desnorm, min_desnorm 
+
+        elif data_mode == "desnorm":
+            return forw, z_vals
+
+        else:
+        raise ValueError("data_mode debe ser 'norm' o 'desnorm'")
+
+
+
+    def load_psd(self, psd_mode):
+
+        if psd_mode == "desnorm":
+            psd_file = "PSD_desnorm.npz"
+        elif psd_mode == "norm":
+            psd_file = "PSD_morm.npz"
+        else:
+            raise ValueError("psd_mode debe ser 'norm' o 'desnorm'")
+
+        load_psd = np.load(psd_file)
         psd_mean = load_psd["mean"]
         psd_sigma = load_psd["sigma_log"]
         psd_max = load_psd["psd_max"]
         psd_min = load_psd["psd_min"]
 
-        return norm_data, z_vals, psd_max, psd_min, psd_mean, psd_sigma, max_desnorm, min_desnorm
+        return psd_max, psd_min, psd_mean, psd_sigma
           
