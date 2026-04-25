@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+condor_logs/
+*.log
+*.out
+*.err

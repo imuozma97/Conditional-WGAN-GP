@@ -1,3 +1,0 @@
->>>>> ACTIVATE VIRTUALENV TensorFlow 2.3.1
-LD_LIBRARY_PATH=/lhome/ext/uv140/uv1402/miniconda3/envs/cuda-env/lib:
-[PhysicalDevice(name='/physical_device:GPU:0', device_type='GPU')]
