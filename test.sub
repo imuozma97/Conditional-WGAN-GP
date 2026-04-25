@@ -10,11 +10,14 @@ error                   = condor_logs/errors.$(Cluster).$(Process).err
 
 # Needed to read .bashrc and conda environment
 getenv = True
-#request_cpus   = 16
-#request_memory = 32768
+request_cpus   = 16
+request_memory = 32768
 request_gpus = 1
 
-#+UseNvidiaA100 = True
+# Tiempo máximo de job (en segundos) - 8 horas
++MaxJobRuntime = 28800
+# Prioridad del job
++Priority = 10
 
 queue
 

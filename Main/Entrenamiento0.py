@@ -12,6 +12,11 @@ COSAS IMPORTANTES:
 Utilizo norm. En caso de usar desnorm, sobrarían las salidas de max_desnorm y min_desnorm.
 En este caso backward es None también, no se necesita invertir los datos
 """
+import os
+os.environ['TF_GPU_ALLOCATOR'] = 'cuda_malloc_async'
+os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
+os.environ['TF_GPU_THREAD_MODE'] = 'gpu_private'
+
 import tensorflow as tf
 import tensorflow.keras as keras
 import numpy as np
@@ -20,11 +25,7 @@ import numpy as np
 gpus = tf.config.list_physical_devices('GPU')
 print(gpus)
 for gpu in gpus:
-    # Limitar memoria GPU a 24GB para evitar fragmentación
-    tf.config.set_logical_device_configuration(
-        gpu, 
-        [tf.config.LogicalDeviceConfiguration(memory_limit=24576)]  # 24GB en MB
-    )
+    tf.config.experimental.set_memory_growth(gpu, True)
 
 
 from preprocess_data import Dataset
