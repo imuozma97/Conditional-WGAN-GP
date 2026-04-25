@@ -25,8 +25,8 @@ for gpu in gpus:
 from preprocess_data import Dataset
 from transforms import backward
 from config import embedding_dim, batch_size1, ncritic2
-from models.generators import Generator_film
-from models.discriminators import Discriminator_psd
+from architectures.generators import Generator_film
+from architectures.discriminators import Discriminator_psd
 from power import Power
 from training import Training
 

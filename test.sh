@@ -10,5 +10,5 @@ conda activate $ENVIRONMENT
 export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
 echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
 
-
-~/miniconda3/envs/cuda-env/bin/python3 -u Entrenamiento0.py
+cd "$(dirname "$0")"
+~/miniconda3/envs/cuda-env/bin/python3 -u -m Main.Entrenamiento0.py
