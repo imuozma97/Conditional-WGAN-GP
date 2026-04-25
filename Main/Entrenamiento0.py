@@ -20,7 +20,11 @@ import numpy as np
 gpus = tf.config.list_physical_devices('GPU')
 print(gpus)
 for gpu in gpus:
-    tf.config.experimental.set_memory_growth(gpu, True)
+    # Limitar memoria GPU a 24GB para evitar fragmentación
+    tf.config.set_logical_device_configuration(
+        gpu, 
+        [tf.config.LogicalDeviceConfiguration(memory_limit=24576)]  # 24GB en MB
+    )
 
 
 from preprocess_data import Dataset
