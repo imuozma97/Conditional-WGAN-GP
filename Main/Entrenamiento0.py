@@ -28,7 +28,6 @@ from transforms import backward
 from config import embedding_dim, batch_size1, ncritic2
 from architectures.generators import Generator_film
 from architectures.discriminators import Discriminator_psd
-from power import Power
 from training import Training
 
 
@@ -39,7 +38,6 @@ generated_images_folder = "../Results3D/0-images"
 
 #Cargamos las clases necesarias
 datos= Dataset(batch_size1)
-power = Power()
 
 
 norm_data, z_vals, _, _ = datos.load_data("norm")

@@ -16,9 +16,6 @@ from psd_utils import psd_out_of_band_fraction, lambda_psd_schedule, psd_loss
 from loss_plot import plot_loss_graph
 
 
-power = Power()
-
-
 class Training(tf.keras.Model):
 
     def __init__(self, data_class, discriminator, generator, batch_size, ncritic, trained_models_folder, generated_images_folder):
@@ -37,6 +34,9 @@ class Training(tf.keras.Model):
         #self.use_backward = backward is not None
         #self.backward = backward
         self.disc_psd = True
+        
+        # Power se crea aquí, después de que TensorFlow esté configurado
+        self.power = Power()
 
 
     def compile(self, d_optimizer, g_optimizer):
@@ -56,7 +56,7 @@ class Training(tf.keras.Model):
             with tf.GradientTape() as disc_tape:
                     
                 generated_images = self.generator([noise, z_values], training=True)
-                psd_gen = power.compute_all_psd(generated_images)
+                psd_gen = self.power.compute_all_psd(generated_images)
 
                 #Si el D tiene psd o no:
                 if self.disc_psd:
@@ -83,7 +83,7 @@ class Training(tf.keras.Model):
         with tf.GradientTape(persistent = True) as gen_tape:
                 
             generated_images = self.generator([noise, z_values], training=True)
-            psd_gen = power.compute_all_psd(generated_images)
+            psd_gen = self.power.compute_all_psd(generated_images)
 
             #Si el D tiene psd o no:
             if self.disc_psd:
