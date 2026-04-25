@@ -36,7 +36,7 @@ class Training(tf.keras.Model):
 
         #self.use_backward = backward is not None
         #self.backward = backward
-        self.use_psd = True
+        self.disc_psd = True
 
 
     def compile(self, d_optimizer, g_optimizer):
@@ -46,7 +46,7 @@ class Training(tf.keras.Model):
 
 
     @tf.function    
-    def train_step(self, data,  current_epoch):
+    def train_step(self, data):
             
         real_images, z_values, psd_max, psd_min,  psd_mean, sigma_log = data  
 
@@ -58,8 +58,8 @@ class Training(tf.keras.Model):
                 generated_images = self.generator([noise, z_values], training=True)
                 psd_gen = power.compute_all_psd(generated_images)
 
-                #Si hay psd o no:
-                if self.use_psd:
+                #Si el D tiene psd o no:
+                if self.disc_psd:
                     fake_predictions = self.discriminator([generated_images, z_values, psd_gen], training=True)
                     real_predictions = self.discriminator([real_images, z_values, psd_mean], training=True)
                 else:
@@ -70,7 +70,7 @@ class Training(tf.keras.Model):
                 disc_loss_real = tf.reduce_mean(real_predictions)
                 wass_loss = disc_loss_fake - disc_loss_real
 
-                gp, grads_norm_mean = gradient_penalty(real_images, generated_images, z_values, self.discriminator, 10, psd_mean)
+                gp, grads_norm_mean = gradient_penalty(real_images, generated_images, z_values, self.discriminator, self.batch_size, 10, psd_mean)
 
                 disc_loss = wass_loss + gp
 
@@ -85,8 +85,8 @@ class Training(tf.keras.Model):
             generated_images = self.generator([noise, z_values], training=True)
             psd_gen = power.compute_all_psd(generated_images)
 
-            #Si hay psd o no:
-            if self.use_psd:
+            #Si el D tiene psd o no:
+            if self.disc_psd:
                 fake_predictions = self.discriminator([generated_images, z_values, psd_gen], training=True)
             else:
                 fake_predictions = self.discriminator([generated_images, z_values], training=True)
@@ -95,9 +95,10 @@ class Training(tf.keras.Model):
             percent = psd_out_of_band_fraction(psd_gen, psd_min, psd_max)
 
             loss_psd = psd_loss(psd_gen, psd_mean, sigma_log) 
-            lambda_psd = lambda_psd_schedule(current_epoch)
 
-            gen_loss = loss_adv + lambda_psd*loss_psd
+            #lambda_psd = lambda_psd_schedule(self.current_epoch)
+
+            gen_loss = loss_adv #+ lambda_psd*loss_psd
                 
 
         grads_gen = gen_tape.gradient(gen_loss, self.generator.trainable_variables)
