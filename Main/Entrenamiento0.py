@@ -23,9 +23,11 @@ import numpy as np
 
 
 gpus = tf.config.list_physical_devices('GPU')
-print(gpus)
+print("1. GPUs detectadas:", gpus)
 for gpu in gpus:
     tf.config.experimental.set_memory_growth(gpu, True)
+
+print("2. Memory growth enabled")
 
 
 from preprocess_data import Dataset
@@ -42,24 +44,32 @@ generated_images_folder = "../Results3D/0-images"
 
 
 #Cargamos las clases necesarias
+print("3. Creando Dataset...")
 datos= Dataset(batch_size1)
 
-
+print("4. Cargando datos...")
 norm_data, z_vals, _, _ = datos.load_data("norm")
+print(f"   norm_data shape: {norm_data.shape}, dtype: {norm_data.dtype}")
+
+print("5. Cargando PSD...")
 psd_max, psd_min, psd_mean, psd_sigma = datos.load_psd("norm")
+
+print("6. Creando dataset tf...")
 dataset = datos.crea_dataset(norm_data, z_vals, psd_max, psd_min, psd_mean, psd_sigma)
 
-#Cargamos el Discriminador y Generador
+print("7. Creando Generador...")
 generator = Generator_film(filter1 = 256, filter2 = 128, filter3 = 64)
+
+print("8. Creando Discriminador...")
 discriminator = Discriminator_psd(filter1 = 32, filter2 = 64, filter3 = 128)
 
-
-#Cargamos la red principal
+print("9. Creando Training...")
 cgan = Training(data_class = datos, discriminator = discriminator, generator = generator, batch_size = batch_size1, ncritic = ncritic2, 
                 trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder)
 
+print("10. Compilando...")
 cgan.compile(d_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.00005, beta_1 = 0, beta_2 = 0.9),
              g_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.0001, beta_1 = 0, beta_2 = 0.9))
 
-
+print("11. Iniciando entrenamiento...")
 cgan.train(dataset, epochs = 20000)
