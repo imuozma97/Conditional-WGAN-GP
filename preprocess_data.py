@@ -87,7 +87,7 @@ class Dataset(tf.keras.Model):
     def crea_dataset(self, *data):
     
       dataset = tf.data.Dataset.from_tensor_slices(data)
-      dataset = dataset.shuffle(buffer_size=buffer_size).batch(self.batch_size, drop_remainder=False)
+      dataset = dataset.shuffle(buffer_size=buffer_size).batch(self.batch_size)
   
       return dataset
 

@@ -28,7 +28,7 @@ class Training(tf.keras.Model):
         self.batch_size = batch_size
         self.trained_models_folder= trained_models_folder
         self.generated_images_folder = generated_images_folder
-        self.current_epoch = 0
+        self.current_epoch = 1
         self.ncritic = ncritic
         #self.maximo = maximo
         #self.minimo = minimo

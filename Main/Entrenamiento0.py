@@ -16,6 +16,7 @@ import tensorflow as tf
 import tensorflow.keras as keras
 import numpy as np
 
+
 gpus = tf.config.list_physical_devices('GPU')
 print(gpus)
 for gpu in gpus:
