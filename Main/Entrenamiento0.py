@@ -32,8 +32,8 @@ from training import Training
 
 
 
-trained_models_folder = "Results3D/0-models"
-generated_images_folder = "Results3D/0-images"
+trained_models_folder = "../Results3D/0-models"
+generated_images_folder = "../Results3D/0-images"
 
 
 #Cargamos las clases necesarias
@@ -46,8 +46,8 @@ psd_max, psd_min, psd_mean, psd_sigma = datos.load_psd("norm")
 dataset = datos.crea_dataset(norm_data, z_vals, psd_max, psd_min, psd_mean, psd_sigma)
 
 #Cargamos el Discriminador y Generador
-generator = Generator_film(embedding_dim = embedding_dim, filter1 = 256, filter2 = 128, filter3 = 64)
-discriminator = Discriminator_psd(embedding_dim=embedding_dim, filter1 = 32, filter2 = 64, filter3 = 128)
+generator = Generator_film(filter1 = 256, filter2 = 128, filter3 = 64)
+discriminator = Discriminator_psd(filter1 = 32, filter2 = 64, filter3 = 128)
 
 
 #Cargamos la red principal

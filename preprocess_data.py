@@ -7,10 +7,10 @@ import numpy as np
 import h5py
 
 from config import n_bar, buffer_size
-
+from transforms import forward
 
 class Dataset(tf.keras.Model):
-    def__init__(self, batch_size):
+    def __init__(self, batch_size):
         super().__init__()
         self.batch_size = batch_size #Tiene que ser input porque no siempre es el mismo
 
@@ -94,31 +94,31 @@ class Dataset(tf.keras.Model):
 
     def load_data(self, data_mode):
 
-        images, red = self.data0('Data3D-64.hdf5')
+        images, red = self.data0('../Camels_data/Data3D-64.hdf5')
         images_clean = self.replace_extreme_voxels(images, quit=20) #Quito los 20 valores extremos
         delta = self.delta(images_clean)
         forw = forward(delta)
 
-        z_vals = data.normalizar_z(red)
+        z_vals = self.normalizar_z(red)
 
         if data_mode == "norm":
-            norm_data, max_desnorm, min_desnorm = data.normalizar_datos(forw)
+            norm_data, max_desnorm, min_desnorm = self.normalizar_datos(forw)
             return norm_data, z_vals, max_desnorm, min_desnorm 
 
         elif data_mode == "desnorm":
             return forw, z_vals
 
         else:
-        raise ValueError("data_mode debe ser 'norm' o 'desnorm'")
+            raise ValueError("data_mode debe ser 'norm' o 'desnorm'")
 
 
 
     def load_psd(self, psd_mode):
 
         if psd_mode == "desnorm":
-            psd_file = "PSD_desnorm.npz"
+            psd_file = "psd-data/PSD_desnorm.npz"
         elif psd_mode == "norm":
-            psd_file = "PSD_morm.npz"
+            psd_file = "psd-data/PSD_norm.npz"
         else:
             raise ValueError("psd_mode debe ser 'norm' o 'desnorm'")
 

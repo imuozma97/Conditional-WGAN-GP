@@ -9,7 +9,7 @@ import json
 import numpy as np
 
 
-from config import latent_dim, maximo, minimo
+from config import latent_dim
 from grad_pen import gradient_penalty
 from power import Power
 from psd_utils import psd_out_of_band_fraction, lambda_psd_schedule, psd_loss

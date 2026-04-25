@@ -8,9 +8,10 @@ from config import shift, c
 
 
 
-def stat_forward_0_tf(x, c=2e4):
+def stat_forward_0(x, c=2e4):
     
     x = tf.convert_to_tensor(x, dtype=tf.float32)
+    c = tf.cast(c, tf.float32)
 
     mask = x > c
     maski = tf.logical_not(mask)

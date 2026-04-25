@@ -50,12 +50,12 @@ class Generator_film(tf.keras.Model):
 
         # Bloque 2
         self.conv2 = tf.keras.layers.Conv3DTranspose(filter2, 4, strides=2, padding='same', use_bias=False)
-        self.film2 = FiLMLayer(filter)
+        self.film2 = FiLMLayer(filter2)
         self.act2 = tf.keras.layers.ReLU()
 
         # Bloque 3
         self.conv3 = tf.keras.layers.Conv3DTranspose(filter3, 3, strides=2, padding='same', use_bias=False)
-        self.film3 = FiLMLayer(filter4)
+        self.film3 = FiLMLayer(filter3)
         self.act3 = tf.keras.layers.ReLU()
 
         #Última capa
@@ -196,7 +196,8 @@ class Generator_concat(tf.keras.Model): #TAL VEZ TENDRÍA QUE QUITAR BACHNORM
             tf.keras.layers.ReLU(),
 
             # Capa de salida
-            tf.keras.layers.Conv3D(1, kernel_size=3, padding='same', activation='tanh', kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02)])
+            tf.keras.layers.Conv3D(1, kernel_size=3, padding='same', activation='tanh', kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02))
+            ])
 
     def call(self, inputs, training=True):
         z_latent, z_condition = inputs  
