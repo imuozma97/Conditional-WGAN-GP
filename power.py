@@ -94,9 +94,12 @@ class Power(tf.keras.Model):
     
     def compute_all_psd(self, images):
         
+        print(f"      compute_all_psd: images shape = {images.shape}")
+        
         psds = []
         
         for i in range(len(images)):
+            print(f"      compute_all_psd: procesando imagen {i+1}/{len(images)}")
             psds.append(self.compute_psd(images[i])[0])
             
         psds = tf.stack(psds, axis=0)

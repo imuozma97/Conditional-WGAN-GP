@@ -177,8 +177,8 @@ class Training(tf.keras.Model):
             
             print('Currently training on epoch {} (out of {}).'.format(epoch, epochs))
 
-            for image_batch in dataset_train:
-                    
+            for batch_idx, image_batch in enumerate(dataset_train):
+                print(f"   Batch {batch_idx + 1}")
                 losses = self.train_step(image_batch)
                 wass_loss += -losses[0]
                 disc_loss_r += losses[1]
