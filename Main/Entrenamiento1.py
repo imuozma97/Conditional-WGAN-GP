@@ -41,8 +41,8 @@ from training import Training
 
 
 
-trained_models_folder = "../Results3D/0-models"
-generated_images_folder = "../Results3D/0-images"
+trained_models_folder = "../Results3D/1-models"
+generated_images_folder = "../Results3D/1-images"
 
 
 #Cargamos las clases necesarias
@@ -60,8 +60,8 @@ discriminator = Discriminator_projection(filter1 = 32, filter2 = 64, filter3 = 1
 
 #Cargamos la red principal
 cgan = Training(data_class = datos, discriminator = discriminator, generator = generator, batch_size = batch_size1, ncritic = ncritic2, 
-                trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder, disc_psd = False)
-
+                trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder,
+                use_psd = False)
 cgan.compile(d_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.00005, beta_1 = 0, beta_2 = 0.9),
              g_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.0001, beta_1 = 0, beta_2 = 0.9))
 

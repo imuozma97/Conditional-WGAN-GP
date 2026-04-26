@@ -18,7 +18,7 @@ from loss_plot import plot_loss_graph
 
 class Training(tf.keras.Model):
 
-    def __init__(self, data_class, discriminator, generator, batch_size, ncritic, trained_models_folder, generated_images_folder):
+    def __init__(self, data_class, discriminator, generator, batch_size, ncritic, trained_models_folder, generated_images_folder, use_psd=True):
         super().__init__()
         self.discriminator = discriminator
         self.generator = generator
@@ -27,13 +27,14 @@ class Training(tf.keras.Model):
         self.generated_images_folder = generated_images_folder
         self.current_epoch = 1
         self.ncritic = ncritic
+        self.use_psd = use_psd
         #self.maximo = maximo
         #self.minimo = minimo
         self.data_class = data_class
 
         #self.use_backward = backward is not None
         #self.backward = backward
-        self.disc_psd = True
+        self.use_psd = use_psd
         
         # Power se crea aquí, después de que TensorFlow esté configurado
         self.power = Power()
@@ -58,7 +59,7 @@ class Training(tf.keras.Model):
                 psd_gen = self.power.compute_all_psd(generated_images)
 
                 #Si el D tiene psd o no:
-                if self.disc_psd:
+                if self.use_psd:
                     fake_predictions = self.discriminator([generated_images, z_values, psd_gen], training=True)
                     real_predictions = self.discriminator([real_images, z_values, psd_mean], training=True)
                 else:
@@ -85,7 +86,7 @@ class Training(tf.keras.Model):
             psd_gen = self.power.compute_all_psd(generated_images)
 
             #Si el D tiene psd o no:
-            if self.disc_psd:
+            if self.use_psd:
                 fake_predictions = self.discriminator([generated_images, z_values, psd_gen], training=True)
             else:
                 fake_predictions = self.discriminator([generated_images, z_values], training=True)
