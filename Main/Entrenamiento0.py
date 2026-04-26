@@ -16,6 +16,7 @@ import os
 os.environ['TF_GPU_ALLOCATOR'] = 'cuda_malloc_async'
 os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 os.environ['TF_GPU_THREAD_MODE'] = 'gpu_private'
+os.environ['TF_XLA_ENABLE'] = '0'  # Desactivar XLA
 
 import tensorflow as tf
 import tensorflow.keras as keras

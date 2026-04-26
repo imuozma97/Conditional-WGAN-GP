@@ -93,18 +93,24 @@ class Power(tf.keras.Model):
     
     
     def compute_all_psd(self, images):
-        
+        """
+        Versión optimizada que procesa todas las imágenes a la vez
+        """
         print(f"      compute_all_psd: images shape = {images.shape}")
         
-        psds = []
+        # images shape: (batch, 64, 64, 64, 1)
+        batch_size = images.shape[0]
         
-        for i in range(len(images)):
-            print(f"      compute_all_psd: procesando imagen {i+1}/{len(images)}")
-            psd_result = self.compute_psd(images[i])[0]
-            psds.append(psd_result)
-            # Liberar memoria explícitamente
-            tf.keras.backend.clear_session()
+        # Aplanar las imágenes
+        images_flat = tf.reshape(images, [batch_size, -1])
+        
+        # Calcular FFT para cada imagen del batch
+        # Necesitamos hacer FFT 3D para cada imagen individualmente
+        all_psds = []
+        
+        for i in range(batch_size):
+            img = images[i, :, :, :, 0]  # (64, 64, 64)
+            psd_val = self.compute_psd(img)[0]
+            all_psds.append(psd_val)
             
-        psds = tf.stack(psds, axis=0)
-        
-        return psds#, red
+        return tf.stack(all_psds)
