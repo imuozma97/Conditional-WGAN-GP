@@ -232,9 +232,6 @@ class Training(tf.keras.Model):
                 best_percent.append(float(percent.numpy()))
                 best_epoch.append(epoch)
 
-                print("psd_gen_batch:", type(psd_gen_batch))
-                print("psd_gen_batch shape:", psd_gen_batch.shape)
-                
                 np.savez(os.path.join(gen_path, "psd_data.npz"),
                     psd_gen = psd_gen_batch.numpy(),
                     psd_min=psd_min_batch.numpy(),
