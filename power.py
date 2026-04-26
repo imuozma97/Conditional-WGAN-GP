@@ -100,7 +100,10 @@ class Power(tf.keras.Model):
         
         for i in range(len(images)):
             print(f"      compute_all_psd: procesando imagen {i+1}/{len(images)}")
-            psds.append(self.compute_psd(images[i])[0])
+            psd_result = self.compute_psd(images[i])[0]
+            psds.append(psd_result)
+            # Liberar memoria explícitamente
+            tf.keras.backend.clear_session()
             
         psds = tf.stack(psds, axis=0)
         
