@@ -220,8 +220,7 @@ class Training(tf.keras.Model):
 
             
             #Aquí guardará el modelo únicamente si mejora
-            #if epoch > 150 and percent < best_metric:
-            if epoch == 1:
+            if epoch > 150 and percent < best_metric:
                 best_metric = percent
 
                 gen_path = os.path.join(self.trained_models_folder, "best_generator", f"epoch_{epoch:05d}")
