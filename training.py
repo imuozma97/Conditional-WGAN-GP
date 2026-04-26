@@ -49,16 +49,12 @@ class Training(tf.keras.Model):
     def train_step(self, data):
             
         real_images, z_values, psd_max, psd_min,  psd_mean, sigma_log = data  
-        print("   train_step: datos recibidos")
 
         for _ in range(self.ncritic):
             noise = tf.random.normal([self.batch_size, latent_dim]) 
-            print("   train_step: ruido generado")
                 
             with tf.GradientTape() as disc_tape:
-                print("   train_step: generando imágenes...")
                 generated_images = self.generator([noise, z_values], training=True)
-                print("   train_step: imágenes generadas, calculando PSD...")
                 psd_gen = self.power.compute_all_psd(generated_images)
 
                 #Si el D tiene psd o no:
@@ -177,8 +173,7 @@ class Training(tf.keras.Model):
             
             print('Currently training on epoch {} (out of {}).'.format(epoch, epochs))
 
-            for batch_idx, image_batch in enumerate(dataset_train):
-                print(f"   Batch {batch_idx + 1}")
+            for image_batch in dataset_train:
                 losses = self.train_step(image_batch)
                 wass_loss += -losses[0]
                 disc_loss_r += losses[1]
