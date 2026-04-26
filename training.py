@@ -3,6 +3,8 @@ Funciones principales del entrenamiento
 -train step: hace cada batch
 """
 
+from fileinput import filename
+
 import tensorflow as tf
 import os
 import json
@@ -291,7 +293,7 @@ class Training(tf.keras.Model):
     
 
 
-            plot_loss_graph(epoch_vect, wass_losses, adv_losses, "Wasserstein-Loss.pdf", "Wasserstein Loss", "Adv Loss")
-            plot_loss_graph(epoch_vect, disc_losses_f, disc_losses_r, "Distance-Loss.pdf", "Disc Loss Fake", "Disc Loss Real")
-            plot_loss_graph(epoch_vect, grad_pen, None,  "Gradient-penalty.pdf", "Gradient Penalty", "GP")
+            plot_loss_graph(epoch_vect, wass_losses, adv_losses, "Wasserstein-Loss.pdf", "Wasserstein Loss", "Adv Loss", self.generated_images_folder)
+            plot_loss_graph(epoch_vect, disc_losses_f, disc_losses_r, "Distance-Loss.pdf", "Disc Loss Fake", "Disc Loss Real", self.generated_images_folder)
+            plot_loss_graph(epoch_vect, grad_pen, None,  "Gradient-penalty.pdf", "Gradient Penalty", "GP" ,self.generated_images_folder)
                 
