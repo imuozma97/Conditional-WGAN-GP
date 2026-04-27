@@ -4,3 +4,6 @@ condor_logs/
 *.log
 *.out
 *.err
+Results3D/
+*.npz
+*.h5
