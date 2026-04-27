@@ -1,9 +1,9 @@
 """
 Archivo principal para entrenar la red. Este simula a Artemisa3, que contiene:
-D + psd
+D + projection
 G + film, sin BN; 8x8x8x256
 batch_size = 17
-n_critic = 2
+n_critic = 3
 latent_dim = 128
 
 Este archivo utiliza datos noramlizados y PSD también normalizado.
@@ -34,15 +34,15 @@ for gpu in gpus:
 
 
 from preprocess_data import Dataset
-from config import batch_size1, ncritic2
+from config import batch_size1, ncritic3
 from architectures.generators import Generator_film
 from architectures.discriminators import Discriminator_projection
 from training import Training
 
 
 
-trained_models_folder = "Results3D/1-models"
-generated_images_folder = "Results3D/1-images"
+trained_models_folder = "Results3D/2-models"
+generated_images_folder = "Results3D/2-images"
 
 
 #Cargamos las clases necesarias
@@ -59,7 +59,7 @@ discriminator = Discriminator_projection(filter1 = 32, filter2 = 64, filter3 = 1
 
 
 #Cargamos la red principal
-cgan = Training(data_class = datos, discriminator = discriminator, generator = generator, batch_size = batch_size1, ncritic = ncritic2, 
+cgan = Training(data_class = datos, discriminator = discriminator, generator = generator, batch_size = batch_size1, ncritic = ncritic3, 
                 trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder,
                 use_psd = False)
 cgan.compile(d_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.00005, beta_1 = 0, beta_2 = 0.9),
