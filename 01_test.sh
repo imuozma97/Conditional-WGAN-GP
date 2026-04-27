@@ -9,6 +9,5 @@ conda activate $ENVIRONMENT
 
 export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
 echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
-export TF_XLA_FLAGS=--tf_xla_auto_jit=0
-cd "$(dirname "$0")"
-~/miniconda3/envs/cuda-env/bin/python3 -u -m Main.Entrenamiento0.py
+echo $CUDA_VISIBLE_DEVICES
+~/miniconda3/envs/cuda-env/bin/python3 -u -m Main.Entrenamiento2.py

@@ -46,7 +46,7 @@ generated_images_folder = "../Results3D/0-images"
 
 
 #Cargamos las clases necesarias
-datos= Dataset(batch_size1)
+datos= Dataset(2)
 
 
 norm_data, z_vals, _, _ = datos.load_data("norm")
@@ -59,9 +59,9 @@ discriminator = Discriminator_psd(filter1 = 32, filter2 = 64, filter3 = 128)
 
 
 #Cargamos la red principal (use_psd=False para desactivar PSD)
-cgan = Training(data_class = datos, discriminator = discriminator, generator = generator, batch_size = batch_size1, ncritic = ncritic2, 
+cgan = Training(data_class = datos, discriminator = discriminator, generator = generator, batch_size = 2, ncritic = ncritic2, 
                 trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder,
-                use_psd = False)
+                use_psd = True)
 
 cgan.compile(d_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.00005, beta_1 = 0, beta_2 = 0.9),
              g_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.0001, beta_1 = 0, beta_2 = 0.9))
