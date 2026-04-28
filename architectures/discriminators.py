@@ -111,69 +111,67 @@ class Discriminator_concat(tf.keras.Model):
 class Discriminator_psd(tf.keras.Model):
     def __init__(self, filter1, filter2, filter3):
         super().__init__()
+
+        self.embedding_dim = embedding_dim
         self.filter1 = filter1
         self.filter2 = filter2
         self.filter3 = filter3
 
+        # embedding de z (para projection)
         self.z_embedding = tf.keras.Sequential([
             tf.keras.layers.Dense(embedding_dim),
             tf.keras.layers.Dense(embedding_dim),
         ])
 
-        # Rama imagen
+        # rama espacial
         self.conv_layers = tf.keras.Sequential([
-            tf.keras.layers.Conv3D(self.filter1, 4, padding="same", strides = 2, kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02),
-                                   use_bias = True),
+            tf.keras.layers.Conv3D(filter1, 4, padding="same",
+                                   kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True),
             tf.keras.layers.LeakyReLU(0.2),
+           # tf.keras.layers.MaxPooling3D(2),
 
-            tf.keras.layers.Conv3D(self.filter2, 4, padding="same", strides = 2, kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02),
-                                   use_bias = True),
+            tf.keras.layers.Conv3D(filter2, 4, padding="same",
+                                   kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True),
             tf.keras.layers.LeakyReLU(0.2),
+           # tf.keras.layers.MaxPooling3D(2),
 
-            tf.keras.layers.Conv3D(self.filter3, 3, padding="same", strides = 2, kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), 
-                                  use_bias = True),
+            tf.keras.layers.Conv3D(filter3, 3, padding="same",
+                                   kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True),
             tf.keras.layers.LeakyReLU(0.2),
+            #tf.keras.layers.MaxPooling3D(2),
 
             tf.keras.layers.GlobalAveragePooling3D(),
         ])
 
-        # Rama PSD
+        # rama PSD
         self.psd_branch = tf.keras.Sequential([
             tf.keras.layers.Dense(128),
             tf.keras.layers.LeakyReLU(0.2),
             tf.keras.layers.Dense(embedding_dim),
         ])
 
-        # Fusión después de concatenar
-        self.fusion = tf.keras.Sequential([
-            tf.keras.layers.Dense(embedding_dim),
-            tf.keras.layers.LeakyReLU(0.2),
-        ])
-        #self.features_dense = tf.keras.layers.Dense(embedding_dim)
+        # capas finales
+        self.features_dense = tf.keras.layers.Dense(embedding_dim)
         self.final_dense = tf.keras.layers.Dense(1)
 
     def call(self, inputs, training=True):
         image, z, psd = inputs
 
-        # Imagen → embedding
+        # ----- rama espacial
         f_img = self.conv_layers(image)
-        #f_img = self.features_dense(f_img)
+        f_img = self.features_dense(f_img)
 
-        # PSD → embedding
-        f_psd = self.psd_branch(psd)
+        # ----- rama PSD
+        log_psd = tf.math.log(psd + 1e-8)
+        f_psd = self.psd_branch(log_psd)
 
-        # CONCAT (clave del cambio)
-        f = tf.concat([f_img, f_psd], axis=-1)
-        #f = f_img +f_psd
+        # ----- combinar
+        f = f_img + f_psd   # (mejor que concat en muchos casos)
 
-        # proyección a espacio común
-        f = self.fusion(f)
-
-        # conditioning (projection GAN)
+        # ----- projection conditioning
         z_embed = self.z_embedding(z)
         projection = tf.reduce_sum(f * z_embed, axis=-1, keepdims=True)
 
         out = self.final_dense(f)
 
         return out + projection
-    
