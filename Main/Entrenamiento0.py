@@ -3,7 +3,7 @@ Archivo principal para entrenar la red. Este simula a Artemisa3, que contiene:
 D + psd
 G + film, sin BN; 8x8x8x256
 batch_size = 17
-n_critic = 2 
+n_critic = 3
 latent_dim = 128
 
 Este archivo utiliza datos noramlizados y PSD también normalizado.
@@ -20,8 +20,7 @@ os.environ['TF_XLA_ENABLE'] = '0'
 
 import tensorflow as tf
 import tensorflow.keras as keras
-#from tensorflow.keras import mixed_precision
-#mixed_precision.set_global_policy('mixed_float16')
+
 # Optimizaciones de memoria
 tf.config.optimizer.set_jit(True)
 tf.config.optimizer.set_experimental_options({"layout_optimizer": False, "constant_folding": True, "shape_optimization": True, "arithmetic_optimization": True, "disable_meta_optimizer": False, "function_optimization": True})
@@ -36,7 +35,7 @@ for gpu in gpus:
 
 
 from preprocess_data import Dataset
-from config import batch_size1, ncritic2
+from config import batch_size1, ncritic3
 from architectures.generators import Generator_film
 from architectures.discriminators import Discriminator_psd
 from training import Training
@@ -48,7 +47,7 @@ generated_images_folder = "Results3D/0-images"
 
 
 #Cargamos las clases necesarias
-datos= Dataset(batch_size1)
+datos= Dataset(batch_size = batch_size1)
 
 
 norm_data, z_vals, _, _ = datos.load_data("norm")
@@ -58,18 +57,19 @@ dataset = datos.crea_dataset(norm_data, z_vals, psd_max, psd_min, psd_mean, psd_
 #Cargamos el Discriminador y Generador
 generator = Generator_film(filter1 = 256, filter2 = 128, filter3 = 64)
 discriminator = Discriminator_psd(filter1 = 32, filter2 = 64, filter3 = 128)
-generator.build(input_shape = (None, 128))
-discriminator.build(input_shape = (None, 8, 8, 8,1))
-print(generator.summary())
-print(discriminator.summary())
+
 
 #Cargamos la red principal (use_psd=False para desactivar PSD)
-cgan = Training(data_class = datos, discriminator = discriminator, generator = generator, batch_size = batch_size1, ncritic = ncritic2, 
+cgan = Training(data_class = datos, discriminator = discriminator, generator = generator, batch_size = batch_size1, ncritic = ncritic3, 
                 trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder,
                 use_psd = True)
+
+
 
 cgan.compile(d_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.00005, beta_1 = 0, beta_2 = 0.9),
              g_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.0001, beta_1 = 0, beta_2 = 0.9))
 
 
 cgan.train(dataset, epochs = 20000)
+print(generator.summary())
+print(discriminator.summary())
