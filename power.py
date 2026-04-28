@@ -57,47 +57,47 @@ class Power(tf.keras.Model):
            
     def compute_psd(self, image):
         """
-        image: (L, L, L) o (batch, L, L, L)
+        Computa PSD para una imagen
+        image: (L, L, L)
+        Retorna: (psd, bin_centers)
         """
-
         image = tf.cast(image, tf.float32)
-
+        
         # FFT 3D
         fft3 = tf.signal.fft3d(tf.cast(image, tf.complex64))
         power = tf.math.abs(fft3)**2 / (boxsize**3)
-
+        
         # centrar k=0
         power = tf.signal.fftshift(power, axes=(-3, -2, -1))
-
+        
         # aplanar
         power_flat = tf.reshape(power, [-1])
         bin_idx_flat = tf.reshape(self.bin_indices, [-1])
-
+        
         # media por bin radial
         psd = tf.math.unsorted_segment_mean(
             data=power_flat,
             segment_ids=bin_idx_flat,
             num_segments=self.nbins
         )
-
+        
         return psd, self.bin_centers 
-    
     
     
     
     def compute_all_psd(self, images):
         """
-        Versión optimizada que procesa todas las imágenes a la vez
+        Procesa todas las imágenes del batch de forma vectorizada
+        images shape: (batch, 64, 64, 64, 1)
         """
-        # images shape: (batch, 64, 64, 64, 1)
-        batch_size = images.shape[0]
+        # Eliminar la dimensión de canales
+        images = tf.squeeze(images, axis=-1)
         
-        # Calcular FFT para cada imagen del batch
-        all_psds = []
+        # Vectorizado: procesar todas las imágenes a la vez
+        psd_results = tf.map_fn(
+            lambda x: self.compute_psd(x)[0],
+            images,
+            fn_output_signature=tf.float32
+        )
         
-        for i in range(batch_size):
-            img = images[i, :, :, :, 0]  # (64, 64, 64)
-            psd_val = self.compute_psd(img)[0]
-            all_psds.append(psd_val)
-            
-        return tf.stack(all_psds)
+        return psd_results
