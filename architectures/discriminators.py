@@ -155,7 +155,11 @@ class Discriminator_psd(tf.keras.Model):
         self.final_dense = tf.keras.layers.Dense(1)
 
     def call(self, inputs, training=True, use_psd=True):
-        image, z, psd = inputs
+        
+        if use_psd: 
+            image, z, psd = inputs
+        else:
+            image, z = inputs
 
         f_img = self.conv_layers(image)
         f_img = self.features_dense(f_img)
