@@ -3,7 +3,7 @@ Archivo principal para entrenar la red. Este simula a Artemisa3, que contiene:
 D + psd
 G + film, sin BN; 8x8x8x256
 batch_size = 17
-n_critic = 2
+n_critic = 2 
 latent_dim = 128
 
 Este archivo utiliza datos noramlizados y PSD también normalizado.
@@ -22,6 +22,7 @@ import tensorflow as tf
 # Optimizaciones de memoria
 tf.config.optimizer.set_jit(True)
 tf.config.optimizer.set_experimental_options({"layout_optimizer": False, "constant_folding": True, "shape_optimization": True, "arithmetic_optimization": True, "disable_meta_optimizer": False, "function_optimization": True})
+tf.config.run_functions_eagerly(True)
 
 import tensorflow.keras as keras
 import numpy as np
@@ -41,12 +42,12 @@ from training import Training
 
 
 
-trained_models_folder = "../Results3D/0-models"
-generated_images_folder = "../Results3D/0-images"
+trained_models_folder = "Results3D/0-models"
+generated_images_folder = "Results3D/0-images"
 
 
 #Cargamos las clases necesarias
-datos= Dataset(2)
+datos= Dataset(batch_size1)
 
 
 norm_data, z_vals, _, _ = datos.load_data("norm")
@@ -59,7 +60,7 @@ discriminator = Discriminator_psd(filter1 = 32, filter2 = 64, filter3 = 128)
 
 
 #Cargamos la red principal (use_psd=False para desactivar PSD)
-cgan = Training(data_class = datos, discriminator = discriminator, generator = generator, batch_size = 2, ncritic = ncritic2, 
+cgan = Training(data_class = datos, discriminator = discriminator, generator = generator, batch_size = batch_size1, ncritic = ncritic2, 
                 trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder,
                 use_psd = True)
 
