@@ -58,6 +58,8 @@ dataset = datos.crea_dataset(norm_data, z_vals, psd_max, psd_min, psd_mean, psd_
 #Cargamos el Discriminador y Generador
 generator = Generator_film(filter1 = 256, filter2 = 128, filter3 = 64)
 discriminator = Discriminator_psd(filter1 = 32, filter2 = 64, filter3 = 128)
+generator.build(input_shape = (None, 128))
+discriminator.build(input_shape = (None, 8, 8, 8,1))
 print(generator.summary())
 print(discriminator.summary())
 
