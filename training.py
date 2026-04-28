@@ -3,8 +3,6 @@ Funciones principales del entrenamiento
 -train step: hace cada batch
 """
 
-from fileinput import filename
-
 import tensorflow as tf
 import os
 import json
@@ -27,7 +25,7 @@ class Training(tf.keras.Model):
         self.batch_size = batch_size
         self.trained_models_folder= trained_models_folder
         self.generated_images_folder = generated_images_folder
-        self.current_epoch = 1
+        self.current_epoch = 0
         self.ncritic = ncritic
         self.use_psd = use_psd
         #self.maximo = maximo
@@ -36,9 +34,7 @@ class Training(tf.keras.Model):
 
         #self.use_backward = backward is not None
         #self.backward = backward
-        self.use_psd = use_psd
         
-        # Power se crea aquí, después de que TensorFlow esté configurado
         self.power = Power()
 
 
@@ -218,7 +214,7 @@ class Training(tf.keras.Model):
             if epoch > 150 and percent < best_metric:
                 best_metric = percent
 
-                gen_path = os.path.join(self.trained_models_folder, "best_generator", f"epoch_{epoch:05d}")
+                gen_path = os.path.join(self.trained_models_folder, "best_percent_generator", f"epoch_{epoch:05d}")
                 os.makedirs(gen_path, exist_ok=True)
                 self.generator.save(gen_path)
 
@@ -226,7 +222,7 @@ class Training(tf.keras.Model):
                 best_percent.append(float(percent.numpy()))
                 best_epoch.append(epoch)
 
-                np.savez(os.path.join(gen_path, "psd_data.npz"),
+                np.savez(os.path.join(gen_path, f"psd_data_{epoch:05d}.npz"),
                     psd_gen = psd_gen_batch.numpy(),
                     psd_min=psd_min_batch.numpy(),
                     psd_max=psd_max_batch.numpy(),
@@ -237,18 +233,17 @@ class Training(tf.keras.Model):
                 checkpoint_manager.save()
 
                 print(f"Checkpoint guardado en época {epoch}")
+
+            
                     
                     
         
-            if self.current_epoch % 150 == 0:
+            if epoch % 150 == 0:
                 print(f"Guardando modelo por estabilización después de 150 épocas.")
 
-                gen_dir = os.path.join(self.trained_models_folder, "generator_stable")
-                os.makedirs(gen_dir, exist_ok=True)
-                gen_path = os.path.join(gen_dir, f"generator_epoch_{epoch:05d}.weights.h5")
-
-                self.generator.save_weights(gen_path)
-                    
+                gen_path = os.path.join(self.trained_models_folder, "generator_stable", f"epoch_{epoch:05d}")
+                os.makedirs(gen_path, exist_ok=True)
+                self.generator.save(gen_path)
                     
 
             wass_losses.append(float(wass_loss.numpy()))
