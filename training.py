@@ -64,13 +64,12 @@ class Training(tf.keras.Model):
                 if self.use_psd:
                     fake_predictions = self.discriminator([generated_images, z_values, psd_gen], training=True)
                     real_predictions = self.discriminator([real_images, z_values, psd_mean], training=True)
-                    gp, grads_norm_mean = gradient_penalty(real_images, generated_images, z_values, self.discriminator, self.batch_size, 10, psd_mean)
 
                 else:
                     fake_predictions = self.discriminator([generated_images, z_values], training=True)
                     real_predictions = self.discriminator([real_images, z_values], training=True)
-                    gp, grads_norm_mean = gradient_penalty(real_images, generated_images, z_values, self.discriminator, self.batch_size, 10, None)
-
+                
+                gp, grads_norm_mean = gradient_penalty(real_images, generated_images, z_values, self.discriminator, self.batch_size, 10)
                     
                 disc_loss_fake = tf.reduce_mean(fake_predictions)
                 disc_loss_real = tf.reduce_mean(real_predictions)

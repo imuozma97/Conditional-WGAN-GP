@@ -6,20 +6,13 @@ import tensorflow as tf
 
 
 
-def gradient_penalty(real_images, fake_images, z_values, discriminator, batch_size, lambda_term , extra_real = None):
+def gradient_penalty(real_images, fake_images, z_values, discriminator, batch_size, lambda_term):
 
     alpha = tf.random.uniform([batch_size, 1, 1, 1, 1], 0., 1.)
     real_images = tf.cast(real_images, tf.float32)
 
     interpolated = real_images + alpha * (fake_images - real_images)
     real_inputs = [interpolated, z_values]
-
-    if extra_real is not None:
-        # Crear un PSD "dummy" para el gradient penalty sin calcular gradientes para él
-        # Usamos tf.stop_gradient para evitar que se calculen gradientes para el PSD
-        extra_real_stopped = tf.stop_gradient(extra_real)
-        real_inputs.append(extra_real_stopped)
-
 
     with tf.GradientTape() as gp_tape:
         gp_tape.watch(interpolated)
