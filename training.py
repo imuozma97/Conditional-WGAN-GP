@@ -84,7 +84,7 @@ class Training(tf.keras.Model):
 
             # Generador
         noise = tf.random.normal([self.batch_size, latent_dim]) 
-        with tf.GradientTape(persistent = True) as gen_tape:
+        with tf.GradientTape() as gen_tape:
                 
             generated_images = self.generator([noise, z_values], training=True)
             psd_gen = self.power.compute_all_psd(generated_images)
@@ -106,21 +106,21 @@ class Training(tf.keras.Model):
                 
 
         grads_gen = gen_tape.gradient(gen_loss, self.generator.trainable_variables)
-        grads_psd = gen_tape.gradient(loss_psd, self.generator.trainable_variables)
-        grads_adv = gen_tape.gradient(loss_adv, self.generator.trainable_variables)
+        #grads_psd = gen_tape.gradient(loss_psd, self.generator.trainable_variables)
+        #grads_adv = gen_tape.gradient(loss_adv, self.generator.trainable_variables)
 
         norm_gen = tf.linalg.global_norm(grads_gen)
-        norm_psd = tf.linalg.global_norm(grads_psd)
-        norm_adv = tf.linalg.global_norm(grads_adv)
+        #norm_psd = tf.linalg.global_norm(grads_psd)
+        #norm_adv = tf.linalg.global_norm(grads_adv)
     
             
         self.g_optimizer.apply_gradients(zip(grads_gen, self.generator.trainable_variables))
             
-        ratio1 = norm_disc / (norm_adv + 1e-8)
-        ratio2 = norm_adv / (norm_psd + 1e-8)
-        ratio3 = norm_disc / (norm_gen + 1e-8)
+        ratio1 = norm_disc / (norm_gen + 1e-8)
+        #ratio2 = norm_adv / (norm_psd + 1e-8)
+        #ratio3 = norm_disc / (norm_adv + 1e-8)
 
-        return wass_loss, disc_loss_real, disc_loss_fake, loss_adv, loss_psd, percent, grads_norm_mean, ratio1, ratio2, ratio3, psd_gen, psd_max, psd_min
+        return wass_loss, disc_loss_real, disc_loss_fake, loss_adv, loss_psd, percent, grads_norm_mean, ratio1, psd_gen, psd_max, psd_min
         
     
 
@@ -138,7 +138,7 @@ class Training(tf.keras.Model):
         grad_pen = []
         percents = []
             
-        ratios1, ratios2, ratios3 = [], [], []
+        ratios1 = []
 
         best_metric = float("inf")
         best_psd, best_epoch, best_percent = [], [], []
@@ -173,7 +173,7 @@ class Training(tf.keras.Model):
                 
             percent = 0
                 
-            ratio1, ratio2, ratio3 = 0, 0, 0
+            ratio1 = 0
         
             
             print('Currently training on epoch {} (out of {}).'.format(epoch, epochs))
@@ -191,12 +191,10 @@ class Training(tf.keras.Model):
                 gp += losses[6]
                     
                 ratio1 += losses[7]
-                ratio2 += losses[8]
-                ratio3 += losses[9]
                 
-                psd_gen_batch = losses[10]
-                psd_max_batch = losses[11]
-                psd_min_batch = losses[12]
+                psd_gen_batch = losses[8]
+                psd_max_batch = losses[9]
+                psd_min_batch = losses[10]
                 percent_batch = losses[5]
                     
                 batch_count += 1
@@ -213,8 +211,6 @@ class Training(tf.keras.Model):
             gp /= batch_count
                 
             ratio1 /= batch_count
-            ratio2 /= batch_count
-            ratio3 /= batch_count
                 
             
 
@@ -267,8 +263,6 @@ class Training(tf.keras.Model):
             grad_pen.append(float(gp.numpy()))
                 
             ratios1.append(float(ratio1.numpy()))
-            ratios2.append(float(ratio2.numpy()))
-            ratios3.append(float(ratio3.numpy()))
                 
             
                 
@@ -286,8 +280,6 @@ class Training(tf.keras.Model):
                         'best_psd' : best_psd, 
                         'percents' : percents,
                         'ratio1' : ratios1, 
-                        'ratio2': ratios2,
-                        'ratio3' : ratios3
                     }, f)
     
 
