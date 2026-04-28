@@ -19,13 +19,14 @@ os.environ['TF_GPU_THREAD_MODE'] = 'gpu_private'
 os.environ['TF_XLA_ENABLE'] = '0'
 
 import tensorflow as tf
+import tensorflow.keras as keras
+from tensorflow.keras import mixed_precision
+mixed_precision.set_global_policy('mixed_float16')
 # Optimizaciones de memoria
 tf.config.optimizer.set_jit(True)
 tf.config.optimizer.set_experimental_options({"layout_optimizer": False, "constant_folding": True, "shape_optimization": True, "arithmetic_optimization": True, "disable_meta_optimizer": False, "function_optimization": True})
 tf.config.run_functions_eagerly(True)
 
-import tensorflow.keras as keras
-import numpy as np
 
 
 gpus = tf.config.list_physical_devices('GPU')
