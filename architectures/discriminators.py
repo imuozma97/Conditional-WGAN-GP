@@ -154,21 +154,18 @@ class Discriminator_psd(tf.keras.Model):
         self.features_dense = tf.keras.layers.Dense(embedding_dim)
         self.final_dense = tf.keras.layers.Dense(1)
 
-    def call(self, inputs, training=True):
+    def call(self, inputs, training=True, use_psd=True):
         image, z, psd = inputs
 
-        # ----- rama espacial
         f_img = self.conv_layers(image)
         f_img = self.features_dense(f_img)
 
-        # ----- rama PSD
-        log_psd = tf.math.log(psd + 1e-8)
-        f_psd = self.psd_branch(log_psd)
+        if use_psd:
+            f_psd = self.psd_branch(psd)
+            f = f_img + f_psd
+        else:
+            f = f_img  
 
-        # ----- combinar
-        f = f_img + f_psd   # (mejor que concat en muchos casos)
-
-        # ----- projection conditioning
         z_embed = self.z_embedding(z)
         projection = tf.reduce_sum(f * z_embed, axis=-1, keepdims=True)
 

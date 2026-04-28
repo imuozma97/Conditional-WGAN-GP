@@ -23,7 +23,7 @@ def gradient_penalty(real_images, fake_images, z_values, discriminator, batch_si
 
     with tf.GradientTape() as gp_tape:
         gp_tape.watch(interpolated)
-        pred = discriminator(real_inputs, training=True)
+        pred = discriminator(real_inputs, training=True, use_psd=False)
 
     grads = gp_tape.gradient(pred, interpolated)
     grads_norm = tf.sqrt(tf.reduce_sum(tf.square(grads), axis=[1, 2, 3, 4]) + 1e-12)
