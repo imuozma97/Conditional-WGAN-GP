@@ -125,20 +125,20 @@ class Discriminator_psd(tf.keras.Model):
 
         # rama espacial
         self.conv_layers = tf.keras.Sequential([
-            tf.keras.layers.Conv3D(filter1, 4, padding="same",
+            tf.keras.layers.Conv3D(self.filter1, 4, padding="same", strides = 1, 
                                    kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True),
             tf.keras.layers.LeakyReLU(0.2),
-           # tf.keras.layers.MaxPooling3D(2),
+            tf.keras.layers.MaxPooling3D(2),
 
-            tf.keras.layers.Conv3D(filter2, 4, padding="same",
+            tf.keras.layers.Conv3D(self.filter2, 4, padding="same", strides = 1, 
                                    kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True),
             tf.keras.layers.LeakyReLU(0.2),
-           # tf.keras.layers.MaxPooling3D(2),
+            tf.keras.layers.MaxPooling3D(2),
 
-            tf.keras.layers.Conv3D(filter3, 3, padding="same",
+            tf.keras.layers.Conv3D(self.filter3, 3, padding="same", strides = 1, 
                                    kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True),
             tf.keras.layers.LeakyReLU(0.2),
-            #tf.keras.layers.MaxPooling3D(2),
+            tf.keras.layers.MaxPooling3D(2),
 
             tf.keras.layers.GlobalAveragePooling3D(),
         ])
