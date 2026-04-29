@@ -138,6 +138,8 @@ class Training(tf.keras.Model):
         best_metric = float("inf")
         best_psd, best_epoch, best_percent = [], [], []
         
+        # Inicializar start_epoch
+        start_epoch = 0
 
         # Configuración de checkpoints
         checkpoint_dir = os.path.join(self.trained_models_folder, "checkpoints")
@@ -151,6 +153,34 @@ class Training(tf.keras.Model):
             print(f"Restaurando desde {checkpoint_manager.latest_checkpoint}")
             checkpoint.restore(checkpoint_manager.latest_checkpoint)
             start_epoch = int(checkpoint.epoch.numpy())  # Recuperar la última época guardada
+            
+            # Cargar datos de pérdidas previos si existen
+            if os.path.exists(loss_file):
+                try:
+                    with open(loss_file, 'r') as f:
+                        prev_data = json.load(f)
+                    wass_losses = prev_data.get('wass_losses', [])
+                    adv_losses = prev_data.get('adv_losses', [])
+                    psd_losses = prev_data.get('psd_losses', [])
+                    grad_pen = prev_data.get('grad_pen', [])
+                    best_epoch = prev_data.get('best_epoch', [])
+                    best_psd = prev_data.get('best_psd', [])
+                    percents = prev_data.get('percents', [])
+                    ratios1 = prev_data.get('ratio1', [])
+                    # Reconstruir epoch_vect basado en las pérdidas cargadas
+                    epoch_vect = list(range(len(wass_losses)))
+                    print(f"Datos de pérdida cargados: {len(wass_losses)} épocas previas")
+                except Exception as e:
+                    print(f"Error al cargar datos de pérdida: {e}. Iniciando desde cero.")
+                    wass_losses = []
+                    adv_losses = []
+                    psd_losses = []
+                    grad_pen = []
+                    percents = []
+                    ratios1 = []
+                    epoch_vect = []
+                    best_epoch = []
+                    best_psd = []
         else:
             print("No se encontraron checkpoints previos, iniciando desde cero.")
             start_epoch = 0
