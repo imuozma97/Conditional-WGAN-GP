@@ -35,7 +35,7 @@ for gpu in gpus:
 
 
 from preprocess_data import Dataset
-from config import batch_size1, ncritic3
+from config import batch_size1, ncritic2
 from architectures.generators import Generator_film
 from architectures.discriminators import Discriminator_psd
 from training import Training
@@ -60,7 +60,7 @@ discriminator = Discriminator_psd(filter1 = 32, filter2 = 64, filter3 = 128)
 
 
 #Cargamos la red principal (use_psd=False para desactivar PSD)
-cgan = Training(data_class = datos, discriminator = discriminator, generator = generator, batch_size = batch_size1, ncritic = ncritic3, 
+cgan = Training(data_class = datos, discriminator = discriminator, generator = generator, batch_size = batch_size1, ncritic = ncritic2, 
                 trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder,
                 use_psd = True)
 
