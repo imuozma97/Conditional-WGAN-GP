@@ -7,3 +7,5 @@ condor_logs/
 Results3D/
 *.npz
 *.h5
+*.sh
+*.sub
