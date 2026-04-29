@@ -129,4 +129,21 @@ class Dataset(tf.keras.Model):
         psd_min = load_psd["psd_min"]
 
         return psd_max, psd_min, psd_mean, psd_sigma
+
+
+    def reordenacion(self, images, redshifts):
+        """
+        Reordena los datos para que estén agrupados por redshift, es decir, primero todas las imágenes con z1, luego con z2, etc.
+        """
+        data_reordered = []
+        red_reordered = []
+
+        for j in range(num_classes):
+            for i in range(num_cv):
+                data_reordered.append(images[j + num_classes*i])
+                red_reordered.append(redshifts[j + num_classes*i])
+        data_reordered = np.array(data_reordered)
+        red_reordered = np.array(red_reordered) 
+        
+        return data_reordered, red_reordered
           

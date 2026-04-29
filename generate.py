@@ -22,7 +22,7 @@ class Fake_images(tf.keras.Model):
         """
         Genera imágenes cargando el modelo guardado.
         """
-        model_path = os.path.join(self.trained_models_folder, "best_generator", name)
+        model_path = os.path.join(self.trained_models_folder, name)
         generator = tf.keras.models.load_model(model_path, compile=False)
 
         generated_images = []
@@ -74,7 +74,8 @@ class Fake_images(tf.keras.Model):
     
     
     def save_data(self, name_output, data, labels):
-        
+        if not os.path.exists(name_output):
+            os.makedirs(name_output)
         filepath = os.path.join(self.trained_models_folder, name_output)
         np.savez_compressed(filepath, data = data, labels = labels)
         

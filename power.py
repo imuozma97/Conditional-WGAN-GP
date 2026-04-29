@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-from config import boxsize, image_size
+from config import boxsize, image_size, num_classes
 
 
 class Power(tf.keras.Model):
@@ -101,3 +101,90 @@ class Power(tf.keras.Model):
         )
         
         return psd_results
+
+
+
+    def compute_mean(self, psds):
+        
+        """
+        Calcula el psd medio del conjunto de psd que se le pasen. También saca el psd_max el psd_min y el sigma de ese conjunto de psd
+        """
+        
+        psd_mean_list = []  
+
+        for psd in psds:
+            psd_mean_list.append(psd)
+        
+        psd_mean_list = np.array(psd_mean_list)
+        psd_tensor = tf.stack(psd_mean_list, axis=0)
+        mean_psd = tf.reduce_mean(psd_tensor, axis=0)
+        sigma = np.std(psd_tensor, axis = 0)
+        
+        
+        psd_max = np.max(psd_mean_list, axis = 0)
+        psd_min = np.min(psd_mean_list, axis = 0)
+        
+        return mean_psd, psd_max, psd_min, sigma
+        
+        
+        
+
+    def compute_all_mean(self, psds, group):
+        
+        """
+        Calcula todas las medias de los psd. Por eso llama a compute_mean, para cacular la media, el psd_max, el psd_min y el sigma
+        de cada conjunto del mismo redshift y los añade a un vector
+        """
+        
+        psd_all_mean = []
+        psd_max_mean = []
+        psd_min_mean = []
+        sigmas = []
+        
+        for i in range(num_classes):
+            
+            psd = self.compute_mean(psds[group*i : group + group*i])
+            psd_all_mean.append(psd[0])
+            psd_max_mean.append(psd[1])
+            psd_min_mean.append(psd[2])
+            sigmas.append(psd[3])
+            
+            
+        psd_all_mean = np.array(psd_all_mean)
+        psd_max_mean = np.array(psd_max_mean)
+        psd_min_mean = np.array(psd_min_mean)
+        sigmas = np.array(sigmas)
+        
+        return psd_all_mean, psd_max_mean, psd_min_mean, sigmas
+    
+    
+    
+    
+    def compare_psd(self, k_values, mean_real, mean_fake, psd_max_real, psd_min_real, psd_max_fake, psd_min_fake, carpeta, tipo):
+        
+        for i in range(num_classes):
+            plt.figure(figsize=(8, 5))
+
+            plt.plot(k_values, mean_real[i], '-o', ms = 4, color = 'blue', label = "Real")
+            plt.plot(k_values, mean_fake[i], '-o', ms = 4, color = 'red', label = "Fake")
+        
+            plt.fill_between(k_values, psd_min_real[i], psd_max_real[i], color='blue', alpha = 0.2, label = "max-min real")
+            plt.fill_between(k_values, psd_min_fake[i], psd_max_fake[i], color='red', alpha = 0.2, label = "max-min fake")
+
+            plt.yscale('log')
+            plt.xlabel("$k$ [h/Mpc]", fontsize = 20)
+            plt.ylabel("P(k)", fontsize = 20)
+
+            plt.title("PSD vs. $k$ at z = {:.2f}".format(float(data[1][i])), fontsize = 24)
+            plt.legend(fontsize = 14)
+            if tipo == "norm":
+                plt.ylim(10**-4, 10**5)
+            elif tipo == "desnorm":
+                plt.ylim(10**-2, 10**6)
+
+            
+            if not os.path.exists(os.path.join(generated_images_folder, carpeta)):
+                os.makedirs(os.path.join(generated_images_folder, carpeta))
+
+            plt.savefig(os.path.join(generated_images_folder , carpeta, f"Compare_psd_{i:02d}.png"), bbox_inches='tight', format='png')
+            plt.show()
