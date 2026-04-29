@@ -141,7 +141,7 @@ class Training(tf.keras.Model):
                 with open(loss_file, 'r') as f:
                     data = json.load(f)
 
-                epoch_vect = list(range(len(data.get('wass_losses', []))))
+                epoch_vect = data.get("epoch_vect", [])
                 wass_losses = data.get('wass_losses', [])
                 disc_losses_f = data.get('disc_losses_f', [])
                 disc_losses_r = data.get('disc_losses_r', [])
@@ -153,10 +153,12 @@ class Training(tf.keras.Model):
 
                 best_epoch = data.get('best_epoch', [])
                 best_psd = data.get('best_psd', [])
-                #best_percent = data.get('best_percent', [])
+                best_percent = data.get('best_percent', [])
 
-                best_percent_metric = min(percents)
+                best_percent_metric = best_percent[-1]
                 best_psd_metric = best_psd[-1]
+
+                start_epoch = epoch_vect[-1]
 
 
         else:
@@ -177,7 +179,7 @@ class Training(tf.keras.Model):
 
             best_percent_metric = float("inf")
             best_psd_metric = float("inf")
-            best_psd, best_epoch, best_percent = [], [], []
+            best_psd, best_epoch_psd, best_percent, best_epoch_percent = [], [], [], []
         
             
         for epoch in range(start_epoch, epochs):
@@ -228,20 +230,18 @@ class Training(tf.keras.Model):
                 
             ratio1 /= batch_count
                 
-            
 
             
             #Aquí guardará el modelo únicamente si mejora
-            if epoch > 150 and percent < best_percent_metric:
+            if epoch > 1 and percent < best_percent_metric:
                 best_percent_metric = percent
 
                 gen_path = os.path.join(self.trained_models_folder, "best_percent_generator", f"epoch_{epoch:05d}")
                 os.makedirs(gen_path, exist_ok=True)
                 self.generator.save(gen_path)
 
-                best_psd.append(float(psd_loss.numpy()))
                 best_percent.append(float(percent.numpy()))
-                best_epoch.append(epoch)
+                best_epoch_percent.append(epoch)
 
                 np.savez(os.path.join(gen_path, f"psd_data_{epoch:05d}.npz"),
                     psd_gen = psd_gen_batch.numpy(),
@@ -256,17 +256,20 @@ class Training(tf.keras.Model):
                 print(f"Best percent guardado en época {epoch}")
 
 
-            if epoch > 150 and psd_loss < best_psd_metric:
+            if epoch > 1 and psd_loss < best_psd_metric:
                 best_psd_metric = psd_loss
 
                 gen_path = os.path.join(self.trained_models_folder, "best_psd_generator", f"epoch_{epoch:05d}")
                 os.makedirs(gen_path, exist_ok=True)
                 self.generator.save(gen_path)
 
+                best_psd.append(float(psd_loss.numpy()))
+                best_epoch_psd.append(epoch)
+
                 np.savez(os.path.join(gen_path, f"psd_data_{epoch:05d}.npz"),
                     psd_gen = psd_gen_batch.numpy(),
-                    psd_min=psd_min_batch.numpy(),
-                    psd_max=psd_max_batch.numpy(),
+                    psd_min = psd_min_batch.numpy(),
+                    psd_max = psd_max_batch.numpy(),
                     percent = float(percent_batch.numpy())
                 )
 
@@ -293,27 +296,29 @@ class Training(tf.keras.Model):
             percents.append(float(percent.numpy()))
                 
             grad_pen.append(float(gp.numpy()))
-                
             ratios1.append(float(ratio1.numpy()))
-                
-            
-                
             epoch_vect.append(epoch)
 
 
-                # Guardamos pérdidas en archivo
+            # Guardamos pérdidas en archivo
+            tmp_file = loss_file + ".tmp"
             with open(loss_file, 'w') as f:
                 json.dump({
+                        'epoch_vect' : epoch_vect,
+                        'disc_losses_f' : disc_losses_f,
+                        'disc_losses_r' : disc_losses_r,
                         'wass_losses': wass_losses,
                         'adv_losses': adv_losses,
-                        'psd_losses': psd_losses,
                         'grad_pen' : grad_pen,
-                        'best_epoch' : best_epoch,
-                        'best_psd' : best_psd, 
+                        'psd_losses': psd_losses,
                         'percents' : percents,
+                        'best_psd' : best_psd, 
+                        'best_epoch_psd' : best_epoch_psd,
+                        'best_percent' : best_percent,
+                        'best_epoch_percent' : best_epoch_percent,
                         'ratio1' : ratios1, 
                     }, f)
-    
+            os.replace(tmp_file, loss_file)
 
 
             plot_loss_graph(epoch_vect, wass_losses, adv_losses, "Wasserstein-Loss.pdf", "Wasserstein Loss", "Adv Loss", self.generated_images_folder)
