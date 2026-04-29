@@ -302,7 +302,7 @@ class Training(tf.keras.Model):
 
             # Guardamos pérdidas en archivo
             tmp_file = loss_file + ".tmp"
-            with open(loss_file, 'w') as f:
+            with open(tmp_file, 'w') as f:
                 json.dump({
                         'epoch_vect' : epoch_vect,
                         'disc_losses_f' : disc_losses_f,
