@@ -122,24 +122,6 @@ class Training(tf.keras.Model):
 
 
     def train(self, dataset_train,  epochs):
-        
-        epoch_vect = []
-        wass_losses = []
-        disc_losses_r, disc_losses_f  = [],  []
-            
-        adv_losses = []
-        psd_losses = []
-            
-        grad_pen = []
-        percents = []
-            
-        ratios1 = []
-
-        best_metric = float("inf")
-        best_psd, best_epoch, best_percent = [], [], []
-        
-        # Inicializar start_epoch
-        start_epoch = 0
 
         # Configuración de checkpoints
         checkpoint_dir = os.path.join(self.trained_models_folder, "checkpoints")
@@ -153,39 +135,50 @@ class Training(tf.keras.Model):
             print(f"Restaurando desde {checkpoint_manager.latest_checkpoint}")
             checkpoint.restore(checkpoint_manager.latest_checkpoint)
             start_epoch = int(checkpoint.epoch.numpy())  # Recuperar la última época guardada
-            
-            # Cargar datos de pérdidas previos si existen
+
             if os.path.exists(loss_file):
-                try:
-                    with open(loss_file, 'r') as f:
-                        prev_data = json.load(f)
-                    wass_losses = prev_data.get('wass_losses', [])
-                    adv_losses = prev_data.get('adv_losses', [])
-                    psd_losses = prev_data.get('psd_losses', [])
-                    grad_pen = prev_data.get('grad_pen', [])
-                    best_epoch = prev_data.get('best_epoch', [])
-                    best_psd = prev_data.get('best_psd', [])
-                    percents = prev_data.get('percents', [])
-                    ratios1 = prev_data.get('ratio1', [])
-                    # Reconstruir epoch_vect basado en las pérdidas cargadas
-                    epoch_vect = list(range(len(wass_losses)))
-                    print(f"Datos de pérdida cargados: {len(wass_losses)} épocas previas")
-                except Exception as e:
-                    print(f"Error al cargar datos de pérdida: {e}. Iniciando desde cero.")
-                    wass_losses = []
-                    adv_losses = []
-                    psd_losses = []
-                    grad_pen = []
-                    percents = []
-                    ratios1 = []
-                    epoch_vect = []
-                    best_epoch = []
-                    best_psd = []
+                print("Cargando histórico de pérdidas...")
+                with open(loss_file, 'r') as f:
+                    data = json.load(f)
+
+                epoch_vect = list(range(len(data.get('wass_losses', []))))
+                wass_losses = data.get('wass_losses', [])
+                disc_losses_f = data.get('disc_losses_f', [])
+                disc_losses_r = data.get('disc_losses_r', [])
+                adv_losses = data.get('adv_losses', [])
+                psd_losses = data.get('psd_losses', [])
+                grad_pen = data.get('grad_pen', [])
+                percents = data.get('percents', [])
+                ratios1 = data.get('ratio1', [])
+
+                best_epoch = data.get('best_epoch', [])
+                best_psd = data.get('best_psd', [])
+                #best_percent = data.get('best_percent', [])
+
+                best_percent_metric = min(percents)
+                best_psd_metric = best_psd[-1]
+
+
         else:
             print("No se encontraron checkpoints previos, iniciando desde cero.")
             start_epoch = 0
-
+        
+            epoch_vect = []
+            wass_losses = []
+            disc_losses_r, disc_losses_f  = [],  []
                 
+            adv_losses = []
+            psd_losses = []
+                
+            grad_pen = []
+            percents = []
+                
+            ratios1 = []
+
+            best_percent_metric = float("inf")
+            best_psd_metric = float("inf")
+            best_psd, best_epoch, best_percent = [], [], []
+        
             
         for epoch in range(start_epoch, epochs):
                 
@@ -195,9 +188,7 @@ class Training(tf.keras.Model):
             adv_loss = 0
             psd_loss = 0
             gp = 0
-                
             percent = 0
-                
             ratio1 = 0
         
             
@@ -241,8 +232,8 @@ class Training(tf.keras.Model):
 
             
             #Aquí guardará el modelo únicamente si mejora
-            if epoch > 150 and percent < best_metric:
-                best_metric = percent
+            if epoch > 150 and percent < best_percent_metric:
+                best_percent_metric = percent
 
                 gen_path = os.path.join(self.trained_models_folder, "best_percent_generator", f"epoch_{epoch:05d}")
                 os.makedirs(gen_path, exist_ok=True)
@@ -262,7 +253,24 @@ class Training(tf.keras.Model):
                 checkpoint.epoch.assign(epoch)
                 checkpoint_manager.save()
 
-                print(f"Checkpoint guardado en época {epoch}")
+                print(f"Best percent guardado en época {epoch}")
+
+
+            if epoch > 150 and psd_loss < best_psd_metric:
+                best_psd_metric = psd_loss
+
+                gen_path = os.path.join(self.trained_models_folder, "best_psd_generator", f"epoch_{epoch:05d}")
+                os.makedirs(gen_path, exist_ok=True)
+                self.generator.save(gen_path)
+
+                np.savez(os.path.join(gen_path, f"psd_data_{epoch:05d}.npz"),
+                    psd_gen = psd_gen_batch.numpy(),
+                    psd_min=psd_min_batch.numpy(),
+                    psd_max=psd_max_batch.numpy(),
+                    percent = float(percent_batch.numpy())
+                )
+
+                print(f"Best psd Guardado en época {epoch}")
 
             
                     
