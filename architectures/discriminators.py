@@ -46,7 +46,7 @@ class Discriminator_projection(tf.keras.Model):
         self.final_dense = tf.keras.layers.Dense(1, activation='linear', kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02))  # WGAN critic output
         
 
-    def call(self, inputs, training=True):
+    def call(self, inputs, training=True, use_psd=False):
         image, z = inputs
         
         f = self.extract_features(image)
@@ -95,7 +95,8 @@ class Discriminator_concat(tf.keras.Model):
             tf.keras.layers.Dense(1, activation='linear', kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02))  # WGAN critic output
         ])
 
-    def call(self, inputs, training=True):
+
+    def call(self, inputs, training=True, use_psd=False):
         image, z = inputs  
 
         z_embed = self.z_embedding(z) 
