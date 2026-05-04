@@ -13,6 +13,7 @@ from power import Power
 from config import batch_size1, num_classes, image_size, latent_dim, num_cv, mass, boxsize, n_bar, N
 from histo import Histogramas
 from cubos import cubo_part
+from gif import gif
 
 trained_models_folder = "Results3D/1-models"
 generated_images_folder = "Results3D/1-images"
@@ -27,7 +28,7 @@ norm_data, z_vals, max_desnorm, min_desnorm = datos.load_data("norm")
 norm_data_agrupados, _ = datos.reordenacion(norm_data, z_vals)
 desnorm_data_agrupados = datos.desnormalizar_datos(norm_data_agrupados, max_desnorm, min_desnorm)
 desnorm_data_agrupados = backward(desnorm_data_agrupados)
-
+'''
 #PSD DATOS REALES NORMALIZADOS
 psd_max_norm, psd_min_norm, psd_mean_norm, psd_sigma_norm = datos.load_psd("norm")
 psd_mean_norm = psd_mean_norm[0:34]
@@ -44,13 +45,16 @@ psd_max_desnorm = psd_max_desnorm[0:34]
 psd_min_desnorm = psd_min_desnorm[0:34]
 
 
-
 #GENERACIÓN DE IMÁGENES FALSAS PARA LOS MEJORES PERCENTS
 
+'''
 imagenes = Fake_images(N = 27, trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder) 
 print("Generando imágenes falsas...")
 gen_images = imagenes.generate_images(z_vals, f"best_psd_generator/epoch_{epoch}")
-imagenes.save_data(f"datos_gen_{epoch}.npz", gen_images[0], gen_images[1]) 
+ruta = os.path.join(trained_models_folder, f"datos_gen_{epoch}.npz")
+#imagenes.save_data(ruta, gen_images[0], gen_images[1])
+save_generated_vtk(gen_images, z_vals, output_folder=os.path.join(trained_models_folder, f"vtk_epoch_{epoch}"), log_scale=True)
+
 
 #Cargamos los datos generados para calcular espectros
 print("Cargando datos generados...")
@@ -60,12 +64,11 @@ norm_fake_agrupados,_ = datos.reordenacion(norm_fake, labels_fake)
 #Desnormalizamos los datos generados
 desnorm_fake = datos.desnormalizar_datos(norm_fake, max_desnorm, min_desnorm)
 desnorm_fake = backward(desnorm_fake)
-
 desnorm_fake_agrupados,_  = datos.reordenacion(desnorm_fake, labels_fake)
 
 
 #SACAMOS PSD DE LOS DATOS FALSOS
- 
+'''
 print("Calculando PSD de los datos falsos normalizados...")
 psd_fake_norm = power.compute_all_psd(norm_fake_agrupados)
 psd_fake_norm_medio = power.compute_all_mean(psd_fake_norm, N)
@@ -100,9 +103,9 @@ histogramas.all_histogramas(desnorm_fake_agrupados, desnorm_data_agrupados, "des
 print("Sacando cubos de las imágenes generadas...")
 
 cubo_part(np.log1p(desnorm_fake), z_vals, f"cubos_{epoch}", generated_images_folder)
+'''
 
-
-
-
-
-
+gif(os.path.join(generated_images_folder, f"compare_psd_maxmin_desnorm_{epoch}"), f"psd_gif_{epoch}.gif")
+gif(os.path.join(generated_images_folder, f"histogramas_desnormalizados_{epoch}"), f"histogramas_gif_{epoch}.gif")
+for i in range(27):
+    gif(os.path.join(generated_images_folder, f"cubos_{epoch}", f"Sim_{i:02d}"), f"cubos_gif_Sim_{i:02d}_{epoch}.gif")
