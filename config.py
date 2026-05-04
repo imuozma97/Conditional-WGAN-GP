@@ -19,6 +19,8 @@ batch_size2 = 34
 ncritic1 = 1
 ncritic2 = 2
 ncritic3 = 3
+ncritic4 = 4
+ncritic5 = 5    
 
 N = 27
 

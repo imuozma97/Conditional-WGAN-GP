@@ -43,7 +43,7 @@ class Fake_images(tf.keras.Model):
                 
             j += 1
                     
-        generated_images = np.array(generated_images).reshape(self.N*num_classes, image_size, image_size, image_size)
+        generated_images = np.array(generated_images).reshape(self.N*num_classes, image_size, image_size, image_size, 1)
         redshift = np.array(redshift)
 
         return generated_images, redshift
@@ -83,8 +83,7 @@ class Fake_images(tf.keras.Model):
     
     def load_data(self, file):
         
-        filepath = os.path.join(self.trained_models_folder, file)
-        loaded = np.load(filepath)
+        loaded = np.load(file)
         datos_fake = loaded["data"]  #Este sería el antiguo cubos generados
         labels_fake = loaded["labels"]
         

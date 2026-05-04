@@ -160,8 +160,9 @@ class Power(tf.keras.Model):
     
     
     
-    def compare_psd(self, k_values, mean_real, mean_fake, psd_max_real, psd_min_real, psd_max_fake, psd_min_fake, carpeta, tipo):
-        
+    
+    def compare_psd(self, k_values, mean_real, mean_fake, psd_max_real, psd_min_real, psd_max_fake, psd_min_fake, redshift, generated_images_folder, carpeta, tipo):
+ 
         for i in range(num_classes):
             plt.figure(figsize=(8, 5))
 
@@ -175,7 +176,7 @@ class Power(tf.keras.Model):
             plt.xlabel("$k$ [h/Mpc]", fontsize = 20)
             plt.ylabel("P(k)", fontsize = 20)
 
-            plt.title("PSD vs. $k$ at z = {:.2f}".format(float(data[1][i])), fontsize = 24)
+            plt.title("PSD vs. $k$ at z = {:.2f}".format(float(redshift[i])), fontsize = 24)
             plt.legend(fontsize = 14)
             if tipo == "norm":
                 plt.ylim(10**-4, 10**5)

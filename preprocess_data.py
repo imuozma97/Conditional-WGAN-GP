@@ -6,7 +6,7 @@ import tensorflow as tf
 import numpy as np
 import h5py
 
-from config import n_bar, buffer_size
+from config import n_bar, buffer_size, num_classes, num_cv
 from transforms import forward
 
 class Dataset(tf.keras.Model):
@@ -81,6 +81,14 @@ class Dataset(tf.keras.Model):
 
     def normalizar_z(self, redshifts):
         return (redshifts - np.min(redshifts))/(np.max(redshifts)- np.min(redshifts)).astype("float32")
+
+
+    def desnormalizar_datos(self, images, maximo, minimo):
+        
+        original_data =  ((images + 1) / 2) * (maximo - minimo) + minimo
+        #original_data =  images * (maximo - minimo) + minimo
+        
+        return original_data
     
 
     
@@ -129,6 +137,12 @@ class Dataset(tf.keras.Model):
         psd_min = load_psd["psd_min"]
 
         return psd_max, psd_min, psd_mean, psd_sigma
+    
+    def load_k_values(self):
+        load_psd = np.load("psd-data/PSD_norm.npz")
+        k_values = load_psd["k_values"]
+
+        return k_values
 
 
     def reordenacion(self, images, redshifts):

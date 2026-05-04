@@ -14,10 +14,9 @@ from config import batch_size1, num_classes, image_size, latent_dim, num_cv, mas
 from histo import Histogramas
 from cubos import cubo_part
 
-trained_models_folder = "Results3D/2-models"
-generated_images_folder = "Results3D/2-images"
-
-epoch = "03814"
+trained_models_folder = "Results3D/1-models"
+generated_images_folder = "Results3D/1-images"
+epoch = "01802"
 
 datos= Dataset(batch_size1)
 power = Power()
@@ -98,7 +97,8 @@ print("Sacando histogramas desnormalizados...")
 histogramas.all_histogramas(desnorm_fake_agrupados, desnorm_data_agrupados, "desnorm", epoch)
 
 
-#print("Sacando cubos de las imágenes generadas...")
+print("Sacando cubos de las imágenes generadas...")
+
 cubo_part(np.log1p(desnorm_fake), z_vals, f"cubos_{epoch}", generated_images_folder)
 
 
@@ -106,13 +106,3 @@ cubo_part(np.log1p(desnorm_fake), z_vals, f"cubos_{epoch}", generated_images_fol
 
 
 
-
-
-
-
-
-
-
-
-#gen_images_psd = imagenes.generate_images(z_vals, f"best_psd_generator/epoch_{epoch_psd}")
-#imagenes.save_data(f"datos_gen_{epoch_psd}.npz", gen_images_psd[0], gen_images_psd[1]) 
