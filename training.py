@@ -154,6 +154,8 @@ class Training(tf.keras.Model):
                 best_epoch = data.get('best_epoch', [])
                 best_psd = data.get('best_psd', [])
                 best_percent = data.get('best_percent', [])
+                best_epoch_psd = data.get('best_epoch_psd', [])
+                best_epoch_percent = data.get('best_epoch_percent', [])
 
                 best_percent_metric = best_percent[-1]
                 best_psd_metric = best_psd[-1]
@@ -233,7 +235,7 @@ class Training(tf.keras.Model):
 
             
             #Aquí guardará el modelo únicamente si mejora
-            if epoch > 1 and percent < best_percent_metric:
+            if epoch > 150 and percent < best_percent_metric:
                 best_percent_metric = percent
 
                 gen_path = os.path.join(self.trained_models_folder, "best_percent_generator", f"epoch_{epoch:05d}")
@@ -256,7 +258,7 @@ class Training(tf.keras.Model):
                 print(f"Best percent guardado en época {epoch}")
 
 
-            if epoch > 1 and psd_loss < best_psd_metric:
+            if epoch > 150 and psd_loss < best_psd_metric:
                 best_psd_metric = psd_loss
 
                 gen_path = os.path.join(self.trained_models_folder, "best_psd_generator", f"epoch_{epoch:05d}")
