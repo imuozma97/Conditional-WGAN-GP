@@ -160,4 +160,55 @@ class Dataset(tf.keras.Model):
         red_reordered = np.array(red_reordered) 
         
         return data_reordered, red_reordered
-          
+
+
+    def compute_mu_sigma(self, snap, red):
+
+        snap_ordenado,_ = self.reordenacion(snap, red)
+        mu = []
+        sigma = []
+        for i in range(num_classes):
+            mu.append(np.mean(snap_ordenado[i*num_cv:(i+1)*num_cv]))
+            sigma.append(np.std(snap_ordenado[i*num_cv:(i+1)*num_cv]))
+
+        mu = np.array(mu)
+        sigma = np.array(sigma)
+
+        mu_expanded = np.tile(mu, num_cv)
+        sigma_expanded = np.tile(sigma, num_cv)
+
+        return mu_expanded, sigma_expanded
+
+
+    def normalizar_new(self, images, mu, sigma):
+        normalized_data = (images - mu) / sigma
+        normalized_data = np.expand_dims(normalized_data, -1)
+
+        return normalized_data
+
+
+
+    def load_data_new(self, data_mode):
+
+        images, red = self.data0('../Camels_data/Data3D-64.hdf5')
+        images_clean = self.replace_extreme_voxels(images, quit=20) #Quito los 20 valores extremos
+        delta = self.delta(images_clean)
+        forw = forward(delta)
+
+        z_vals = self.normalizar_z(red)
+
+        mu, sigma = self.compute_mu_sigma(forw, red) #Se lo doy por evoluciones porque compute ya lo reagrupa dentro, y salen por evoluciones, como los datos
+
+        if data_mode == "norm":
+            norm_data = self.normalizar_new(forw, mu, sigma)
+            print("Maximo y minimo de norm_data: ", np.max(norm_data), np.min(norm_data))
+            #FALTARÏA ENTRE -1 Y 1, LO PONGO?
+            return norm_data, z_vals, mu, sigma
+
+        elif data_mode == "desnorm":
+            return forw, z_vals
+
+        else:
+            raise ValueError("data_mode debe ser 'norm' o 'desnorm'")
+    
+
