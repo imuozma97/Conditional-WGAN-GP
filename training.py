@@ -160,7 +160,6 @@ class Training(tf.keras.Model):
                 best_percent_metric = best_percent[-1]
                 best_psd_metric = best_psd[-1]
 
-                start_epoch = epoch_vect[-1]
 
 
         else:
@@ -252,9 +251,6 @@ class Training(tf.keras.Model):
                     percent = float(percent_batch.numpy())
                     )
 
-                checkpoint.epoch.assign(epoch)
-                checkpoint_manager.save()
-
                 print(f"Best percent guardado en época {epoch}")
 
 
@@ -300,6 +296,9 @@ class Training(tf.keras.Model):
             grad_pen.append(float(gp.numpy()))
             ratios1.append(float(ratio1.numpy()))
             epoch_vect.append(epoch)
+
+            checkpoint.epoch.assign(epoch)
+            checkpoint_manager.save()
 
 
             # Guardamos pérdidas en archivo

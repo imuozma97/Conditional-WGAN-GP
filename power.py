@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-from config import boxsize, image_size, num_classes
+from config import boxsize, image_size, num_classes, N
 
 
 class Power(tf.keras.Model):
@@ -189,3 +189,40 @@ class Power(tf.keras.Model):
 
             plt.savefig(os.path.join(generated_images_folder , carpeta, f"Compare_psd_{i:02d}.png"), bbox_inches='tight', format='png')
             plt.show()
+
+
+
+    def compare_psd2(self, k_values, mean_real, mean_fake, psd_fake, psd_max_real, psd_min_real, redshift, generated_images_folder, carpeta, tipo):
+ 
+        for i in range(num_classes):
+            plt.figure(figsize=(8, 5))
+            for j in range(N):
+                plt.plot(k_values, psd_fake[i*N + j], ms = 4, color = np.random.rand(3) , alpha = 0.3)
+         
+
+            plt.plot(k_values, mean_real[i], '-o', ms = 4, color = 'blue', label = "Mean-Real")
+            plt.plot(k_values, mean_fake[i], '-o', ms = 4, color = 'red', label = "Mean-Fake")
+            plt.fill_between(k_values, psd_min_real[i], psd_max_real[i], color='blue', alpha = 0.2, label = "max-min real")
+            
+            plt.yscale('log')
+            plt.xlabel("$k$ [h/Mpc]", fontsize = 20)
+            plt.ylabel("P(k)", fontsize = 20)
+
+            plt.title("PSD vs. $k$ at z = {:.2f}".format(float(redshift[i])), fontsize = 24)
+            plt.legend(fontsize = 14)
+            if tipo == "norm":
+                plt.ylim(10**-4, 10**5)
+            elif tipo == "desnorm":
+                plt.ylim(10**-2, 10**6)
+
+            
+            if not os.path.exists(os.path.join(generated_images_folder, carpeta)):
+                os.makedirs(os.path.join(generated_images_folder, carpeta))
+
+            plt.savefig(os.path.join(generated_images_folder , carpeta, f"psd_{i:02d}.png"), bbox_inches='tight', format='png')
+            plt.show()
+
+
+
+
+

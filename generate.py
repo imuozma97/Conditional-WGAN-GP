@@ -93,27 +93,11 @@ class Fake_images(tf.keras.Model):
 
 
 
-    def save_generated_vtk(data, redshift, output_folder, base_name="Sim", log_scale=False):
-        """
-        Guarda volúmenes 3D en formato VTK (.vti) binario para ParaView.
+    def save_generated_vtk(self, data, redshift, output_folder, base_name="Sim", log_scale=False):
 
-        Parámetros:
-        ----------
-        data : np.array
-            Shape (N, 64, 64, 64, 1)
-        redshift : np.array
-            Shape (N,)
-        output_folder : str
-            Carpeta base de salida
-        base_name : str
-            Prefijo para carpetas de simulación
-        log_scale : bool
-            Si True aplica log1p para visualización
-        """
+        pv.OFF_SCREEN = True  # importante en clusters
 
-        pv.OFF_SCREEN = True  # seguro para clusters
-
-        data = np.squeeze(data)  # (918, 64,64,64)
+        data = np.squeeze(data, axis=-1)  # (918, 64,64,64)
 
         total = data.shape[0]
         cubos_por_sim = 34
@@ -129,25 +113,26 @@ class Fake_images(tf.keras.Model):
                 idx = sim * cubos_por_sim + j
                 volume = data[idx]
 
-                # 🔹 opcional: escala log (MUY útil para cosmología)
                 if log_scale:
+                    volume = np.clip(volume, -0.999, None)
                     volume = np.log1p(volume)
+                    print("Maximo", np.max(volume), "Minimo", np.min(volume))
 
-                #  CREAR GRID VTK
+                # 🔴 GRID VTK CORRECTO
                 grid = pv.ImageData()
 
-                # IMPORTANTE
+                # ✔️ dimensiones de puntos = voxels + 1
                 grid.dimensions = np.array(volume.shape) + 1
+
                 grid.origin = (0, 0, 0)
                 grid.spacing = (1, 1, 1)
 
-                # CLAVE ABSOLUTA: orden Fortran
-                grid.point_data["density"] = volume.flatten(order="F")
+                # 🔴 CLAVE: datos como CELDAS (voxels)
+                grid.cell_data["density"] = volume.flatten(order="F")
 
-                # Guardar redshift como metadata
+                # metadata útil
                 grid.field_data["redshift"] = np.array([redshift[idx]])
 
-                # Guardar archivo
                 filename = os.path.join(carpeta_sim, f"z_{j:02d}.vti")
                 grid.save(filename)
 

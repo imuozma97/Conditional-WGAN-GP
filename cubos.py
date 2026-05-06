@@ -21,6 +21,15 @@ def cubo_part(data, redshift, carpeta_base, generated_images_folder):
         carpeta_sim = os.path.join(generated_images_folder, carpeta_base, f"Sim_{sim:02d}")
         os.makedirs(carpeta_sim, exist_ok=True)
 
+        bloque = data[sim * cubos_por_sim:(sim + 1) * cubos_por_sim]
+
+        vmin = np.min(bloque)
+        vmax = np.max(bloque)
+
+        vmin = np.percentile(bloque, 1)
+        vmax = np.percentile(bloque, 99)
+
+
         for j in range(cubos_por_sim):
 
             i = sim * cubos_por_sim + j  # índice global
@@ -32,11 +41,11 @@ def cubo_part(data, redshift, carpeta_base, generated_images_folder):
             values = volume_fake[volume_fake > threshold]
 
             alpha = np.zeros_like(values, dtype=float)
-            alpha[values < 2] = 0.3
-            alpha[(values >= 2) & (values <= 6.5)] = 0.5
-            alpha[values > 6.5] = 0.9
+            alpha[values < -1] = 0.3
+            alpha[(values >= -1) & (values <= 4)] = 0.5
+            alpha[values > 4] = 0.9
 
-            norm = mcolors.Normalize(vmin=0, vmax=8)
+            norm = mcolors.Normalize(vmin = vmin, vmax = vmax)
             cmap = cm.plasma
             colors = cmap(norm(values))
             colors[:, 3] = alpha
