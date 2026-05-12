@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-from config import boxsize, image_size, num_classes, N
+from config import boxsize, image_size, num_classes
 
 
 class Power(tf.keras.Model):
@@ -73,7 +73,7 @@ class Power(tf.keras.Model):
         # aplanar
         power_flat = tf.reshape(power, [-1])
         bin_idx_flat = tf.reshape(self.bin_indices, [-1])
-        
+ 
         # media por bin radial
         psd = tf.math.unsorted_segment_mean(
             data=power_flat,
@@ -115,16 +115,15 @@ class Power(tf.keras.Model):
         for psd in psds:
             psd_mean_list.append(psd)
         
-        psd_mean_list = np.array(psd_mean_list)
-        psd_tensor = tf.stack(psd_mean_list, axis=0)
-        mean_psd = tf.reduce_mean(psd_tensor, axis=0)
-        sigma = np.std(psd_tensor, axis = 0)
+        psd_mean_list = tf.stack(psd_mean_list)
+        mean_psd = tf.reduce_mean(psd_mean_list, axis=0)
+        sigma = tf.math.reduce_std(psd_mean_list, axis = 0)
+        sigma_log = tf.math.reduce_std(tf.math.log(psd_mean_list + 1e-8), axis = 0)  
+
+        psd_max = tf.reduce_max(psd_mean_list, axis = 0)
+        psd_min = tf.reduce_min(psd_mean_list, axis = 0)
         
-        
-        psd_max = np.max(psd_mean_list, axis = 0)
-        psd_min = np.min(psd_mean_list, axis = 0)
-        
-        return mean_psd, psd_max, psd_min, sigma
+        return mean_psd, psd_max, psd_min, sigma, sigma_log
         
         
         
@@ -140,6 +139,7 @@ class Power(tf.keras.Model):
         psd_max_mean = []
         psd_min_mean = []
         sigmas = []
+        sigma_log = []
         
         for i in range(num_classes):
             
@@ -148,14 +148,16 @@ class Power(tf.keras.Model):
             psd_max_mean.append(psd[1])
             psd_min_mean.append(psd[2])
             sigmas.append(psd[3])
+            sigma_log.append(psd[4])
             
             
-        psd_all_mean = np.array(psd_all_mean)
-        psd_max_mean = np.array(psd_max_mean)
-        psd_min_mean = np.array(psd_min_mean)
-        sigmas = np.array(sigmas)
+        psd_all_mean = tf.stack(psd_all_mean)
+        psd_max_mean = tf.stack(psd_max_mean)
+        psd_min_mean = tf.stack(psd_min_mean)
+        sigmas = tf.stack(sigmas)
+        sigma_log = tf.stack(sigma_log)
         
-        return psd_all_mean, psd_max_mean, psd_min_mean, sigmas
+        return psd_all_mean, psd_max_mean, psd_min_mean, sigmas, sigma_log
     
     
     
@@ -192,12 +194,12 @@ class Power(tf.keras.Model):
 
 
 
-    def compare_psd2(self, k_values, mean_real, mean_fake, psd_fake, psd_max_real, psd_min_real, redshift, generated_images_folder, carpeta, tipo):
+    def compare_psd2(self, k_values, mean_real, mean_fake, psd_fake, psd_max_real, psd_min_real, redshift, generated_images_folder, carpeta, tipo, samples):
  
         for i in range(num_classes):
             plt.figure(figsize=(8, 5))
-            for j in range(N):
-                plt.plot(k_values, psd_fake[i*N + j], ms = 4, color = np.random.rand(3) , alpha = 0.3)
+            for j in range(samples):
+                plt.plot(k_values, psd_fake[i*samples + j], ms = 4, color = np.random.rand(3) , alpha = 0.3)  # Solo etiquetar los primeros 10 para evitar saturar la leyenda
          
 
             plt.plot(k_values, mean_real[i], '-o', ms = 4, color = 'blue', label = "Mean-Real")
