@@ -32,6 +32,10 @@ class Dataset(tf.keras.Model):
         
         delta = (images - n_bar)/n_bar
         return delta
+
+    def deshacer_delta(self, delta):
+        images = delta * n_bar + n_bar
+        return images
     
     
     def replace_extreme_voxels(self, data, quit=20): #Pruebo a quitar más??
@@ -102,33 +106,30 @@ class Dataset(tf.keras.Model):
 
     def load_data(self, data_mode):
 
-        images, red = self.data0('../Camels_data/Data3D-64.hdf5')
-        images_clean = self.replace_extreme_voxels(images, quit=20) #Quito los 20 valores extremos
-        delta = self.delta(images_clean)
+        images, red = self.data0('Camels_data/Data3D-64.hdf5')
+        delta = self.delta(images)
         forw = forward(delta)
 
         z_vals = self.normalizar_z(red)
 
-        if data_mode == "norm":
+
+        if data_mode == "global_norm":
             norm_data, max_desnorm, min_desnorm = self.normalizar_datos(forw)
             return norm_data, z_vals, max_desnorm, min_desnorm 
 
-        elif data_mode == "desnorm":
-            return forw, z_vals
+        elif data_mode == "redshift_norm":
+            mu, sigma = self.compute_mu_sigma(forw) #Se lo doy por evoluciones porque compute ya lo reagrupa dentro, y salen por evoluciones, como los datos
+            norm_data = self.normalizar_mu_sigma(forw, mu, sigma)
+            return norm_data, z_vals, mu, sigma
+
+        #Trrndría que añadir otro más en caso de querer hacer ambas cosas; hacer la norm de redshift y luego tanh
 
         else:
-            raise ValueError("data_mode debe ser 'norm' o 'desnorm'")
+            raise ValueError("Elige bien el data_mode, 'global_norm' o 'redshift_norm'")
 
 
 
-    def load_psd(self, psd_mode):
-
-        if psd_mode == "desnorm":
-            psd_file = "psd-data/PSD_desnorm.npz"
-        elif psd_mode == "norm":
-            psd_file = "psd-data/PSD_norm.npz"
-        else:
-            raise ValueError("psd_mode debe ser 'norm' o 'desnorm'")
+    def load_psd(self, psd_file):
 
         load_psd = np.load(psd_file)
         psd_mean = load_psd["mean"]
@@ -145,26 +146,30 @@ class Dataset(tf.keras.Model):
         return k_values
 
 
-    def reordenacion(self, images, redshifts):
-        """
-        Reordena los datos para que estén agrupados por redshift, es decir, primero todas las imágenes con z1, luego con z2, etc.
-        """
-        data_reordered = []
-        red_reordered = []
+    def reordenacion(self, muestras, *arrays):
+        reordered = [[] for _ in arrays]
 
         for j in range(num_classes):
-            for i in range(num_cv):
-                data_reordered.append(images[j + num_classes*i])
-                red_reordered.append(redshifts[j + num_classes*i])
-        data_reordered = np.array(data_reordered)
-        red_reordered = np.array(red_reordered) 
-        
-        return data_reordered, red_reordered
+            for i in range(muestras):
+
+                idx = j + num_classes * i
+
+                for k, arr in enumerate(arrays):
+                    reordered[k].append(arr[idx])
+
+        reordered = [np.array(r) for r in reordered]
+
+        if len(reordered) == 1:
+            return reordered[0]
+
+        return tuple(reordered)
 
 
-    def compute_mu_sigma(self, snap, red):
 
-        snap_ordenado,_ = self.reordenacion(snap, red)
+
+    def compute_mu_sigma(self, snap):
+
+        snap_ordenado = self.reordenacion(num_cv, snap)
         mu = []
         sigma = []
         for i in range(num_classes):
@@ -180,30 +185,67 @@ class Dataset(tf.keras.Model):
         return mu_expanded, sigma_expanded
 
 
-    def normalizar_new(self, images, mu, sigma):
+
+
+    def normalizar_mu_sigma(self, images, mu, sigma):
+
+        mu = tf.reshape(mu, (-1, 1, 1, 1))
+        sigma = tf.reshape(sigma, (-1, 1, 1, 1))
+
         normalized_data = (images - mu) / sigma
         normalized_data = np.expand_dims(normalized_data, -1)
 
         return normalized_data
 
+    def desnormalizar_mu_sigma(self, images, mu, sigma):
+
+        mu = tf.reshape(mu, (-1, 1, 1, 1))
+        sigma = tf.reshape(sigma, (-1, 1, 1, 1))
+        images = np.squeeze(images, axis=-1)
+        print("images shape", images.shape)
+        print("mu shape", mu.shape)
+        print("sigma shape", sigma.shape)
+        original_data = images * sigma + mu
+        original_data = np.expand_dims(original_data, -1)
+
+        return original_data    
 
 
-    def load_data_new(self, data_mode):
 
-        images, red = self.data0('../Camels_data/Data3D-64.hdf5')
-        images_clean = self.replace_extreme_voxels(images, quit=20) #Quito los 20 valores extremos
+    def load_data_new(self, data_mode, salida = None):
+
+        images, red = self.data0('Camels_data/Data3D-64.hdf5')
+        #images_clean = self.replace_extreme_voxels(images, quit=20) #Quito los 20 valores extremos
         delta = self.delta(images_clean)
         forw = forward(delta)
 
         z_vals = self.normalizar_z(red)
 
-        mu, sigma = self.compute_mu_sigma(forw, red) #Se lo doy por evoluciones porque compute ya lo reagrupa dentro, y salen por evoluciones, como los datos
+        mu, sigma = self.compute_mu_sigma(forw) #Se lo doy por evoluciones porque compute ya lo reagrupa dentro, y salen por evoluciones, como los datos
 
         if data_mode == "norm":
-            norm_data = self.normalizar_new(forw, mu, sigma)
-            print("Maximo y minimo de norm_data: ", np.max(norm_data), np.min(norm_data))
-            #FALTARÏA ENTRE -1 Y 1, LO PONGO?
-            return norm_data, z_vals, mu, sigma
+            if salida == "tanh": 
+                norm_data = self.normalizar_mu_sigma(forw, mu, sigma)
+                min_val = np.min(norm_data)
+                max_val = np.max(norm_data)
+                norm_data = 2 * (norm_data - min_val) / (max_val - min_val) - 1
+
+                return norm_data, z_vals, mu, sigma, min_val, max_val
+
+
+            if salida == "sigmoid":
+                norm_data = self.normalizar_mu_sigma(forw, mu, sigma)
+                min_val = np.min(norm_data)
+                max_val = np.max(norm_data)
+                norm_data = (norm_data - min_val) / (max_val - min_val)
+
+                return norm_data, z_vals, mu, sigma, min_val, max_val
+
+            if salida == "linear":
+                norm_data = self.normalizar_mu_sigma(forw, mu, sigma)
+                return norm_data, z_vals, mu, sigma
+            
+
 
         elif data_mode == "desnorm":
             return forw, z_vals
