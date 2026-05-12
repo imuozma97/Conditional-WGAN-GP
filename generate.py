@@ -116,7 +116,6 @@ class Fake_images(tf.keras.Model):
                 if log_scale:
                     volume = np.clip(volume, -0.999, None)
                     volume = np.log1p(volume)
-                    print("Maximo", np.max(volume), "Minimo", np.min(volume))
 
                 # 🔴 GRID VTK CORRECTO
                 grid = pv.ImageData()
