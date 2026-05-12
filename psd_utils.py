@@ -18,17 +18,17 @@ def psd_loss(gen_psd, mean_psd, sigma_log):
 
 def lambda_psd_schedule(epoch):  #De este hacer revisión cuando lo vaya a usar
         
-    if epoch < 500:
-        return 0
-        
-    elif epoch <  800:
-        return 1 + (epoch - 300) / 500*(2 - 1)
-        
-    elif epoch < 1500:
-        return 2 + (epoch - 800) / 700*(2.5 - 2)
-        
+    if epoch < 150:
+        lambda_psd = 0.0
+
+    elif epoch < 350:
+        lambda_psd = 0.05 * (epoch - 150) / 200
+
+    elif epoch < 900:
+        lambda_psd = 0.05 + 0.10 * (epoch - 350) / 550
+
     else:
-        return 1.5
+        lambda_psd = 0.15
         
 
 def psd_out_of_band_fraction(psd_gen, psd_min, psd_max):
