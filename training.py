@@ -18,7 +18,7 @@ from loss_plot import plot_loss_graph
 
 class Training(tf.keras.Model):
 
-    def __init__(self, data_class, discriminator, generator, batch_size, ncritic, trained_models_folder, generated_images_folder, use_psd=True):
+    def __init__(self, data_class, discriminator, generator, batch_size, ncritic, trained_models_folder, generated_images_folder, use_psd=True, use_psd_loss = True):
         super().__init__()
         self.discriminator = discriminator
         self.generator = generator
@@ -28,6 +28,7 @@ class Training(tf.keras.Model):
         self.current_epoch = 0
         self.ncritic = ncritic
         self.use_psd = use_psd
+        self.use_psd_loss = use_psd_loss
         #self.maximo = maximo
         #self.minimo = minimo
         self.data_class = data_class
@@ -95,9 +96,11 @@ class Training(tf.keras.Model):
 
             loss_psd = psd_loss(psd_gen, psd_mean, sigma_log) 
 
-            #lambda_psd = lambda_psd_schedule(self.current_epoch)
-
-            gen_loss = loss_adv #+ lambda_psd*loss_psd
+            if self.use_psd_loss:
+                lambda_psd = lambda_psd_schedule(self.current_epoch)
+                gen_loss = loss_adv + lambda_psd*loss_psd
+            else:  
+                gen_loss = loss_adv
                 
 
         grads_gen = gen_tape.gradient(gen_loss, self.generator.trainable_variables)
