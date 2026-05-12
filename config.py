@@ -5,11 +5,13 @@ Parámetros que se mantienen constantes durante el entrenamiento.
 
 num_classes = 34 
 image_size = 64
+image_size2 = 128
 latent_dim = 128
 num_cv = 27
 mass = 6.5e7 #Msol/h
 boxsize = 25 #Poner unidades
 n_bar = 256**3 / 64**3
+n_bar2 = 256**3 / 128**3
 embedding_dim = 32
 buffer_size = 918
 
