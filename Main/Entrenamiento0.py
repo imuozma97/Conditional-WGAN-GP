@@ -35,7 +35,7 @@ for gpu in gpus:
 
 
 from preprocess_data import Dataset
-from config import batch_size1, ncritic2
+from config import batch_size1, ncritic1
 from architectures.generators import Generator_film
 from architectures.discriminators import Discriminator_psd
 from training import Training
@@ -50,19 +50,19 @@ generated_images_folder = "Results3D/0-images"
 datos= Dataset(batch_size = batch_size1)
 
 
-norm_data, z_vals, _, _ = datos.load_data("norm")
-psd_max, psd_min, psd_mean, psd_sigma = datos.load_psd("norm")
+norm_data, z_vals, _, _ = datos.load_data("global_norm")
+psd_max, psd_min, psd_mean, psd_sigma = datos.load_psd("PSD_norm_c100.npz")
 dataset = datos.crea_dataset(norm_data, z_vals, psd_max, psd_min, psd_mean, psd_sigma)
 
 #Cargamos el Discriminador y Generador
 generator = Generator_film(filter1 = 256, filter2 = 128, filter3 = 64)
-discriminator = Discriminator_psd(filter1 = 32, filter2 = 64, filter3 = 128)
+discriminator = Discriminator_psd(filter1 = 64, filter2 = 128, filter3 = 256)
 
 
-#Cargamos la red principal (use_psd=False para desactivar PSD)
-cgan = Training(data_class = datos, discriminator = discriminator, generator = generator, batch_size = batch_size1, ncritic = ncritic2, 
+#Cargamos la red principal (use_psd=False para desactivar PSD en el discriminador)
+cgan = Training(data_class = datos, discriminator = discriminator, generator = generator, batch_size = batch_size1, ncritic = ncritic1, 
                 trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder,
-                use_psd = True)
+                use_psd = True, use_psd_loss = False)
 
 
 
