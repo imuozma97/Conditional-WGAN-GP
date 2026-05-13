@@ -20,6 +20,9 @@ class Histogramas:
         values = data1.numpy().flatten() if hasattr(data1, "numpy") else data1.flatten()
         values2 = data2.numpy().flatten() if hasattr(data2, "numpy") else data2.flatten()
 
+        vmin = min(values.min(), values2.min())
+        vmax = max(values.max(), values2.max())
+
         plt.figure(figsize=(6,4))
         plt.hist(values, bins=50, color='steelblue', edgecolor='black', alpha=0.7, label = "Fake")
         plt.hist(values2, bins=50, color='purple', edgecolor='black', alpha=0.7, label = "Real")
@@ -34,7 +37,7 @@ class Histogramas:
         plt.ylim(1, 10**7)
 
         if tipo == "norm":
-            plt.xlim(-1, 1)
+            plt.xlim(vmin, vmax)
             filename = f"histo_norm_{i:02d}.png"
             carpeta = f"histogramas_normalizados_{epoch}"
             if not os.path.exists(os.path.join(self.generated_images_folder, carpeta)):
