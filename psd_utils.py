@@ -30,6 +30,7 @@ def lambda_psd_schedule(epoch):  #De este hacer revisión cuando lo vaya a usar
     else:
         lambda_psd = 0.15
         
+    return lambda_psd
 
 def psd_out_of_band_fraction(psd_gen, psd_min, psd_max):
     """
