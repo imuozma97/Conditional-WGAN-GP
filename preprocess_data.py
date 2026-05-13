@@ -107,6 +107,7 @@ class Dataset(tf.keras.Model):
     def load_data(self, data_mode):
 
         images, red = self.data0('Camels_data/Data3D-64.hdf5')
+        #images_clean = self.replace_extreme_voxels(images, quit = 20)
         delta = self.delta(images)
         forw = forward(delta)
 
@@ -132,12 +133,13 @@ class Dataset(tf.keras.Model):
     def load_psd(self, psd_file):
 
         load_psd = np.load(psd_file)
+        all_psd = load_psd["psd"]
         psd_mean = load_psd["mean"]
         psd_sigma = load_psd["sigma_log"]
         psd_max = load_psd["psd_max"]
         psd_min = load_psd["psd_min"]
 
-        return psd_max, psd_min, psd_mean, psd_sigma
+        return psd_max, psd_min, psd_mean, psd_sigma, all_psd
     
     def load_k_values(self):
         load_psd = np.load("psd-data/PSD_norm.npz")
@@ -147,6 +149,10 @@ class Dataset(tf.keras.Model):
 
 
     def reordenacion(self, muestras, *arrays):
+
+        """
+        En el caso de querer reordenar las muestras reales, muestras = num_cv, y de las flasas será N
+        """
         reordered = [[] for _ in arrays]
 
         for j in range(num_classes):
