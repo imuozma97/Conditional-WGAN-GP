@@ -29,13 +29,8 @@ class Training(tf.keras.Model):
         self.ncritic = ncritic
         self.use_psd = use_psd
         self.use_psd_loss = use_psd_loss
-        #self.maximo = maximo
-        #self.minimo = minimo
         self.data_class = data_class
 
-        #self.use_backward = backward is not None
-        #self.backward = backward
-        
         self.power = Power()
 
 
