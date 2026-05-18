@@ -24,7 +24,7 @@ ncritic3 = 3
 ncritic4 = 4
 ncritic5 = 5    
 
-N = 27
+#N = 27
 
 shift = 1
-c = 20000
+c = 100
