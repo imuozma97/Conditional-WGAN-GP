@@ -14,7 +14,7 @@ from config import batch_size1, num_classes, image_size, latent_dim, num_cv, mas
 from histo import Histogramas
 from cubos import cubo_part
 from gif import gif
-from psd_utils import lambda_psd_schedule
+from psd_utils import lambda_psd_schedule, psd_out_of_band_fraction
 
 trained_models_folder = "Results3D/15-models"
 generated_images_folder = "Results3D/15-images"
@@ -56,8 +56,8 @@ psd_min_desnorm = psd_min_desnorm[0:34]
 
 imagenes = Fake_images(N = N, trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder) 
 print("Generando imágenes falsas...")
-gen_images = imagenes.generate_images(z_vals, f"best_psd_generator/epoch_{epoch}")
-imagenes.save_data(f"datos_gen_{epoch}.npz", gen_images[0], gen_images[1])
+#gen_images = imagenes.generate_images(z_vals, f"best_psd_generator/epoch_{epoch}")
+#imagenes.save_data(f"datos_gen_{epoch}.npz", gen_images[0], gen_images[1])
 
 
 #Cargamos los datos generados para calcular espectros
@@ -94,16 +94,19 @@ psd_fake_desnorm_max = psd_fake_desnorm_medio[1]
 psd_fake_desnorm_min = psd_fake_desnorm_medio[2]
 psd_fake_desnorm_sigma = psd_fake_desnorm_medio[3]   
 
-
+"""
 #AHORA COMPARAMOS LOS PSD DE LOS DATOS REALES Y FALSOS, TANTO NORMALIZADOS COMO DESNORMALIZADOS
 print("Comparando PSD de los datos reales y falsos normalizados...")
 power.compare_psd(k_values, psd_mean_norm, psd_fake_norm_mean, psd_max_norm, psd_min_norm, psd_fake_norm_max, psd_fake_norm_min, z_vals, generated_images_folder, f"compare_psd_norm_{epoch}", "norm")
 print("Comparando PSD de los datos reales y falsos desnormalizados...")
 power.compare_psd(k_values, psd_mean_desnorm, psd_fake_desnorm_mean, psd_max_desnorm, psd_min_desnorm, psd_fake_desnorm_max, psd_fake_desnorm_min, z_vals, generated_images_folder, f"compare_psd_desnorm_{epoch}", "desnorm")
-power.compare_psd2(k_values, psd_mean_desnorm, psd_fake_desnorm_mean, psd_fake_desnorm, psd_max_desnorm, psd_min_desnorm, z_vals, generated_images_folder, f"compare_psd_individual_{epoch}", "desnorm", N)
+power.compare_psd_individual(k_values, psd_mean_desnorm, psd_fake_desnorm_mean, psd_fake_desnorm, psd_max_desnorm, psd_min_desnorm, z_vals, generated_images_folder, f"compare_psd_individual_{epoch}", "desnorm", N)
+
+"""
+power.compare_psd_sigma(k_values, psd_mean_desnorm, psd_fake_desnorm_mean, psd_max_desnorm, psd_min_desnorm, sigma_fake, z_vals, generated_images_folder, f"compare_sigma_desnorm_{epoch}", "desnorm")
 
 
-
+"""
 histogramas = Histogramas(generated_images_folder, z_vals)
 print("Sacando histogramas normalizados...")
 histogramas.all_histogramas(N, norm_fake_agrupados, norm_data_agrupados, "norm", epoch)
@@ -111,18 +114,13 @@ print("Sacando histogramas desnormalizados...")
 histogramas.all_histogramas(N, desnorm_fake_agrupados, desnorm_data_agrupados, "desnorm", epoch)
 
 
-#print("Sacando cubos de las imágenes generadas...")
-
-#cubo_part(np.log1p(desnorm_fake), z_vals, f"cubos_{epoch}", generated_images_folder)
-
-
-#for i in range(27):
- #   gif(os.path.join(generated_images_folder, f"cubos_{epoch}", f"Sim_{i:02d}"), f"cubos_gif_Sim_{i:02d}_{epoch}.gif")
-
 
 gif(os.path.join(generated_images_folder, f"compare_psd_desnorm_{epoch}"), f"psd_gif_{epoch}.gif")
 gif(os.path.join(generated_images_folder, f"compare_psd_norm_{epoch}"), f"psd_gif_{epoch}.gif")
 gif(os.path.join(generated_images_folder, f"compare_psd_individual_{epoch}"), f"psd_gif_{epoch}.gif")
-#gif(os.path.join(generated_images_folder, f"histogramas_desnormalizados_{epoch}"), f"histogramas_gif_{epoch}.gif")
-
+"""
+gif(os.path.join(generated_images_folder, f"histogramas_desnormalizados_{epoch}"), f"histogramas_gif_{epoch}.gif")
+gif(os.path.join(generated_images_folder, f"histogramas_normalizados_{epoch}"), f"histogramas_gif_{epoch}.gif")
+"""
 imagenes.save_generated_vtk(desnorm_fake, z_vals, output_folder=os.path.join(trained_models_folder, f"vtk_epoch_{epoch}"), log_scale=True)
+"""
