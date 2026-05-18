@@ -10,7 +10,7 @@ import tensorflow as tf
 import os
 import numpy as np
 
-from config import latent_dim, num_classes, N, image_size, boxsize, mass,embedding_dim
+from config import latent_dim, num_classes, image_size, boxsize, mass,embedding_dim
 
 class FiLMLayer(tf.keras.layers.Layer):
     def __init__(self, n_channels):
@@ -279,7 +279,6 @@ class Generator_film_linear(tf.keras.Model):
 
         concat = tf.concat([z_latent, z], axis=-1)
 
-        # Dense y reshape del ruido---¿Debería poner también la condición desde el principio?
         x = self.dense(concat)
         x = self.reshape(x)
 
