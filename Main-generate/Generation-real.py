@@ -17,6 +17,7 @@ from gif import gif
 from psd_utils import lambda_psd_schedule
 
 generated_images_folder = "Real-images"
+trained_models_folder =  "Real-images"
 datos= Dataset(batch_size1)
 power = Power()
 N=100
@@ -32,4 +33,4 @@ norm_data_agrupados, mu_agrupado, sigma_agrupado = datos.reordenacion(num_cv, no
 desnorm_data_agrupados = datos.desnormalizar_mu_sigma(norm_data_agrupados, mu_agrupado, sigma_agrupado)
 desnorm_data_agrupados = backward(desnorm_data_agrupados)
 
-imagenes.save_generated_vtk(desnorm_data, z_vals, output_folder=os.path.join(trained_models_folder, f"vtk_real"), log_scale=True)
+imagenes.save_generated_vtk(desnorm_data, z_vals, output_folder=os.path.join(generated_images_folder, f"vtk_real"), log_scale=True)
