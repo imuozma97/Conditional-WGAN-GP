@@ -36,7 +36,7 @@ for gpu in gpus:
 
 from preprocess_data import Dataset
 from config import batch_size1, ncritic3
-from architectures.generators import Generator_film3
+from architectures.generators import Generator_film_linear
 from architectures.discriminators import Discriminator_pca
 from training3 import Training3
 
@@ -56,11 +56,11 @@ dataset = datos.crea_dataset(norm_data, z_vals, psd_max, psd_min, psd_real, psd_
 
 #Cargamos el Discriminador y Generador
 generator = Generator_film3(filter1 = 256, filter2 = 128, filter3 = 64)
-discriminator = Discriminator_pca(filter1 = 64, filter2 = 128, filter3 = 256, layer = "GAP")
+discriminator = Discriminator_pca(filter1 = 32, filter2 = 64, filter3 = 128, layer = "GAP")
 
 
 #Cargamos la red principal
-cgan = Training(data_class = datos, discriminator1 = discriminator1, discriminator2 = discriminator2, generator = generator, batch_size = batch_size1, ncritic = ncritic3, 
+cgan = Training3(data_class = datos, discriminator = discriminator, generator = generator, batch_size = batch_size1, ncritic = ncritic3, 
                 trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder)
 cgan.compile(d_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.0001, beta_1 = 0, beta_2 = 0.9),
              g_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.0001, beta_1 = 0, beta_2 = 0.9))
