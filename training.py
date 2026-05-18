@@ -12,13 +12,13 @@ import numpy as np
 from config import latent_dim
 from grad_pen import gradient_penalty
 from power import Power
-from psd_utils import psd_out_of_band_fraction, lambda_psd_schedule, psd_loss
+from psd_utils import psd_out_of_band_fraction, psd_loss
 from loss_plot import plot_loss_graph
 
 
 class Training(tf.keras.Model):
 
-    def __init__(self, data_class, discriminator, generator, batch_size, ncritic, trained_models_folder, generated_images_folder, use_psd=True, use_psd_loss = True):
+    def __init__(self, data_class, discriminator, generator, batch_size, ncritic, trained_models_folder, generated_images_folder, lambda_psd_schedule, use_psd=True, use_psd_loss = True):
         super().__init__()
         self.discriminator = discriminator
         self.generator = generator
@@ -30,6 +30,7 @@ class Training(tf.keras.Model):
         self.use_psd = use_psd
         self.use_psd_loss = use_psd_loss
         self.data_class = data_class
+        self.lambda_psd_schedule = lambda_psd_schedule
 
         self.power = Power()
 
@@ -92,15 +93,13 @@ class Training(tf.keras.Model):
             loss_psd = psd_loss(psd_gen, psd_mean, sigma_log) 
 
             if self.use_psd_loss:
-                lambda_psd = lambda_psd_schedule(self.current_epoch)
+                lambda_psd = self.lambda_psd_schedule(self.current_epoch)
                 gen_loss = loss_adv + lambda_psd*loss_psd
             else:  
                 gen_loss = loss_adv
                 
 
         grads_gen = gen_tape.gradient(gen_loss, self.generator.trainable_variables)
-        #grads_psd = gen_tape.gradient(loss_psd, self.generator.trainable_variables)
-        #grads_adv = gen_tape.gradient(loss_adv, self.generator.trainable_variables)
 
         norm_gen = tf.linalg.global_norm(grads_gen)
         #norm_psd = tf.linalg.global_norm(grads_psd)
