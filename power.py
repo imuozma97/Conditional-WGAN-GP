@@ -194,12 +194,13 @@ class Power(tf.keras.Model):
 
 
 
-    def compare_psd2(self, k_values, mean_real, mean_fake, psd_fake, psd_max_real, psd_min_real, redshift, generated_images_folder, carpeta, tipo, samples):
+    def compare_psd_individual(self, k_values, mean_real, mean_fake, psd_fake, psd_max_real, psd_min_real, redshift, generated_images_folder, carpeta, tipo, samples):
  
+        color = np.random.rand(3)
         for i in range(num_classes):
             plt.figure(figsize=(8, 5))
             for j in range(samples):
-                plt.plot(k_values, psd_fake[i*samples + j], ms = 4, color = np.random.rand(3) , alpha = 0.3)  # Solo etiquetar los primeros 10 para evitar saturar la leyenda
+                plt.plot(k_values, psd_fake[i*samples + j], ms = 4, color = color , alpha = 0.3)  # Solo etiquetar los primeros 10 para evitar saturar la leyenda
          
 
             plt.plot(k_values, mean_real[i], '-o', ms = 4, color = 'blue', label = "Mean-Real")
@@ -228,3 +229,31 @@ class Power(tf.keras.Model):
 
 
 
+    def compare_psd_sigma(self, k_values, mean_real, mean_fake, psd_max_real, psd_min_real, sigma_real, redshift, generated_images_folder, carpeta, tipo):  
+ 
+        for i in range(num_classes):
+            plt.figure(figsize=(8, 5))
+
+            plt.plot(k_values, mean_real[i], '-o', ms = 4, color = 'blue', label = "Real")
+            plt.plot(k_values, mean_fake[i], '-o', ms = 4, color = 'red', label = "Fake")
+        
+            plt.fill_between(k_values, psd_min_real[i], psd_max_real[i], color='blue', alpha = 0.2, label = "max-min real")
+            plt.fill_between(k_values, mean_fake[i]-2*sigma_real, mean_fake[i]+2*sigma_real, color='red', alpha = 0.2, label = "max-min fake")
+
+            plt.yscale('log')
+            plt.xlabel("$k$ [h/Mpc]", fontsize = 20)
+            plt.ylabel("P(k)", fontsize = 20)
+
+            plt.title("PSD vs. $k$ at z = {:.2f}".format(float(redshift[i])), fontsize = 24)
+            plt.legend(fontsize = 14)
+            if tipo == "norm":
+                plt.ylim(10**-4, 10**5)
+            elif tipo == "desnorm":
+                plt.ylim(10**-2, 10**6)
+
+            
+            if not os.path.exists(os.path.join(generated_images_folder, carpeta)):
+                os.makedirs(os.path.join(generated_images_folder, carpeta))
+
+            plt.savefig(os.path.join(generated_images_folder , carpeta, f"Compare_psd_{i:02d}.png"), bbox_inches='tight', format='png')
+            plt.show()
