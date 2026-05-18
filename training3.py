@@ -11,7 +11,7 @@ from sklearn.decomposition import PCA
 
 
 from config import latent_dim
-from grad_pen import gradient_penalty
+#from grad_pen import gradient_penalty
 from power import Power
 from psd_utils import psd_out_of_band_fraction, lambda_psd_schedule, psd_loss
 from loss_plot import plot_loss_graph
@@ -58,13 +58,13 @@ class Training3(tf.keras.Model):
                 fake_predictions = self.discriminator([generated_images, z_values, coeffs_fake[0], coeffs_fake[1],coeffs_fake[2]], training=True)
                 real_predictions = self.discriminator([real_images, z_values, coeffs_real[0], coeffs_real[1],coeffs_real[2]], training=True)
                 
-                gp, grads_norm_mean = gradient_penalty(real_images, generated_images, z_values, self.discriminator, self.batch_size, 10)
+                #gp, grads_norm_mean = gradient_penalty(real_images, generated_images, z_values, self.discriminator, self.batch_size, 10)
                     
                 disc_loss_fake = tf.reduce_mean(fake_predictions)
                 disc_loss_real = tf.reduce_mean(real_predictions)
                 wass_loss = disc_loss_fake - disc_loss_real
 
-                disc_loss = wass_loss + gp
+                disc_loss = wass_loss# + gp
 
             grads_disc = disc_tape.gradient(disc_loss, self.discriminator.trainable_variables)
             norm_disc = tf.linalg.global_norm(grads_disc)
@@ -97,7 +97,7 @@ class Training3(tf.keras.Model):
             
         ratio1 = norm_disc / (norm_gen + 1e-8)
 
-        return wass_loss, disc_loss_real, disc_loss_fake, loss_adv, loss_psd, percent, grads_norm_mean, ratio1, psd_gen, psd_max, psd_min
+        return wass_loss, disc_loss_real, disc_loss_fake, loss_adv, loss_psd, percent, ratio1, psd_gen, psd_max, psd_min
         
     
 
@@ -129,7 +129,7 @@ class Training3(tf.keras.Model):
                 disc_losses_r = data.get('disc_losses_r', [])
                 adv_losses = data.get('adv_losses', [])
                 psd_losses = data.get('psd_losses', [])
-                grad_pen = data.get('grad_pen', [])
+                #grad_pen = data.get('grad_pen', [])
                 percents = data.get('percents', [])
                 ratios1 = data.get('ratio1', [])
 
@@ -155,7 +155,7 @@ class Training3(tf.keras.Model):
             adv_losses = []
             psd_losses = []
                 
-            grad_pen = []
+            #grad_pen = []
             percents = []
                 
             ratios1 = []
@@ -172,7 +172,7 @@ class Training3(tf.keras.Model):
             wass_loss, disc_loss_r, disc_loss_f  = 0, 0, 0
             adv_loss = 0
             psd_loss = 0
-            gp = 0
+            #gp = 0
             percent = 0
             ratio1 = 0
         
@@ -189,13 +189,13 @@ class Training3(tf.keras.Model):
                 psd_loss += losses[4]
                 percent += losses[5]
                     
-                gp += losses[6]
+                #gp += losses[6]
                     
-                ratio1 += losses[7]
+                ratio1 += losses[6]
                 
-                psd_gen_batch = losses[8]
-                psd_max_batch = losses[9]
-                psd_min_batch = losses[10]
+                psd_gen_batch = losses[7]
+                psd_max_batch = losses[8]
+                psd_min_batch = losses[9]
                 percent_batch = losses[5]
                     
                 batch_count += 1
@@ -209,7 +209,7 @@ class Training3(tf.keras.Model):
             psd_loss /= batch_count
             percent /= batch_count
 
-            gp /= batch_count
+            #gp /= batch_count
                 
             ratio1 /= batch_count
                 
@@ -275,7 +275,7 @@ class Training3(tf.keras.Model):
             psd_losses.append(float(psd_loss.numpy()))
             percents.append(float(percent.numpy()))
                 
-            grad_pen.append(float(gp.numpy()))
+            #grad_pen.append(float(gp.numpy()))
             ratios1.append(float(ratio1.numpy()))
             epoch_vect.append(epoch)
 
@@ -292,7 +292,7 @@ class Training3(tf.keras.Model):
                         'disc_losses_r' : disc_losses_r,
                         'wass_losses': wass_losses,
                         'adv_losses': adv_losses,
-                        'grad_pen' : grad_pen,
+                        #'grad_pen' : grad_pen,
                         'psd_losses': psd_losses,
                         'percents' : percents,
                         'best_psd' : best_psd, 
@@ -306,5 +306,5 @@ class Training3(tf.keras.Model):
 
             plot_loss_graph(epoch_vect, wass_losses, adv_losses, "Wasserstein-Loss.pdf", "Wasserstein Loss", "Adv Loss", self.generated_images_folder)
             plot_loss_graph(epoch_vect, disc_losses_f, disc_losses_r, "Distance-Loss.pdf", "Disc Loss Fake", "Disc Loss Real", self.generated_images_folder)
-            plot_loss_graph(epoch_vect, grad_pen, None,  "Gradient-penalty.pdf", "Gradient Penalty", "GP" ,self.generated_images_folder)
+            #plot_loss_graph(epoch_vect, grad_pen, None,  "Gradient-penalty.pdf", "Gradient Penalty", "GP" ,self.generated_images_folder)
                 
