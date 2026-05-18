@@ -35,7 +35,7 @@ for gpu in gpus:
 
 
 from preprocess_data import Dataset
-from config import batch_size1, ncritic2
+from config import batch_size1, ncritic1
 from architectures.generators import Generator_film_linear
 from architectures.discriminators import Discriminator_psd
 from training import Training
@@ -56,11 +56,11 @@ dataset = datos.crea_dataset(norm_data, z_vals, psd_max, psd_min, psd_mean, psd_
 
 #Cargamos el Discriminador y Generador
 generator = Generator_film_linear(filter1 = 256, filter2 = 128, filter3 = 64)
-discriminator = Discriminator_psd(filter1 = 64, filter2 = 128, filter3 = 256)
+discriminator = Discriminator_psd(filter1 = 32, filter2 = 64, filter3 = 128)
 
 
 #Cargamos la red principal
-cgan = Training(data_class = datos, discriminator = discriminator, generator = generator, batch_size = batch_size1, ncritic = ncritic2, 
+cgan = Training(data_class = datos, discriminator = discriminator, generator = generator, batch_size = batch_size1, ncritic = ncritic1, 
                 trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder,
                 use_psd = True, use_psd_loss = False)
 

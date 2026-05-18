@@ -34,9 +34,9 @@ for gpu in gpus:
 
 
 from preprocess_data import Dataset
-from config import batch_size1, ncritic4
+from config import batch_size1, ncritic3
 from architectures.generators import Generator_film3
-from architectures.discriminators import Discriminator_projection2
+from architectures.discriminators import Discriminator_projection
 from training import Training
 
 
@@ -49,17 +49,17 @@ generated_images_folder = "Results3D/4-images"
 datos= Dataset(batch_size1)
 
 
-norm_data, z_vals, _, _ = datos.load_data("norm")
-psd_max, psd_min, psd_mean, psd_sigma = datos.load_psd("norm")
+norm_data, z_vals, _, _ = datos.load_data("global_norm")
+psd_max, psd_min, psd_mean, psd_sigma,_ = datos.load_psd("PSD_norm_c100.npz")
 dataset = datos.crea_dataset(norm_data, z_vals, psd_max, psd_min, psd_mean, psd_sigma)
 
 #Cargamos el Discriminador y Generador
 generator = Generator_film3(filter1 = 256, filter2 = 128, filter3 = 64)
-discriminator = Discriminator_projection2(filter1 = 32, filter2 = 64, filter3 = 128)
+discriminator = Discriminator_projection(filter1 = 32, filter2 = 64, filter3 = 128, layer = "F")
 
 
 #Cargamos la red principal
-cgan = Training(data_class = datos, discriminator = discriminator, generator = generator, batch_size = batch_size1, ncritic = ncritic4, 
+cgan = Training(data_class = datos, discriminator = discriminator, generator = generator, batch_size = batch_size1, ncritic = ncritic3, 
                 trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder,
                 use_psd = False)
 cgan.compile(d_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.00005, beta_1 = 0, beta_2 = 0.9),
