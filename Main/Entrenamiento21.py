@@ -37,7 +37,7 @@ for gpu in gpus:
 from preprocess_data import Dataset
 from config import batch_size1, ncritic3
 from architectures.generators import Generator_film_linear
-from architectures.discriminators import Discriminator_projection_SN
+from architectures.discriminators import Discriminator_projection_SN_all
 from training4 import Training4
 from psd_utils import lambda_psd_schedule
 
@@ -57,7 +57,7 @@ dataset = datos.crea_dataset(norm_data, z_vals, psd_max, psd_min, all_psd, psd_s
 
 #Cargamos el Discriminador y Generador
 generator = Generator_film_linear(filter1 = 256, filter2 = 128, filter3 = 64)
-discriminator = Discriminator_projection_SN(filter1 = 32, filter2 = 64, filter3 = 128, layer = "GAP")
+discriminator = Discriminator_projection_SN_all(filter1 = 32, filter2 = 64, filter3 = 128, layer = "GAP")
 
 
 #Cargamos la red principal
