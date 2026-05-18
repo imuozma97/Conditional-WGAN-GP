@@ -175,7 +175,7 @@ class Discriminator_projection3(tf.keras.Model):
         return out
 
 
-class Discriminator_projection_SN(tf.keras.Model):
+class Discriminator_projection_SN_sin_gp(tf.keras.Model):
     def __init__(self, filter1, filter2, filter3, layer):
         super().__init__()
         self.filter1 = filter1
@@ -193,8 +193,8 @@ class Discriminator_projection_SN(tf.keras.Model):
 
         # Embedding del redshift
         self.z_embedding = tf.keras.Sequential([
-            tf.keras.layers.Dense(embedding_dim, activation='linear'),
-            tf.keras.layers.Dense(embedding_dim, activation='linear'),
+            tfa.layers.SpectralNormalization(tf.keras.layers.Dense(embedding_dim, activation='linear')),
+            tfa.layers.SpectralNormalization(tf.keras.layers.Dense(embedding_dim, activation='linear')),
         ])
 
         # Red convolucional modificada
@@ -216,8 +216,8 @@ class Discriminator_projection_SN(tf.keras.Model):
             final_layer
             
         ])
-        self.features_dense = tf.keras.layers.Dense(embedding_dim)
-        self.final_dense = tf.keras.layers.Dense(1, activation='linear', kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02))  # WGAN critic output
+        self.features_dense = tfa.layers.SpectralNormalization(tf.keras.layers.Dense(embedding_dim))
+        self.final_dense = tfa.layers.SpectralNormalization(tf.keras.layers.Dense(1, activation='linear', kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02))) 
         
 
     def call(self, inputs, training=True, use_psd=False):
@@ -225,9 +225,12 @@ class Discriminator_projection_SN(tf.keras.Model):
         
         f = self.extract_features(image)
         f = self.features_dense(f)
+        f = tf.math.l2_normalize(f, axis = -1)
+
         u = self.final_dense(f)
 
         z_embed = self.z_embedding(z)
+        z_embed = tf.math.l2_normalize(z_embed, axis = -1)
 
         projection = tf.reduce_sum(f * z_embed, axis = -1, keepdims = True)
         out = u + projection
@@ -419,18 +422,18 @@ class Discriminator_pca(tf.keras.Model):
 
             # Red convolucional modificada
         self.extract_features = tf.keras.Sequential([
-            tf.keras.layers.Conv3D(self.filter1, kernel_size=4, strides=2, padding="same",
-                                    kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True),
+            tfa.layers.SpectralNormalization(tf.keras.layers.Conv3D(self.filter1, kernel_size=4, strides=2, padding="same",
+                                    kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True)),
             tf.keras.layers.LeakyReLU(0.2),
                 #tf.keras.layers.MaxPooling3D(pool_size=2),
 
-            tf.keras.layers.Conv3D(self.filter2, kernel_size=4, strides=2, padding="same",
-                                    kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True),
+            tfa.layers.SpectralNormalization(tf.keras.layers.Conv3D(self.filter2, kernel_size=4, strides=2, padding="same",
+                                    kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True)),
             tf.keras.layers.LeakyReLU(0.2),
                 #tf.keras.layers.MaxPooling3D(pool_size=2),
 
-            tf.keras.layers.Conv3D(self.filter3, kernel_size=3, strides=2, padding="same",
-                                    kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True),
+            tfa.layers.SpectralNormalization(tf.keras.layers.Conv3D(self.filter3, kernel_size=3, strides=2, padding="same",
+                                    kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True)),
             tf.keras.layers.LeakyReLU(0.2),
                 #tf.keras.layers.MaxPooling3D(pool_size=2),
 
