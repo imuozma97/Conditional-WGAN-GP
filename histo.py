@@ -5,7 +5,7 @@ Archivo para generar las funciones de los histogramas
 import matplotlib.pyplot as plt
 import os
 import numpy as np
-from config import num_classes, N, num_cv
+from config import num_classes, num_cv
 
 class Histogramas:
     def __init__(self, generated_images_folder, redshifts):
@@ -20,9 +20,7 @@ class Histogramas:
         values = data1.numpy().flatten() if hasattr(data1, "numpy") else data1.flatten()
         values2 = data2.numpy().flatten() if hasattr(data2, "numpy") else data2.flatten()
 
-        vmin = min(values.min(), values2.min())
-        vmax = max(values.max(), values2.max())
-
+        
         plt.figure(figsize=(6,4))
         plt.hist(values, bins=50, color='steelblue', edgecolor='black', alpha=0.7, label = "Fake")
         plt.hist(values2, bins=50, color='purple', edgecolor='black', alpha=0.7, label = "Real")
@@ -37,7 +35,7 @@ class Histogramas:
         plt.ylim(1, 10**7)
 
         if tipo == "norm":
-            plt.xlim(vmin, vmax)
+            plt.xlim(-20, 140)
             filename = f"histo_norm_{i:02d}.png"
             carpeta = f"histogramas_normalizados_{epoch}"
             if not os.path.exists(os.path.join(self.generated_images_folder, carpeta)):
@@ -63,6 +61,6 @@ class Histogramas:
         #plt.show()
         plt.close()
 
-    def all_histogramas(self, fake_agrupado, real_agrupado, tipo, epoch):
+    def all_histogramas(self, N, fake_agrupado, real_agrupado, tipo, epoch):
         for i in range(num_classes):
             self.histograma(fake_agrupado[i*N : N + N*i], real_agrupado[i*num_cv : num_cv + num_cv*i], tipo, epoch, i)
