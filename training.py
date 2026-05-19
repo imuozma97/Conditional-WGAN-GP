@@ -18,7 +18,7 @@ from loss_plot import plot_loss_graph
 
 class Training(tf.keras.Model):
 
-    def __init__(self, data_class, discriminator, generator, batch_size, ncritic, trained_models_folder, generated_images_folder, lambda_psd_schedule, use_psd=True, use_psd_loss = True):
+    def __init__(self, data_class, discriminator, generator, batch_size, ncritic, trained_models_folder, generated_images_folder, lambda_psd_schedule, lambda_term, use_psd=True, use_psd_loss = True):
         super().__init__()
         self.discriminator = discriminator
         self.generator = generator
@@ -31,6 +31,7 @@ class Training(tf.keras.Model):
         self.use_psd_loss = use_psd_loss
         self.data_class = data_class
         self.lambda_psd_schedule = lambda_psd_schedule
+        self.lambda_term = lambda_term
 
         self.power = Power()
 
@@ -62,7 +63,7 @@ class Training(tf.keras.Model):
                     fake_predictions = self.discriminator([generated_images, z_values], training=True)
                     real_predictions = self.discriminator([real_images, z_values], training=True)
                 
-                gp, grads_norm_mean = gradient_penalty(real_images, generated_images, z_values, self.discriminator, self.batch_size, 10)
+                gp, grads_norm_mean = gradient_penalty(real_images, generated_images, z_values, self.discriminator, self.batch_size, self.lambda_term)
                     
                 disc_loss_fake = tf.reduce_mean(fake_predictions)
                 disc_loss_real = tf.reduce_mean(real_predictions)
