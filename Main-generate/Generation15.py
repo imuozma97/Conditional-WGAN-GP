@@ -103,7 +103,8 @@ power.compare_psd(k_values, psd_mean_desnorm, psd_fake_desnorm_mean, psd_max_des
 power.compare_psd_individual(k_values, psd_mean_desnorm, psd_fake_desnorm_mean, psd_fake_desnorm, psd_max_desnorm, psd_min_desnorm, z_vals, generated_images_folder, f"compare_psd_individual_{epoch}", "desnorm", N)
 
 """
-power.compare_psd_sigma(k_values, psd_mean_desnorm, psd_fake_desnorm_mean, psd_max_desnorm, psd_min_desnorm, sigma_fake, z_vals, generated_images_folder, f"compare_sigma_desnorm_{epoch}", "desnorm")
+
+power.compare_psd_sigma(k_values, psd_mean_desnorm, psd_fake_desnorm_mean, psd_max_desnorm, psd_min_desnorm, psd_fake_desnorm_sigma, z_vals, generated_images_folder, f"compare_sigma_desnorm_{epoch}", "desnorm")
 
 
 """
