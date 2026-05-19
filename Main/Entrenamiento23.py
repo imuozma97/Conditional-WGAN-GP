@@ -43,8 +43,8 @@ from psd_utils import lambda_psd_schedule
 
 
 
-trained_models_folder = "Results3D/22-models"
-generated_images_folder = "Results3D/22-images"
+trained_models_folder = "Results3D/23-models"
+generated_images_folder = "Results3D/23-images"
 
 
 #Cargamos las clases necesarias
@@ -57,7 +57,7 @@ dataset = datos.crea_dataset(norm_data, z_vals, psd_max, psd_min, all_psd, psd_s
 
 #Cargamos el Discriminador y Generador
 generator = Generator_film_linear(filter1 = 256, filter2 = 128, filter3 = 64)
-discriminator = Discriminator_projection_SN(filter1 = 32, filter2 = 64, filter3 = 128, layer = "F")
+discriminator = Discriminator_projection_SN(filter1 = 32, filter2 = 64, filter3 = 128, layer = "GAP")
 
 
 #Cargamos la red principal
