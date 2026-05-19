@@ -225,12 +225,10 @@ class Discriminator_projection_SN_all(tf.keras.Model):
         
         f = self.extract_features(image)
         f = self.features_dense(f)
-        f = tf.math.l2_normalize(f, axis = -1)
 
         u = self.final_dense(f)
 
         z_embed = self.z_embedding(z)
-        z_embed = tf.math.l2_normalize(z_embed, axis = -1)
 
         projection = tf.reduce_sum(f * z_embed, axis = -1, keepdims = True)
         out = u + projection
