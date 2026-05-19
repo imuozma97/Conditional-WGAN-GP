@@ -438,8 +438,8 @@ class Discriminator_pca(tf.keras.Model):
             final_layer
             
         ])
-        self.features_dense = tf.keras.layers.Dense(embedding_dim)
-        self.final_dense = tf.keras.layers.Dense(1, activation='linear', kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02))  # WGAN critic output
+        self.features_dense = tfa.layers.SpectralNormalization(tf.keras.layers.Dense(embedding_dim))
+        self.final_dense = tfa.layers.SpectralNormalization(tf.keras.layers.Dense(1, activation='linear', kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02)))  # WGAN critic output
             
 
     def call(self, inputs, training=True):
