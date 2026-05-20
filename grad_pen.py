@@ -6,7 +6,7 @@ import tensorflow as tf
 
 
 
-def gradient_penalty(real_images, fake_images, z_values, discriminator, batch_size, lambda_term):
+def gradient_penalty(real_images, fake_images, z_values, discriminator, batch_size):
 
     alpha = tf.random.uniform([batch_size, 1, 1, 1, 1], 0., 1.)
     real_images = tf.cast(real_images, tf.float32)
@@ -22,4 +22,4 @@ def gradient_penalty(real_images, fake_images, z_values, discriminator, batch_si
     grads_norm = tf.sqrt(tf.reduce_sum(tf.square(grads), axis=[1, 2, 3, 4]) + 1e-12)
     gp = tf.reduce_mean((grads_norm - 1.0) ** 2)
 
-    return lambda_term * gp, tf.reduce_mean(grads_norm)
+    return gp, tf.reduce_mean(grads_norm)
