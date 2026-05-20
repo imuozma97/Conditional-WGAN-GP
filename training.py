@@ -63,13 +63,13 @@ class Training(tf.keras.Model):
                     fake_predictions = self.discriminator([generated_images, z_values], training=True)
                     real_predictions = self.discriminator([real_images, z_values], training=True)
                 
-                gp, grads_norm_mean = gradient_penalty(real_images, generated_images, z_values, self.discriminator, self.batch_size, self.lambda_term)
+                gp, grads_norm_mean = gradient_penalty(real_images, generated_images, z_values, self.discriminator, self.batch_size)
                     
                 disc_loss_fake = tf.reduce_mean(fake_predictions)
                 disc_loss_real = tf.reduce_mean(real_predictions)
                 wass_loss = disc_loss_fake - disc_loss_real
 
-                disc_loss = wass_loss + gp
+                disc_loss = wass_loss + self.lambda_term * gp
 
             grads_disc = disc_tape.gradient(disc_loss, self.discriminator.trainable_variables)
             norm_disc = tf.linalg.global_norm(grads_disc)
