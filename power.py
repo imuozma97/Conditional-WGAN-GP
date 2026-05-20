@@ -196,11 +196,13 @@ class Power(tf.keras.Model):
 
     def compare_psd_individual(self, k_values, mean_real, mean_fake, psd_fake, psd_max_real, psd_min_real, redshift, generated_images_folder, carpeta, tipo, samples):
  
-        color = np.random.rand(3)
+        
         for i in range(num_classes):
+
             plt.figure(figsize=(8, 5))
-            for j in range(samples):
-                plt.plot(k_values, psd_fake[i*samples + j], ms = 4, color = color , alpha = 0.3)  # Solo etiquetar los primeros 10 para evitar saturar la leyenda
+            for j in range((samples)):
+                
+                plt.plot(k_values, psd_fake[i*samples + j], ms = 4, color = np.random.rand(3) , alpha = 0.3)  # Solo etiquetar los primeros 10 para evitar saturar la leyenda
          
 
             plt.plot(k_values, mean_real[i], '-o', ms = 4, color = 'blue', label = "Mean-Real")
@@ -229,18 +231,20 @@ class Power(tf.keras.Model):
 
 
 
-    def compare_psd_sigma(self, k_values, mean_real, mean_fake, psd_max_real, psd_min_real, sigma_real, redshift, generated_images_folder, carpeta, tipo):  
+    def compare_psd_sigma(self, k_values, mean_real, mean_fake, psd_max_real, psd_min_real, sigma_fake, redshift, generated_images_folder, carpeta, tipo):  
  
+
         for i in range(num_classes):
+     
             plt.figure(figsize=(8, 5))
 
             plt.plot(k_values, mean_real[i], '-o', ms = 4, color = 'blue', label = "Real")
             plt.plot(k_values, mean_fake[i], '-o', ms = 4, color = 'red', label = "Fake")
         
             plt.fill_between(k_values, psd_min_real[i], psd_max_real[i], color='blue', alpha = 0.2, label = "max-min real")
-            plt.fill_between(k_values, mean_fake[i]-2*sigma_real, mean_fake[i]+2*sigma_real, color='red', alpha = 0.2, label = "max-min fake")
+            plt.fill_between(k_values, np.abs(mean_fake[i] - 2*sigma_fake[i]),  np.abs(mean_fake[i] + 2*sigma_fake[i]), color='red', alpha = 0.2, label = "sigma fake")
 
-            plt.yscale('log')
+            #plt.yscale('log')
             plt.xlabel("$k$ [h/Mpc]", fontsize = 20)
             plt.ylabel("P(k)", fontsize = 20)
 
@@ -256,4 +260,68 @@ class Power(tf.keras.Model):
                 os.makedirs(os.path.join(generated_images_folder, carpeta))
 
             plt.savefig(os.path.join(generated_images_folder , carpeta, f"Compare_psd_{i:02d}.png"), bbox_inches='tight', format='png')
+            plt.show()
+
+
+
+    def percentil(self, psd, mean_psd):
+
+        print("psd shape:", psd.shape)
+        print("mean_psd shape:", mean_psd.shape)
+
+        distances = np.linalg.norm(psd - mean_psd, axis=1)
+
+        # Índices ordenados de menor a mayor distancia
+        sorted_idx = np.argsort(distances)
+
+        # Quedarse con las 90 más cercanas
+        best_90_idx = sorted_idx[:90]
+
+        # PSDs seleccionados
+        psd_selected = psd[best_90_idx]
+
+        return psd_selected
+
+
+
+
+    def compare_psd_percentil(self, k_values, mean_real, mean_fake, psd_fake, psd_max_real, psd_min_real, redshift, generated_images_folder, carpeta, tipo, samples):
+
+ 
+        for i in range(num_classes):
+
+            plt.figure(figsize=(8, 5))
+
+            psd_class = np.array(psd_fake[i * samples:(i + 1) * samples])
+            mean_real_i = np.array(mean_real[i])
+            mean_fake_i = np.array(mean_fake[i])
+
+            distances = np.linalg.norm(psd_class - mean_real_i, axis=1)
+
+            n_keep = min(90, len(psd_class))
+            idx_sorted = np.argsort(distances)[:n_keep]
+            psd_top90 = psd_class[idx_sorted]
+
+            for j in range(len(psd_top90)):
+                plt.plot(k_values, psd_top90[j], color = np.random.rand(3), alpha=0.25, linewidth=1)
+
+            plt.plot(k_values, mean_real_i, '-o', ms=4, color='blue', label="Mean-Real")
+            plt.plot(k_values, mean_fake_i, '-o', ms=4, color='red', label="Mean-Fake")
+            plt.fill_between(k_values, psd_min_real[i], psd_max_real[i], color='blue', alpha=0.2, label="max-min real")
+
+            plt.yscale('log')
+            plt.xlabel("$k$ [h/Mpc]", fontsize=20)
+            plt.ylabel("P(k)", fontsize=20)
+            plt.title("PSD vs. $k$ at z = {:.2f}".format(float(redshift[i])), fontsize=24)
+            plt.legend(fontsize=14)
+
+            if tipo == "norm":
+                plt.ylim(10**-4, 10**5)
+            elif tipo == "desnorm":
+                plt.ylim(10**-2, 10**6)
+
+            path = os.path.join(generated_images_folder, carpeta)
+            if not os.path.exists(path): os.makedirs(path)
+
+            plt.savefig(os.path.join(path, f"psd_{i:02d}.png"), bbox_inches='tight', format='png')
             plt.show()
