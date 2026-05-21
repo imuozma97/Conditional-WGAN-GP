@@ -38,13 +38,13 @@ from preprocess_data import Dataset
 from config import batch_size1, ncritic3
 from architectures.generators import Generator_film_linear
 from architectures.discriminators import Discriminator_projection
-from training import Training
-from psd_utils import lambda_psd_schedule
+from training4 import Training4
+from psd_utils import lambda_psd_dynamic2
 
 
 
-trained_models_folder = "Results3D/22-models"
-generated_images_folder = "Results3D/22-images"
+trained_models_folder = "Results3D/24-models"
+generated_images_folder = "Results3D/24-images"
 
 
 #Cargamos las clases necesarias
@@ -57,13 +57,13 @@ dataset = datos.crea_dataset(norm_data, z_vals, psd_max, psd_min, all_psd, psd_s
 
 #Cargamos el Discriminador y Generador
 generator = Generator_film_linear(filter1 = 256, filter2 = 128, filter3 = 64)
-discriminator = Discriminator_projection(filter1 = 32, filter2 = 64, filter3 = 128, layer = "GAP")
+discriminator = Discriminator_projection(filter1 = 32, filter2 = 64, filter3 = 128, layer = "F")
 
 
 #Cargamos la red principal
-cgan = Training(data_class = datos, discriminator = discriminator, generator = generator, batch_size = batch_size1, ncritic = ncritic3, 
-                trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder, lambda_psd_schedule = lambda_psd_schedule,
-                lambda_term = 20, use_psd = False, use_psd_loss = False)
+cgan = Training4(data_class = datos, discriminator = discriminator, generator = generator, batch_size = batch_size1, ncritic = ncritic3, 
+                trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder, lambda_psd_schedule = lambda_psd_dynamic2,
+                lambda_term = 20, use_psd = False, use_psd_loss = True)
 cgan.compile(d_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.00005, beta_1 = 0, beta_2 = 0.9),
              g_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.0001, beta_1 = 0, beta_2 = 0.9))
 
