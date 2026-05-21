@@ -77,6 +77,24 @@ def lambda_psd_schedule2(epoch):
     return lambda_psd
 
 
+
+def lambda_psd_dynamic(epoch, start = 0.001, end = 1, end_epoch = 600):
+
+    alpha  = min(epoch/end_epoch, 1)
+
+    return start + (end - start)*alpha
+
+    
+def lambda_psd_dynamic2(epoch, start = 0.001, end = 2, end_epoch = 600):
+
+    alpha  = min(epoch/end_epoch, 1)
+
+    return start + (end - start)*alpha
+
+
+
+
+
 def psd_out_of_band_fraction(psd_gen, psd_min, psd_max):
     """
     Devuelve la fracción media de bins fuera de la banda.
