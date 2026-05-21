@@ -16,9 +16,9 @@ from cubos import cubo_part
 from gif import gif
 from psd_utils import lambda_psd_schedule, psd_out_of_band_fraction
 
-trained_models_folder = "Results3D/15-models"
-generated_images_folder = "Results3D/15-images"
-epoch = "01113"
+trained_models_folder = "Results3D/20-models"
+generated_images_folder = "Results3D/20-images"
+epoch = "01249"
 N=100
 
 datos= Dataset(batch_size1)
@@ -50,16 +50,14 @@ psd_mean_desnorm = psd_mean_desnorm[0:34]
 psd_sigma_desnorm = psd_sigma_desnorm[0:34]
 psd_max_desnorm = psd_max_desnorm[0:34]
 psd_min_desnorm = psd_min_desnorm[0:34]
-#all_psd_agrupado = datos.reordenacion(num_cv, all_psd)
-#all_psd_log = tf.math.log1p(all_psd_agrupado)
 
 
 #GENERACIÓN DE IMÁGENES FALSAS PARA LOS MEJORES PERCENTS
 
 imagenes = Fake_images(N = N, trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder) 
 print("Generando imágenes falsas...")
-#gen_images = imagenes.generate_images(z_vals, f"best_psd_generator/epoch_{epoch}")
-#imagenes.save_data(f"datos_gen_{epoch}.npz", gen_images[0], gen_images[1])
+gen_images = imagenes.generate_images_interpolated(f"best_psd_generator/epoch_{epoch}")
+imagenes.save_data(f"datos_gen_interpolacion{epoch}.npz", gen_images[0], gen_images[1])
 
 
 #Cargamos los datos generados para calcular espectros
@@ -96,20 +94,15 @@ psd_fake_desnorm_max = psd_fake_desnorm_medio[1]
 psd_fake_desnorm_min = psd_fake_desnorm_medio[2]
 psd_fake_desnorm_sigma = psd_fake_desnorm_medio[3]   
 
-"""
+
 #AHORA COMPARAMOS LOS PSD DE LOS DATOS REALES Y FALSOS, TANTO NORMALIZADOS COMO DESNORMALIZADOS
 print("Comparando PSD de los datos reales y falsos normalizados...")
-power.compare_psd(k_values, psd_mean_norm, psd_fake_norm_mean, psd_max_norm, psd_min_norm, psd_fake_norm_max, psd_fake_norm_min, z_vals, generated_images_folder, f"compare_psd_norm_{epoch}", "norm")
+power.compare_psd(k_values, psd_mean_norm, psd_fake_norm_mean, psd_max_norm, psd_min_norm, psd_fake_norm_max, psd_fake_norm_min, z_vals, generated_images_folder, f"interpololacion_compare_psd_norm_{epoch}", "norm")
 print("Comparando PSD de los datos reales y falsos desnormalizados...")
-power.compare_psd(k_values, psd_mean_desnorm, psd_fake_desnorm_mean, psd_max_desnorm, psd_min_desnorm, psd_fake_desnorm_max, psd_fake_desnorm_min, z_vals, generated_images_folder, f"compare_psd_desnorm_{epoch}", "desnorm")
-power.compare_psd_individual(k_values, psd_mean_desnorm, psd_fake_desnorm_mean, psd_fake_desnorm, psd_max_desnorm, psd_min_desnorm, z_vals, generated_images_folder, f"compare_psd_individual_{epoch}", "desnorm", N)
+power.compare_psd(k_values, psd_mean_desnorm, psd_fake_desnorm_mean, psd_max_desnorm, psd_min_desnorm, psd_fake_desnorm_max, psd_fake_desnorm_min, z_vals, generated_images_folder, f"interpolacion_compare_psd_desnorm_{epoch}", "desnorm")
+power.compare_psd_individual(k_values, psd_mean_desnorm, psd_fake_desnorm_mean, psd_fake_desnorm, psd_max_desnorm, psd_min_desnorm, z_vals, generated_images_folder, f"interpolacion_compare_psd_individual_{epoch}", "desnorm", N)
 
-"""
-power.compare_psd_percentil(k_values, psd_mean_desnorm, psd_fake_desnorm_mean, psd_fake_desnorm, psd_max_desnorm, psd_min_desnorm, z_vals, generated_images_folder, f"compare_psd_individual2_{epoch}", "desnorm", N)
-"""
-power.compare_psd_sigma(k_values, psd_mean_desnorm, psd_fake_desnorm_mean, psd_max_desnorm, psd_min_desnorm, psd_fake_desnorm_sigma, z_vals, generated_images_folder, f"compare_sigma_desnorm_{epoch}", "desnorm")
-
-
+power.compare_psd_percentil(k_values, psd_mean_desnorm, psd_fake_desnorm_mean, psd_fake_desnorm, psd_max_desnorm, psd_min_desnorm, z_vals, generated_images_folder, f"interpolacion_compare_psd_individual2_{epoch}", "desnorm", N)
 
 histogramas = Histogramas(generated_images_folder, z_vals)
 print("Sacando histogramas normalizados...")
@@ -128,6 +121,3 @@ gif(os.path.join(generated_images_folder, f"histogramas_normalizados_{epoch}"), 
 
 imagenes.save_generated_vtk(desnorm_fake, z_vals, output_folder=os.path.join(trained_models_folder, f"vtk_epoch_{epoch}"), log_scale=True)
 
-
-gif(os.path.join(generated_images_folder, f"compare_sigma_desnorm_{epoch}"), f"psd_gif_{epoch}.gif")
-"""
