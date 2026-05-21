@@ -10,7 +10,7 @@ import tensorflow as tf
 import os
 import numpy as np
 
-from config import latent_dim, num_classes, image_size, boxsize, mass,embedding_dim
+from config import embedding_dim
 
 class FiLMLayer(tf.keras.layers.Layer):
     def __init__(self, n_channels):
