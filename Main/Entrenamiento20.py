@@ -35,7 +35,7 @@ for gpu in gpus:
 
 
 from preprocess_data import Dataset
-from config import batch_size1, ncritic3
+from config import batch_size1, ncritic3, n_bar
 from architectures.generators import Generator_film_linear
 from architectures.discriminators import Discriminator_projection
 from training import Training
@@ -48,10 +48,10 @@ generated_images_folder = "Results3D/20-images"
 
 
 #Cargamos las clases necesarias
-datos= Dataset(batch_size1)
+datos= Dataset(batch_size1, n_bar)
 
 
-norm_data, z_vals, _, _ = datos.load_data("redshift_norm")
+norm_data, z_vals, _, _ = datos.load_data("redshift_norm", "Data3D-64.hdf5")
 psd_max, psd_min, _, psd_sigma, all_psd = datos.load_psd("PSD_norm_mu_sigma_c100.npz")
 dataset = datos.crea_dataset(norm_data, z_vals, psd_max, psd_min, all_psd, psd_sigma)
 
