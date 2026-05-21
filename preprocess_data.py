@@ -5,14 +5,16 @@ Aquí pongo la clase Dataset, que es la que contiene las funciones necesarias pa
 import tensorflow as tf
 import numpy as np
 import h5py
+import os
 
-from config import n_bar, buffer_size, num_classes, num_cv
+from config import buffer_size, num_classes, num_cv
 from transforms import forward
 
 class Dataset(tf.keras.Model):
-    def __init__(self, batch_size):
+    def __init__(self, batch_size, n_bar):
         super().__init__()
         self.batch_size = batch_size #Tiene que ser input porque no siempre es el mismo
+        self.n_bar = n_bar
 
         
     def data0(self, file):
@@ -30,11 +32,11 @@ class Dataset(tf.keras.Model):
     
     def delta(self, images):
         
-        delta = (images - n_bar)/n_bar
+        delta = (images - self.n_bar)/self.n_bar
         return delta
 
     def deshacer_delta(self, delta):
-        images = delta * n_bar + n_bar
+        images = delta * self.n_bar + self.n_bar
         return images
     
     
@@ -104,9 +106,10 @@ class Dataset(tf.keras.Model):
       return dataset
 
 
-    def load_data(self, data_mode):
+    def load_data(self, data_mode, file):
 
-        images, red = self.data0('Camels_data/Data3D-64.hdf5')
+        output = os.path.join("Camels_data", file)
+        images, red = self.data0(output)
         #images_clean = self.replace_extreme_voxels(images, quit = 20)
         delta = self.delta(images)
         forw = forward(delta)
