@@ -64,6 +64,7 @@ class Fake_images(tf.keras.Model):
 
         z_values = np.linspace(0, 4, 34)
         
+        
         j = 1
         while j < self.N + 1:
             print('Evolución: ', j)
@@ -71,8 +72,8 @@ class Fake_images(tf.keras.Model):
             noise = tf.random.normal([1, latent_dim])
             
             for i in range(num_classes):
-                
-                generated_data = generator([noise, np.expand_dims(z_values[i], 0)], training=False)
+                z = np.expand_dims(np.expand_dims(z_values[i], 0), 0)
+                generated_data = generator([noise, z], training=False)
                 
                 generated_images.append(generated_data.numpy())
                 redshift.append(z_values[i])
