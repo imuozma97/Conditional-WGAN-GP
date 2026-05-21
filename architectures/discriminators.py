@@ -175,7 +175,7 @@ class Discriminator_projection3(tf.keras.Model):
         return out
 
 
-class Discriminator_projection_SN_all(tf.keras.Model):
+class Discriminator_projection_SN(tf.keras.Model):
     def __init__(self, filter1, filter2, filter3, layer):
         super().__init__()
         self.filter1 = filter1
