@@ -94,10 +94,10 @@ class Training4(tf.keras.Model):
             loss_psd = psd_loss(psd_gen, psd_mean, sigma_log) 
 
         grad_psd = gen_tape.gradient(loss_psd, self.generator.trainable_variables)
-        grad_adv = gen_tape.gradient(loss_sdv, self.generator.trainable_variables)
+        grad_adv = gen_tape.gradient(loss_adv, self.generator.trainable_variables)
 
-        norm_psd = tf.linalg.global_norm(grads_psd)
-        norm_adv = tf.linalg.global_norm(grads_adv)
+        norm_psd = tf.linalg.global_norm(grad_psd)
+        norm_adv = tf.linalg.global_norm(grad_adv)
             
         ratio1 = norm_disc / (norm_gen + 1e-8)
         ratio2 = norm_adv / (norm_psd + 1e-8)
