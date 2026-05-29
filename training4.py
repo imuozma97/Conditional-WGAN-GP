@@ -12,13 +12,13 @@ import numpy as np
 from config import latent_dim
 from grad_pen import gradient_penalty
 from power import Power
-from psd_utils import psd_out_of_band_fraction, psd_loss
+from psd_utils import psd_out_of_band_fraction, psd_loss, lambda_psd_dynamic
 from loss_plot import plot_loss_graph
 
 
 class Training4(tf.keras.Model):
 
-    def __init__(self, data_class, discriminator, generator, batch_size, ncritic, trained_models_folder, generated_images_folder, lambda_psd_schedule, lambda_term, use_psd=True, use_psd_loss = True):
+    def __init__(self, data_class, discriminator, generator, batch_size, ncritic, trained_models_folder, generated_images_folder, lambda_term, image_size, use_psd=True, use_psd_loss = True):
         super().__init__()
         self.discriminator = discriminator
         self.generator = generator
@@ -30,10 +30,10 @@ class Training4(tf.keras.Model):
         self.use_psd = use_psd
         self.use_psd_loss = use_psd_loss
         self.data_class = data_class
-        self.lambda_psd_schedule = lambda_psd_schedule
         self.lambda_term = lambda_term
+        self.image_size = image_size
 
-        self.power = Power()
+        self.power = Power(self.image_size)
 
 
     def compile(self, d_optimizer, g_optimizer):
@@ -77,42 +77,85 @@ class Training4(tf.keras.Model):
 
             # Generador
         noise = tf.random.normal([self.batch_size, latent_dim]) 
-        with tf.GradientTape(persistent=True) as gen_tape:
-                
+        eps = 1e-8
+
+        # ==========================================
+        # 1. TAPE AUXILIAR PARA MEDIR GRADIENTES
+        # ==========================================
+        with tf.GradientTape(persistent=True) as tape_aux:
+
             generated_images = self.generator([noise, z_values], training=True)
             psd_gen = self.power.compute_all_psd(generated_images)
 
-            #Si el D tiene psd o no:
             if self.use_psd:
                 fake_predictions = self.discriminator([generated_images, z_values, psd_gen], training=True)
             else:
                 fake_predictions = self.discriminator([generated_images, z_values], training=True)
-                    
+
             loss_adv = -tf.reduce_mean(fake_predictions)
+
             percent = psd_out_of_band_fraction(psd_gen, psd_min, psd_max)
 
-            loss_psd = psd_loss(psd_gen, psd_mean, sigma_log) 
+            loss_psd = psd_loss(psd_gen, psd_mean, sigma_log)
 
-        grad_psd = gen_tape.gradient(loss_psd, self.generator.trainable_variables)
-        grad_adv = gen_tape.gradient(loss_adv, self.generator.trainable_variables)
+        # gradientes auxiliares
+        grads_adv = tape_aux.gradient(loss_adv, self.generator.trainable_variables)
+        grads_psd = tape_aux.gradient(loss_psd, self.generator.trainable_variables)
 
-        norm_psd = tf.linalg.global_norm(grad_psd)
-        norm_adv = tf.linalg.global_norm(grad_adv)
-            
-        ratio1 = norm_disc / (norm_gen + 1e-8)
-        ratio2 = norm_adv / (norm_psd + 1e-8)
-        ratio3 = norm_disc / (norm_adv + 1e-8)
+        # eliminar None
+        grads_adv = [g for g in grads_adv if g is not None]
+        grads_psd = [g for g in grads_psd if g is not None]
 
+        norm_adv = tf.linalg.global_norm(grads_adv)
+        norm_psd = tf.linalg.global_norm(grads_psd)
+
+        
+        ratio2 = norm_adv / (norm_psd + eps)
+
+        del tape_aux
+
+        # ==========================================
+        # 2. λ DINÁMICO
+        # ==========================================
         if self.use_psd_loss:
-            lambda_psd = self.lambda_psd_schedule(self.current_epoch)
-            gen_loss = loss_adv + lambda_psd * ratio2 * loss_psd
-        else:  
-            gen_loss = loss_adv
+
+            peso_din = lambda_psd_dynamic(self.current_epoch)
+
+            lambda_psd = peso_din * (norm_adv / (norm_psd + eps))
+
+            lambda_psd = tf.clip_by_value(lambda_psd,1e-3,1e3)
+
+        else:
+            lambda_psd = 0.0
 
 
-        grads_gen = gen_tape.gradient(gen_loss, self.generator.trainable_variables)
-        norm_gen = tf.linalg.global_norm(grads_gen)
+        # ==========================================
+        # 3. TAPE REAL DEL GENERADOR
+        # ==========================================
+        with tf.GradientTape() as gen_tape:
+
+            generated_images = self.generator([noise, z_values],training=True)
+
+            psd_gen = self.power.compute_all_psd(generated_images)
+
+            if self.use_psd:
+                fake_predictions = self.discriminator([generated_images, z_values, psd_gen],training=True)
+            else:
+                fake_predictions = self.discriminator([generated_images, z_values],training=True)
+
+            loss_adv = -tf.reduce_mean(fake_predictions)
+
+            loss_psd = psd_loss(psd_gen,psd_mean,sigma_log)
+
+            gen_loss = loss_adv + lambda_psd * loss_psd
+
+
+        # gradientes reales
+        grads_gen = gen_tape.gradient(gen_loss,self.generator.trainable_variables)
+        norm_gen = tf.linalg.global_norm([g for g in grads_gen if g is not None])
         self.g_optimizer.apply_gradients(zip(grads_gen, self.generator.trainable_variables))
+        
+        ratio1 = norm_disc / (norm_gen + 1e-8)
 
         return wass_loss, disc_loss_real, disc_loss_fake, loss_adv, loss_psd, percent, grads_norm_mean, ratio1, psd_gen, psd_max, psd_min, ratio2
         
