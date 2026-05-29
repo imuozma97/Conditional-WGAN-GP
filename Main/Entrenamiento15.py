@@ -35,7 +35,7 @@ for gpu in gpus:
 
 
 from preprocess_data import Dataset
-from config import batch_size1, ncritic3
+from config import batch_size1, ncritic3, n_bar
 from architectures.generators import Generator_film_linear
 from architectures.discriminators import Discriminator_projection_SN
 from training import Training
@@ -48,10 +48,10 @@ generated_images_folder = "Results3D/15-images"
 
 
 #Cargamos las clases necesarias
-datos= Dataset(batch_size1)
+datos= Dataset(batch_size1, n_bar)
 
 
-norm_data, z_vals, _, _ = datos.load_data("redshift_norm")
+norm_data, z_vals, _, _ = datos.load_data("redshift_norm", "Data3D-64.hdf5")
 psd_max, psd_min, _, psd_sigma, all_psd = datos.load_psd("PSD_norm_mu_sigma_c100.npz")
 dataset = datos.crea_dataset(norm_data, z_vals, psd_max, psd_min, all_psd, psd_sigma)
 
@@ -63,7 +63,7 @@ discriminator = Discriminator_projection_SN(filter1 = 32, filter2 = 64, filter3 
 #Cargamos la red principal
 cgan = Training(data_class = datos, discriminator = discriminator, generator = generator, batch_size = batch_size1, ncritic = ncritic3, 
                 trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder, lambda_psd_schedule = lambda_psd_schedule,
-                use_psd = False, use_psd_loss = False)
+                lambda_term = 10, use_psd = False, use_psd_loss = False)
 cgan.compile(d_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.00005, beta_1 = 0, beta_2 = 0.9),
              g_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.0001, beta_1 = 0, beta_2 = 0.9))
 
