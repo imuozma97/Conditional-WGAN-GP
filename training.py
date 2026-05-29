@@ -9,7 +9,7 @@ import json
 import numpy as np
 
 
-from config import latent_dim
+from config import latent_dim, image_size
 from grad_pen import gradient_penalty
 from power import Power
 from psd_utils import psd_out_of_band_fraction, psd_loss
@@ -33,7 +33,7 @@ class Training(tf.keras.Model):
         self.lambda_psd_schedule = lambda_psd_schedule
         self.lambda_term = lambda_term
 
-        self.power = Power()
+        self.power = Power(image_size)
 
 
     def compile(self, d_optimizer, g_optimizer):
@@ -242,12 +242,12 @@ class Training(tf.keras.Model):
                 best_percent.append(float(percent.numpy()))
                 best_epoch_percent.append(epoch)
 
-                np.savez(os.path.join(gen_path, f"psd_data_{epoch:05d}.npz"),
-                    psd_gen = psd_gen_batch.numpy(),
-                    psd_min=psd_min_batch.numpy(),
-                    psd_max=psd_max_batch.numpy(),
-                    percent = float(percent_batch.numpy())
-                    )
+                #np.savez(os.path.join(gen_path, f"psd_data_{epoch:05d}.npz"),
+                  #  psd_gen = psd_gen_batch.numpy(),
+                    #psd_min=psd_min_batch.numpy(),
+                    #psd_max=psd_max_batch.numpy(),
+                    #percent = float(percent_batch.numpy())
+                    #)
 
                 print(f"Best percent guardado en época {epoch}")
 
@@ -262,12 +262,12 @@ class Training(tf.keras.Model):
                 best_psd.append(float(psd_loss.numpy()))
                 best_epoch_psd.append(epoch)
 
-                np.savez(os.path.join(gen_path, f"psd_data_{epoch:05d}.npz"),
-                    psd_gen = psd_gen_batch.numpy(),
-                    psd_min = psd_min_batch.numpy(),
-                    psd_max = psd_max_batch.numpy(),
-                    percent = float(percent_batch.numpy())
-                )
+                #np.savez(os.path.join(gen_path, f"psd_data_{epoch:05d}.npz"),
+                 #   psd_gen = psd_gen_batch.numpy(),
+                  #  psd_min = psd_min_batch.numpy(),
+                  #  psd_max = psd_max_batch.numpy(),
+                  #  percent = float(percent_batch.numpy())
+                #)
 
                 print(f"Best psd Guardado en época {epoch}")
 
