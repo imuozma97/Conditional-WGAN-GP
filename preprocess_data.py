@@ -113,6 +113,7 @@ class Dataset(tf.keras.Model):
         #images_clean = self.replace_extreme_voxels(images, quit = 20)
         delta = self.delta(images)
         forw = forward(delta)
+        
 
         z_vals = self.normalizar_z(red)
 
@@ -125,6 +126,11 @@ class Dataset(tf.keras.Model):
             mu, sigma = self.compute_mu_sigma(forw) #Se lo doy por evoluciones porque compute ya lo reagrupa dentro, y salen por evoluciones, como los datos
             norm_data = self.normalizar_mu_sigma(forw, mu, sigma)
             return norm_data, z_vals, mu, sigma
+
+        elif data_mode == "forw": #Este para el caso linear sin hacer la "norm" de mu y sigma
+            forw = np.expand_dims(forw, -1)
+            return forw, z_vals
+
 
         #Trrndría que añadir otro más en caso de querer hacer ambas cosas; hacer la norm de redshift y luego tanh
 
