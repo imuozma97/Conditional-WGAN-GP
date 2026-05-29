@@ -6,18 +6,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-from config import boxsize, image_size, num_classes
+from config import boxsize, num_classes
 
 
 class Power(tf.keras.Model):
     
-    def __init__(self):
+    def __init__(self, image_size):
         super().__init__()
+        self.image_size = image_size
         self.precompute_k_and_bins()
         
         
+        
     def precompute_k_and_bins(self):
-        L = image_size
+        L = self.image_size
 
         PI = tf.constant(3.141592653589793, dtype=tf.float32)
 
@@ -183,7 +185,7 @@ class Power(tf.keras.Model):
             if tipo == "norm":
                 plt.ylim(10**-4, 10**5)
             elif tipo == "desnorm":
-                plt.ylim(10**-2, 10**6)
+                plt.ylim(1, 10**6)
 
             
             if not os.path.exists(os.path.join(generated_images_folder, carpeta)):
@@ -296,11 +298,12 @@ class Power(tf.keras.Model):
             mean_real_i = np.array(mean_real[i])
             mean_fake_i = np.array(mean_fake[i])
 
-            distances = np.linalg.norm(psd_class - mean_real_i, axis=1)
+            eps = 1e-12
+            distances = np.linalg.norm(np.log10(psd_class + eps) - np.log10(mean_real_i), axis=1) #calcula la distancia entre cada curva psd_falsa y la real
 
-            n_keep = min(90, len(psd_class))
-            idx_sorted = np.argsort(distances)[:n_keep]
-            psd_top90 = psd_class[idx_sorted]
+            n_keep = min(90, len(psd_class)) #este se queda con 90
+            idx_sorted = np.argsort(distances)[:n_keep] # da los índices de las 90 distancias más pequeñas
+            psd_top90 = psd_class[idx_sorted] #coge los psd correspondientes a esos indices, que será los que pinte
 
             for j in range(len(psd_top90)):
                 plt.plot(k_values, psd_top90[j], color = np.random.rand(3), alpha=0.25, linewidth=1)
