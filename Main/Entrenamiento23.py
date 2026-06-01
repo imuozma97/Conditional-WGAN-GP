@@ -35,7 +35,7 @@ for gpu in gpus:
 
 
 from preprocess_data import Dataset
-from config import batch_size1, ncritic3, n_bar
+from config import batch_size1, ncritic3, n_bar, image_size
 from architectures.generators import Generator_film_linear
 from architectures.discriminators import Discriminator_projection
 from training4 import Training4
@@ -62,8 +62,8 @@ discriminator = Discriminator_projection(filter1 = 32, filter2 = 64, filter3 = 1
 
 #Cargamos la red principal
 cgan = Training4(data_class = datos, discriminator = discriminator, generator = generator, batch_size = batch_size1, ncritic = ncritic3, 
-                trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder, lambda_psd_schedule = lambda_psd_dynamic,
-                lambda_term = 20, use_psd = False, use_psd_loss = True)
+                trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder,
+                lambda_term = 20, image_size = image_size, use_psd = False, use_psd_loss = True)
 cgan.compile(d_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.00005, beta_1 = 0, beta_2 = 0.9),
              g_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.0001, beta_1 = 0, beta_2 = 0.9))
 

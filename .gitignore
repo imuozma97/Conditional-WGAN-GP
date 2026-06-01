@@ -5,6 +5,8 @@ condor_logs/
 *.out
 *.err
 *.npz
+Results3D/
+Training3D/
 *.h5
 *.sh
 *.sub

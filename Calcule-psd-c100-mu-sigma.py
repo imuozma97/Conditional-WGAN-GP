@@ -2,35 +2,36 @@
 Archivo para calcular el PSD de los datos originales, dependiendo de la normalización
 """
 
-
 import os
 import numpy as np
 from preprocess_data import Dataset
 from power import Power
 from transforms import forward, backward
-from config import batch_size1, num_cv, n_bar
+from config import batch_size1, num_cv, n_bar2, image_size2
 
 
 
-
-datos = Dataset(batch_size1)
-power = Power()
+datos = Dataset(batch_size1, n_bar2)
+power = Power(image_size2)
 #CASO: normalización con mu y sigma, pero ahora c=100, y no hay replace N voxels
-
-images, red = datos.data0('Camels_data/Data3D-64.hdf5')
+print("Cargo datos")
+images, red = datos.data0('Camels_data/Data3D-128.hdf5')
 delta = datos.delta(images)
 forw = forward(delta)
-mu, sigma = datos.compute_mu_sigma(forw, red) #Se lo doy por evoluciones porque compute ya lo reagrupa dentro, y salen por evoluciones, como los datos
+mu, sigma = datos.compute_mu_sigma(forw) #Se lo doy por evoluciones porque compute ya lo reagrupa dentro, y salen por evoluciones, como los datos
 norm_data = datos.normalizar_mu_sigma(forw, mu, sigma)
 
 k_values = power.compute_psd(norm_data[0])[1]
 
+print("PSD")
 #Sacamos todos los psd de los datos normalizados
-psd_norm = power.compute_all_psd(norm_data)           
+psd_norm = power.compute_all_psd(norm_data)         
+print("1")  
 psd_norm_agrupado = datos.reordenacion(psd_norm, red)[0]
-                 
+print("2")    
 #Calculamos las medias de psd para cada redshift con los datos agrupados
 all_mean_norm = power.compute_all_mean(psd_norm_agrupado, num_cv)
+print("3")  
 psd_mean_norm = np.tile(all_mean_norm[0], (27, 1))
 psd_max_norm = np.tile(all_mean_norm[1], (27, 1))
 psd_min_norm = np.tile(all_mean_norm[2], (27, 1))
@@ -38,8 +39,8 @@ sigma_norm = np.tile(all_mean_norm[3], (27, 1))
 sigma_log_norm = np.tile(all_mean_norm[4], (27, 1))
 #k_values = np.tile(k_values, (27, 1))
 
-
-#np.savez("PSD_norm_mu_sigma_c100", psd = psd_norm, psd_agrupado = psd_norm_agrupado, mean = psd_mean_norm , sigma = sigma_norm,  sigma_log = sigma_log_norm, psd_max = psd_max_norm , psd_min = psd_min_norm , k_values = k_values)
+print("Guardo archivo 1")
+np.savez("PSD_norm_mu_sigma_c100_128", psd = psd_norm, psd_agrupado = psd_norm_agrupado, mean = psd_mean_norm , sigma = sigma_norm,  sigma_log = sigma_log_norm, psd_max = psd_max_norm , psd_min = psd_min_norm , k_values = k_values)
 
 
 
@@ -60,7 +61,7 @@ sigma = np.tile(all_mean[3], (27, 1))
 sigma_log = np.tile(all_mean[4], (27, 1))
 
 
-np.savez("PSD_delta_c100", psd = psd_delta, psd_agrupado = psd_delta_agrupado, mean = psd_mean, sigma = sigma, sigma_log = sigma_log, psd_max = psd_max, psd_min = psd_min, k_values = k_values)
+np.savez("PSD_delta_c100_128", psd = psd_delta, psd_agrupado = psd_delta_agrupado, mean = psd_mean, sigma = sigma, sigma_log = sigma_log, psd_max = psd_max, psd_min = psd_min, k_values = k_values)
 
 '''
 part_data = datos.deshacer_delta(delta_data)

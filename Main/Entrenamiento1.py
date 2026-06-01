@@ -38,7 +38,7 @@ from config import batch_size1, ncritic4
 from architectures.generators import Generator_film
 from architectures.discriminators import Discriminator_projection
 from training import Training
-
+from psd_utils import lambda_psd_dynamic
 
 
 trained_models_folder = "Results3D/1-models"
@@ -60,7 +60,7 @@ discriminator = Discriminator_projection(filter1 = 32, filter2 = 64, filter3 = 1
 
 #Cargamos la red principal
 cgan = Training(data_class = datos, discriminator = discriminator, generator = generator, batch_size = batch_size1, ncritic = ncritic4, 
-                trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder,
+                trained_models_folder = trained_models_folder, lambda_psd_schedule = lambda_psd_dynamic, generated_images_folder = generated_images_folder,
                 use_psd = False)
 cgan.compile(d_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.00005, beta_1 = 0, beta_2 = 0.9),
              g_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.0001, beta_1 = 0, beta_2 = 0.9))

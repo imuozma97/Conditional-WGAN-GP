@@ -38,8 +38,8 @@ class Dataset(tf.keras.Model):
     def deshacer_delta(self, delta):
         images = delta * self.n_bar + self.n_bar
         return images
-    
-    
+
+
     def replace_extreme_voxels(self, data, quit=20): #Pruebo a quitar más??
 
         data_new = data.copy()
@@ -75,7 +75,7 @@ class Dataset(tf.keras.Model):
 
     
     
-    def normalizar_datos(self, images):
+    def normalizar_datos_tanh(self, images):
 
         min_val = np.min(images)
         max_val = np.max(images)
@@ -87,9 +87,12 @@ class Dataset(tf.keras.Model):
 
     def normalizar_z(self, redshifts):
         return (redshifts - np.min(redshifts))/(np.max(redshifts)- np.min(redshifts)).astype("float32")
+    
+    def factor_escala(self, redshifts):
+        return 1/(1+redshifts).astype("float32")
 
 
-    def desnormalizar_datos(self, images, maximo, minimo):
+    def desnormalizar_datos_tanh(self, images, maximo, minimo):
         
         original_data =  ((images + 1) / 2) * (maximo - minimo) + minimo
         #original_data =  images * (maximo - minimo) + minimo
@@ -106,20 +109,19 @@ class Dataset(tf.keras.Model):
       return dataset
 
 
-    def load_data(self, data_mode, file):
+    def load_data(self, file, data_mode):
 
         output = os.path.join("Camels_data", file)
         images, red = self.data0(output)
-        #images_clean = self.replace_extreme_voxels(images, quit = 20)
         delta = self.delta(images)
         forw = forward(delta)
-        
+    
+        #z_vals = self.normalizar_z(red)
+        z_vals = self.factor_escala(red)
 
-        z_vals = self.normalizar_z(red)
 
-
-        if data_mode == "global_norm":
-            norm_data, max_desnorm, min_desnorm = self.normalizar_datos(forw)
+        if data_mode == "global_norm_tanh":
+            norm_data, max_desnorm, min_desnorm = self.normalizar_datos_tanh(forw)
             return norm_data, z_vals, max_desnorm, min_desnorm 
 
         elif data_mode == "redshift_norm":
@@ -269,3 +271,36 @@ class Dataset(tf.keras.Model):
             raise ValueError("data_mode debe ser 'norm' o 'desnorm'")
     
 
+
+    def load_data_2d(self, file, data_mode):
+
+        output = os.path.join("Camels_data", file)
+        images, red = self.data0(output)
+
+        images_ord = self.reordenacion(num_cv)
+
+        delta = self.delta(images)
+        forw = forward(delta)
+    
+        #z_vals = self.normalizar_z(red)
+        z_vals = self.factor_escala(red)
+
+
+        if data_mode == "global_norm_tanh":
+            norm_data, max_desnorm, min_desnorm = self.normalizar_datos_tanh(forw)
+            return norm_data, z_vals, max_desnorm, min_desnorm 
+
+        elif data_mode == "redshift_norm":
+            mu, sigma = self.compute_mu_sigma(forw) #Se lo doy por evoluciones porque compute ya lo reagrupa dentro, y salen por evoluciones, como los datos
+            norm_data = self.normalizar_mu_sigma(forw, mu, sigma)
+            return norm_data, z_vals, mu, sigma
+
+        elif data_mode == "forw": #Este para el caso linear sin hacer la "norm" de mu y sigma
+            forw = np.expand_dims(forw, -1)
+            return forw, z_vals
+
+
+        #Trrndría que añadir otro más en caso de querer hacer ambas cosas; hacer la norm de redshift y luego tanh
+
+        else:
+            raise ValueError("Elige bien el data_mode, 'global_norm' o 'redshift_norm'")

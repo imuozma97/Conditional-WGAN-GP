@@ -37,17 +37,14 @@ class Discriminator_projection(tf.keras.Model):
             tf.keras.layers.Conv3D(self.filter1, kernel_size=4, strides=2, padding="same",
                                    kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True),
             tf.keras.layers.LeakyReLU(0.2),
-            #tf.keras.layers.MaxPooling3D(pool_size=2),
 
             tf.keras.layers.Conv3D(self.filter2, kernel_size=4, strides=2, padding="same",
                                    kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True),
             tf.keras.layers.LeakyReLU(0.2),
-            #tf.keras.layers.MaxPooling3D(pool_size=2),
 
-            tf.keras.layers.Conv3D(self.filter3, kernel_size=3, strides=2, padding="same",
+            tf.keras.layers.Conv3D(self.filter3, kernel_size=4, strides=2, padding="same",
                                    kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True),
             tf.keras.layers.LeakyReLU(0.2),
-            #tf.keras.layers.MaxPooling3D(pool_size=2),
 
             final_layer
            

@@ -35,7 +35,8 @@ class Histogramas:
         plt.ylim(1, 10**7)
 
         if tipo == "norm":
-            plt.xlim(-20, 140)
+            #plt.xlim(-20, 140)
+            plt.xlim(-1, 1)
             filename = f"histo_norm_{i:02d}.png"
             carpeta = f"histogramas_normalizados_{epoch}"
             if not os.path.exists(os.path.join(self.generated_images_folder, carpeta)):
