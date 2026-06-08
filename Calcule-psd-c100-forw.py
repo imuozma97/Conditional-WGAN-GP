@@ -11,23 +11,21 @@ from config import batch_size1, num_cv, n_bar, image_size
 
 
 
-datos = Dataset(batch_size1, n_bar)
+datos = Dataset(batch_size1, n_bar, buffer_size =  918)
 power = Power(image_size)
-#CASO: normalización con mu y sigma, pero ahora c=100, y no hay replace N voxels
-print("Cargo datos")
-images, red = datos.data0('Camels_data/Data3D-64.hdf5')
-delta = datos.delta(images)
-forw = forward(delta)
-forw = np.expand_dims(forw, -1)
-#mu, sigma = datos.compute_mu_sigma(forw) #Se lo doy por evoluciones porque compute ya lo reagrupa dentro, y salen por evoluciones, como los datos
-#norm_data = datos.normalizar_mu_sigma(forw, mu, sigma)
 
-k_values = power.compute_psd(forw[0])[1]
+print("Cargo datos")
+n_part, red = datos.load_npart("Data3D-64.hdf5")
+forw = forward(n_part)
+forw = np.expand_dims(forw, -1)
+norm, _, _ = datos.normalizar_datos_tanh(forw)
+
+k_values = power.compute_psd(np.squeeze(forw[0]))[1]
 
 print("PSD")
 #Sacamos todos los psd de los datos normalizados
-print("forw", forw.shape)
-psd_norm = power.compute_all_psd(forw)      
+
+psd_norm = power.compute_all_psd(norm)      
 psd_norm_agrupado = datos.reordenacion(num_cv, psd_norm)
 #Calculamos las medias de psd para cada redshift con los datos agrupados
 all_mean_norm = power.compute_all_mean(psd_norm_agrupado, num_cv)
@@ -38,8 +36,8 @@ sigma_norm = np.tile(all_mean_norm[3], (27, 1))
 sigma_log_norm = np.tile(all_mean_norm[4], (27, 1))
 #k_values = np.tile(k_values, (27, 1))
 
-print("Guardo archivo 1")
-np.savez("PSD_c100_forw.npz", psd = psd_norm, psd_agrupado = psd_norm_agrupado, mean = psd_mean_norm , sigma = sigma_norm,  sigma_log = sigma_log_norm, psd_max = psd_max_norm , psd_min = psd_min_norm , k_values = k_values)
+
+np.savez("PSD_forw_norm.npz", psd = psd_norm, psd_agrupado = psd_norm_agrupado, mean = psd_mean_norm , sigma = sigma_norm,  sigma_log = sigma_log_norm, psd_max = psd_max_norm , psd_min = psd_min_norm , k_values = k_values)
 
 
 """

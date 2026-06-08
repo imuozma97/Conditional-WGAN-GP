@@ -2,33 +2,32 @@
 Archivo para calcular el PSD de los datos originales, dependiendo de la normalización
 """
 
-
 import os
 import numpy as np
 from preprocess_data import Dataset
 from power import Power
 from transforms import forward, backward
 from config import batch_size1, num_cv, n_bar, image_size
-import tensorflow as tf
 
-
-
-datos = Dataset(batch_size1, n_bar, buffer_size = 918)
+datos = Dataset(batch_size1, n_bar)
 power = Power(image_size)
 
-#CASO: normalización global, pero ahora c=100, y no hay replace N voxels
 
-data, red = datos.data0('Camels_data/Data3D-64.hdf5')
-delta = datos.delta(data)
-eps = 10e-5
-transf_delta = tf.math.log(delta + 1 + eps)
+#Cargamos los datos: número de partículas y redshift
+n_part, red = datos.load_npart("Data3D-64.hdf5")
 
-k_values = power.compute_psd(np.squeeze(transf_delta[0]))[1]
+#Aplicacmos la transformación al número de partículas. Esto es lo que recibirá la red. Ya está en el rango correcto
+n_part_transf = datos.transform_npart(n_part, k=11000)
 
+#Normalizamos el redshift
+z_vals = datos.factor_escala(red)
+
+k_values = power.compute_psd(n_part_transf[0])[1]
+"""
+print("PSD")
 #Sacamos todos los psd de los datos normalizados
-psd_norm = power.compute_all_psd(transf_delta)           
+psd_norm = power.compute_all_psd(n_part_transf)      
 psd_norm_agrupado = datos.reordenacion(num_cv, psd_norm)
-                 
 #Calculamos las medias de psd para cada redshift con los datos agrupados
 all_mean_norm = power.compute_all_mean(psd_norm_agrupado, num_cv)
 psd_mean_norm = np.tile(all_mean_norm[0], (27, 1))
@@ -38,21 +37,18 @@ sigma_norm = np.tile(all_mean_norm[3], (27, 1))
 sigma_log_norm = np.tile(all_mean_norm[4], (27, 1))
 #k_values = np.tile(k_values, (27, 1))
 
+print("Guardo archivo 1")
+np.savez("PSD_k11000.npz", psd = psd_norm, psd_agrupado = psd_norm_agrupado, mean = psd_mean_norm , sigma = sigma_norm,  sigma_log = sigma_log_norm, psd_max = psd_max_norm , psd_min = psd_min_norm , k_values = k_values)
 
-np.savez("PSD_ln_delta.npz", psd = psd_norm, psd_agrupado = psd_norm_agrupado, mean = psd_mean_norm , sigma = sigma_norm,  sigma_log = sigma_log_norm, psd_max = psd_max_norm , psd_min = psd_min_norm , k_values = k_values)
-
-
-
-#CASO DESNORMALIZADO
 """
-#Habría que deshacerlo de la misma forma. Si hago psd de delta puede cambiar un poco de si hago los mismos pasos que en el generador
-forw_data = datos.desnormalizar_datos(norm_data, max_val, min_val)
-delta_data = backward(forw_data)
+#CASO DESNORMALIZADO
 
-psd_delta = power.compute_all_psd(delta_data)           
-psd_delta_agrupado = datos.reordenacion(psd_delta, data[1])[0]
+#Habría que deshacerlo de la misma forma. Si hago psd de delta puede cambiar un poco de si hago los mismos pasos que en el generador
+
+psd_n_part = power.compute_all_psd(np.expand_dims(n_part, -1))           
+psd_n_part_agrupado = datos.reordenacion(num_cv, psd_n_part)
                 
-all_mean = power.compute_all_mean(psd_delta_agrupado, num_cv)
+all_mean = power.compute_all_mean(psd_n_part_agrupado, num_cv)
 psd_mean = np.tile(all_mean[0], (27, 1))
 psd_max = np.tile(all_mean[1], (27, 1))
 psd_min = np.tile(all_mean[2], (27, 1))
@@ -60,12 +56,13 @@ sigma = np.tile(all_mean[3], (27, 1))
 sigma_log = np.tile(all_mean[4], (27, 1))
 
 
-np.savez("PSD_delta_c100", psd = psd_delta, psd_agrupado = psd_delta_agrupado, mean = psd_mean, sigma = sigma, sigma_log = sigma_log, psd_max = psd_max, psd_min = psd_min, k_values = k_values)
+np.savez("PSD_k11000_npart.npz", psd = psd_n_part, psd_agrupado = psd_n_part_agrupado, mean = psd_mean, sigma = sigma, sigma_log = sigma_log, psd_max = psd_max, psd_min = psd_min, k_values = k_values)
 
+"""
 part_data = datos.deshacer_delta(delta_data)
 psd_part = power.compute_all_psd(part_data)           
-psd_part_agrupado = datos.reordenacion(psd_part, data[1])[0]
-                
+psd_part_agrupado = datos.reordenacion(num_cv, psd_part)
+
 all_mean_part = power.compute_all_mean(psd_part_agrupado, num_cv)
 psd_mean_part = np.tile(all_mean_part[0], (27, 1))
 psd_max_part = np.tile(all_mean_part[1], (27, 1))
