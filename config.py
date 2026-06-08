@@ -30,5 +30,6 @@ ncritic5 = 5
 
 #N = 27
 
-shift = 1
-c = 100
+shift = 3
+c = 20000
+#c = 7

@@ -43,7 +43,7 @@ class Histogramas:
                 os.makedirs(os.path.join(self.generated_images_folder, carpeta))
 
         if tipo == "desnorm":
-            plt.xlim(0, 4500)
+            #plt.xlim(0, 4500)
             filename = f"histo_desnorm_{i:02d}.png"
             carpeta = f"histogramas_desnormalizados_{epoch}"
             if not os.path.exists(os.path.join(self.generated_images_folder, carpeta)):
