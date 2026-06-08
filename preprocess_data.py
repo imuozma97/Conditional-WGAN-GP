@@ -7,14 +7,15 @@ import numpy as np
 import h5py
 import os
 
-from config import buffer_size, num_classes, num_cv
-from transforms import forward
+from config import num_classes, num_cv
+from transforms import forward, forward_custom
 
 class Dataset(tf.keras.Model):
-    def __init__(self, batch_size, n_bar):
+    def __init__(self, batch_size, n_bar, buffer_size):
         super().__init__()
         self.batch_size = batch_size #Tiene que ser input porque no siempre es el mismo
         self.n_bar = n_bar
+        self.buffer_size = buffer_size
 
         
     def data0(self, file):
@@ -33,6 +34,7 @@ class Dataset(tf.keras.Model):
     def delta(self, images):
         
         delta = (images - self.n_bar)/self.n_bar
+        delta = np.expand_dims(delta, -1)
         return delta
 
     def deshacer_delta(self, delta):
@@ -101,12 +103,37 @@ class Dataset(tf.keras.Model):
     
 
     
-    def crea_dataset(self, *data):
+    def crea_dataset(self,  *data):
     
       dataset = tf.data.Dataset.from_tensor_slices(data)
-      dataset = dataset.shuffle(buffer_size=buffer_size).batch(self.batch_size)
+      dataset = dataset.shuffle(buffer_size = self.buffer_size).batch(self.batch_size)
   
       return dataset
+
+    def load_npart(self, file):
+        output = os.path.join("Camels_data", file)
+        images, red = self.data0(output)
+
+        return images, red
+
+    def transform_npart(self, images, k):
+        rho_transf = 2*images/(images + k) -1 #Aquí ya están agrupados por redshift
+        rho_transf = np.expand_dims(rho_transf, -1)
+        return rho_transf
+
+    def inverse_transform_npart(self, images, k):
+        rho_original = k * (1 + images) / (1 - images)
+        rho_original = np.expand_dims(rho_original, -1)
+        return rho_original
+
+
+    def rotation(self, cube, k):
+        # Rotar 90 grados en el plano de los dos primeros ejes espaciales (ejes 1 y 2)
+        # k=1 significa 90°, k=2 es 180°, k=3 es 270°
+        cubos_rotados = np.rot90(cube, k , axes=(1, 2))
+        return cubos_rotados
+
+
 
 
     def load_data(self, file, data_mode):
@@ -123,6 +150,11 @@ class Dataset(tf.keras.Model):
         if data_mode == "global_norm_tanh":
             norm_data, max_desnorm, min_desnorm = self.normalizar_datos_tanh(forw)
             return norm_data, z_vals, max_desnorm, min_desnorm 
+
+        if data_mode == "global_norm_tanh_new":
+            forw_new = forward_custom(delta)
+            forw_new = np.expand_dims(forw_new, -1)
+            return forw_new, z_vals
 
         elif data_mode == "redshift_norm":
             mu, sigma = self.compute_mu_sigma(forw) #Se lo doy por evoluciones porque compute ya lo reagrupa dentro, y salen por evoluciones, como los datos
@@ -180,6 +212,29 @@ class Dataset(tf.keras.Model):
             return reordered[0]
 
         return tuple(reordered)
+
+
+    def ordenar_datos_evoluciones(self, images, redshifts):
+        
+        """
+        Para normalizar los datos, primero necesitamos que estén ordenados por evoluciones
+        
+        """
+        
+        order_images = []
+        order_redshifts = []
+        
+        for j in range(self.num_cv):
+            for i in range(self.num_classes):
+                order_images.append(images[j + self.num_cv*i])
+                order_redshifts.append(redshifts[j + self.num_cv*i])
+        order_images = np.array(order_images)
+        order_images = np.reshape(order_images, (-1, self.image_size, self.image_size, 1)) 
+
+        order_redshifts = np.array(order_redshifts)
+        order_redshifts = np.squeeze(order_redshifts)
+        
+        return order_images, order_redshifts
 
 
 
@@ -274,16 +329,18 @@ class Dataset(tf.keras.Model):
 
     def load_data_2d(self, file, data_mode):
 
+        
+
         output = os.path.join("Camels_data", file)
         images, red = self.data0(output)
 
-        images_ord = self.reordenacion(num_cv)
+        images_ord, red_ord = self.reordenacion(images, red)
 
-        delta = self.delta(images)
+        delta = self.delta(images_ord)
         forw = forward(delta)
     
         #z_vals = self.normalizar_z(red)
-        z_vals = self.factor_escala(red)
+        z_vals = self.factor_escala(red_ord)
 
 
         if data_mode == "global_norm_tanh":
