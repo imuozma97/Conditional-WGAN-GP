@@ -64,6 +64,7 @@ class Power(tf.keras.Model):
         Retorna: (psd, bin_centers)
         """
         image = tf.cast(image, tf.float32)
+        #print("imagen3: ", image.shape)
         
         # FFT 3D
         fft3 = tf.signal.fft3d(tf.cast(image, tf.complex64))
@@ -86,15 +87,11 @@ class Power(tf.keras.Model):
         return psd, self.bin_centers 
     
     
-    
+    """
     def compute_all_psd(self, images):
-        """
-        Procesa todas las imágenes del batch de forma vectorizada
-        images shape: (batch, 64, 64, 64, 1)
-        """
-        # Eliminar la dimensión de canales
+    
         images = tf.squeeze(images, axis=-1)
-        
+        #print("Imagen2: ", image.shape)
         # Vectorizado: procesar todas las imágenes a la vez
         psd_results = tf.map_fn(
             lambda x: self.compute_psd(x)[0],
@@ -102,6 +99,25 @@ class Power(tf.keras.Model):
             fn_output_signature=tf.float32
         )
         
+        return psd_results
+    
+    """
+    def compute_all_psd(self, images):
+        """
+        Procesa todas las imágenes del batch de forma vectorizada
+        """
+        images = tf.squeeze(images, axis=-1)
+        
+        # En lugar de la lambda, definimos la función aquí dentro
+        def evaluar_psd(x):
+            return self.compute_psd(x)[0]
+
+        # Pasamos 'evaluar_psd' en lugar de la lambda
+        psd_results = tf.map_fn(
+            evaluar_psd,
+            images,
+            fn_output_signature=tf.float32
+        )
         return psd_results
 
 
@@ -185,7 +201,7 @@ class Power(tf.keras.Model):
             if tipo == "norm":
                 plt.ylim(10**-4, 10**5)
             elif tipo == "desnorm":
-                plt.ylim(1, 10**6)
+                plt.ylim(10**3, 10**12)
 
             
             if not os.path.exists(os.path.join(generated_images_folder, carpeta)):
@@ -220,7 +236,7 @@ class Power(tf.keras.Model):
             if tipo == "norm":
                 plt.ylim(10**-4, 10**5)
             elif tipo == "desnorm":
-                plt.ylim(10**-2, 10**6)
+                plt.ylim(10**3, 10**12)
 
             
             if not os.path.exists(os.path.join(generated_images_folder, carpeta)):
@@ -255,7 +271,7 @@ class Power(tf.keras.Model):
             if tipo == "norm":
                 plt.ylim(10**-4, 10**5)
             elif tipo == "desnorm":
-                plt.ylim(10**-2, 10**6)
+                plt.ylim(10**3, 10**12)
 
             
             if not os.path.exists(os.path.join(generated_images_folder, carpeta)):
@@ -321,7 +337,7 @@ class Power(tf.keras.Model):
             if tipo == "norm":
                 plt.ylim(10**-4, 10**5)
             elif tipo == "desnorm":
-                plt.ylim(10**-2, 10**6)
+                plt.ylim(10**3, 10**12)
 
             path = os.path.join(generated_images_folder, carpeta)
             if not os.path.exists(path): os.makedirs(path)
