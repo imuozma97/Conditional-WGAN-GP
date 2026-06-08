@@ -25,16 +25,16 @@ for gpu in gpus:
 
 
 from preprocess_data import Dataset
-from config import batch_size1, ncritic3, n_bar
+from config import batch_size1, ncritic1, n_bar
 from architectures.generators import Generator_film3
-from architectures.discriminators import Discriminator_projection
+from architectures.discriminators import Discriminator_concat
 from training import Training
 from psd_utils import lambda_psd_schedule
 
 
 
-trained_models_folder = "Training3D/3-models"
-generated_images_folder = "Training3D/3-images"
+trained_models_folder = "Training3D/10-models"
+generated_images_folder = "Training3D/10-images"
 
 
 #Cargamos las clases necesarias
@@ -42,11 +42,11 @@ datos= Dataset(batch_size1, n_bar, buffer_size = 918)
 
 #Cargamos los datos: número de partículas y redshift
 n_part, red = datos.load_npart("Data3D-64.hdf5")
-#rot1 = datos.rotation(n_part, k=1)
-#rot2 = datos.rotation(n_part, k=2)
-#rot3 = datos.rotation(n_part, k=3)
+rot1 = datos.rotation(n_part, k=1)
+rot2 = datos.rotation(n_part, k=2)
+rot3 = datos.rotation(n_part, k=3)
 
-#total_data = np.concatenate([n_part, rot1, rot2, rot3], axis = 0)
+total_data = np.concatenate([n_part, rot1, rot2, rot3], axis = 0)
 #Aplicacmos la transformación al número de partículas. Esto es lo que recibirá la red. Ya está en el rango correcto
 n_part_transf = datos.transform_npart(n_part, k=11000)
 
@@ -64,14 +64,14 @@ psd_max, psd_min, mean_psd, psd_sigma, _ = datos.load_psd("PSD_k11000.npz")
 dataset = datos.crea_dataset(n_part_transf, z_vals, psd_max, psd_min, mean_psd, psd_sigma)
 
 #Cargamos el Discriminador y Generador
-generator = Generator_film3(filter1 = 128, filter2 = 64, filter3 = 32)
-discriminator = Discriminator_projection(filter1 = 32, filter2 = 64, filter3 = 128, layer = "F")
+generator = Generator_film3(filter1 = 256, filter2 = 128, filter3 = 64)
+discriminator = Discriminator_concat(filter1 = 32, filter2 = 64, filter3 = 128, layer = "F")
 
 
 #Cargamos la red principal
-cgan = Training(data_class = datos, discriminator = discriminator, generator = generator, batch_size = batch_size1, ncritic = ncritic3, 
+cgan = Training(data_class = datos, discriminator = discriminator, generator = generator, batch_size = batch_size1, ncritic = ncritic1, 
                 trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder, lambda_psd_schedule = lambda_psd_schedule,
-                lambda_term = 20, use_psd = False, use_psd_loss = False)
+                lambda_term = 10, use_psd = False, use_psd_loss = False)
 cgan.compile(d_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.00005, beta_1 = 0, beta_2 = 0.9),
              g_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.0001, beta_1 = 0, beta_2 = 0.9))
 

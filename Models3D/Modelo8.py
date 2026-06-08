@@ -33,38 +33,38 @@ from psd_utils import lambda_psd_schedule
 
 
 
-trained_models_folder = "Training3D/3-models"
-generated_images_folder = "Training3D/3-images"
+trained_models_folder = "Training3D/8-models"
+generated_images_folder = "Training3D/8-images"
 
 
 #Cargamos las clases necesarias
-datos= Dataset(batch_size1, n_bar, buffer_size = 918)
+datos= Dataset(batch_size1, n_bar, buffer_size = 918*4)
 
 #Cargamos los datos: número de partículas y redshift
 n_part, red = datos.load_npart("Data3D-64.hdf5")
-#rot1 = datos.rotation(n_part, k=1)
-#rot2 = datos.rotation(n_part, k=2)
-#rot3 = datos.rotation(n_part, k=3)
+rot1 = datos.rotation(n_part, k=1)
+rot2 = datos.rotation(n_part, k=2)
+rot3 = datos.rotation(n_part, k=3)
 
-#total_data = np.concatenate([n_part, rot1, rot2, rot3], axis = 0)
+total_data = np.concatenate([n_part, rot1, rot2, rot3], axis = 0)
 #Aplicacmos la transformación al número de partículas. Esto es lo que recibirá la red. Ya está en el rango correcto
-n_part_transf = datos.transform_npart(n_part, k=11000)
+n_part_transf = datos.transform_npart(total_data, k=11000)
 
 #Normalizamos el redshift
 z_vals = datos.factor_escala(red)
-#z_vals = np.tile(z_vals, (4, 1))
+z_vals = np.tile(z_vals, (4, 1))
 
 
 psd_max, psd_min, mean_psd, psd_sigma, _ = datos.load_psd("PSD_k11000.npz")
-#psd_max = np.tile(psd_max, (4, 1))
-#psd_min = np.tile(psd_min, (4, 1))
-#mean_psd = np.tile(mean_psd, (4, 1))
-#psd_sigma = np.tile(psd_sigma, (4, 1))
+psd_max = np.tile(psd_max, (4, 1))
+psd_min = np.tile(psd_min, (4, 1))
+mean_psd = np.tile(mean_psd, (4, 1))
+psd_sigma = np.tile(psd_sigma, (4, 1))
 
 dataset = datos.crea_dataset(n_part_transf, z_vals, psd_max, psd_min, mean_psd, psd_sigma)
 
 #Cargamos el Discriminador y Generador
-generator = Generator_film3(filter1 = 128, filter2 = 64, filter3 = 32)
+generator = Generator_film3(filter1 = 256, filter2 = 128, filter3 = 64)
 discriminator = Discriminator_projection(filter1 = 32, filter2 = 64, filter3 = 128, layer = "F")
 
 

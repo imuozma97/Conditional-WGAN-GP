@@ -41,7 +41,7 @@ generated_images_folder = "Training2D/0-images"
 datos= Dataset(batch_size1, n_bar)
 
 
-norm_data, z_vals, max_val, min_val= datos.load_data("Data3D-64.hdf5", "global_norm_tanh")
+norm_data, z_vals, max_val, min_val= datos.load_data("Datos64_nuevos.hdf5", "global_norm_tanh")
 psd_max, psd_min, mean_psd, psd_sigma, _ = datos.load_psd("PSD_norm_c100.npz")
 dataset = datos.crea_dataset(norm_data, z_vals, psd_max, psd_min, mean_psd, psd_sigma)
 

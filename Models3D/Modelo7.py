@@ -26,15 +26,16 @@ for gpu in gpus:
 
 from preprocess_data import Dataset
 from config import batch_size1, ncritic3, n_bar
-from architectures.generators import Generator_film3
+from architectures.generators import Generator_film_linear
 from architectures.discriminators import Discriminator_projection
 from training import Training
 from psd_utils import lambda_psd_schedule
+from transforms import forward
 
 
 
-trained_models_folder = "Training3D/3-models"
-generated_images_folder = "Training3D/3-images"
+trained_models_folder = "Training3D/7-models"
+generated_images_folder = "Training3D/7-images"
 
 
 #Cargamos las clases necesarias
@@ -48,14 +49,18 @@ n_part, red = datos.load_npart("Data3D-64.hdf5")
 
 #total_data = np.concatenate([n_part, rot1, rot2, rot3], axis = 0)
 #Aplicacmos la transformación al número de partículas. Esto es lo que recibirá la red. Ya está en el rango correcto
-n_part_transf = datos.transform_npart(n_part, k=11000)
+n_part_transf = forward(n_part)
+n_part_transf = np.expand_dims(n_part_transf, -1)
+print("Max forw:", np.max(n_part_transf))
+print("Min forw:", np.min(n_part_transf))
 
 #Normalizamos el redshift
 z_vals = datos.factor_escala(red)
+print("zvals:", z_vals[0:34])
 #z_vals = np.tile(z_vals, (4, 1))
 
 
-psd_max, psd_min, mean_psd, psd_sigma, _ = datos.load_psd("PSD_k11000.npz")
+psd_max, psd_min, mean_psd, psd_sigma, _ = datos.load_psd("PSD_forw.npz")
 #psd_max = np.tile(psd_max, (4, 1))
 #psd_min = np.tile(psd_min, (4, 1))
 #mean_psd = np.tile(mean_psd, (4, 1))
@@ -64,7 +69,7 @@ psd_max, psd_min, mean_psd, psd_sigma, _ = datos.load_psd("PSD_k11000.npz")
 dataset = datos.crea_dataset(n_part_transf, z_vals, psd_max, psd_min, mean_psd, psd_sigma)
 
 #Cargamos el Discriminador y Generador
-generator = Generator_film3(filter1 = 128, filter2 = 64, filter3 = 32)
+generator = Generator_film_linear(filter1 = 256, filter2 = 128, filter3 = 64)
 discriminator = Discriminator_projection(filter1 = 32, filter2 = 64, filter3 = 128, layer = "F")
 
 

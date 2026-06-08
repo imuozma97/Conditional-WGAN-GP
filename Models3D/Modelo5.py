@@ -25,16 +25,17 @@ for gpu in gpus:
 
 
 from preprocess_data import Dataset
-from config import batch_size1, ncritic3, n_bar
-from architectures.generators import Generator_film3
+from config import batch_size1, ncritic2, n_bar
+from architectures.generators import Generator_film3, Generator_film_relu
 from architectures.discriminators import Discriminator_projection
 from training import Training
 from psd_utils import lambda_psd_schedule
+from transforms import forward
 
 
 
-trained_models_folder = "Training3D/3-models"
-generated_images_folder = "Training3D/3-images"
+trained_models_folder = "Training3D/5-models"
+generated_images_folder = "Training3D/5-images"
 
 
 #Cargamos las clases necesarias
@@ -48,28 +49,31 @@ n_part, red = datos.load_npart("Data3D-64.hdf5")
 
 #total_data = np.concatenate([n_part, rot1, rot2, rot3], axis = 0)
 #Aplicacmos la transformación al número de partículas. Esto es lo que recibirá la red. Ya está en el rango correcto
-n_part_transf = datos.transform_npart(n_part, k=11000)
+n_part_transf = forward(n_part)
+data_norm,_, _ = datos.normalizar_datos_tanh(n_part_transf)
+print("Max tanh:", np.max(data_norm))
+print("Min tanh:", np.min(data_norm))
 
 #Normalizamos el redshift
 z_vals = datos.factor_escala(red)
 #z_vals = np.tile(z_vals, (4, 1))
 
 
-psd_max, psd_min, mean_psd, psd_sigma, _ = datos.load_psd("PSD_k11000.npz")
+psd_max, psd_min, mean_psd, psd_sigma, _ = datos.load_psd("PSD_forw_norm.npz")
 #psd_max = np.tile(psd_max, (4, 1))
 #psd_min = np.tile(psd_min, (4, 1))
 #mean_psd = np.tile(mean_psd, (4, 1))
 #psd_sigma = np.tile(psd_sigma, (4, 1))
 
-dataset = datos.crea_dataset(n_part_transf, z_vals, psd_max, psd_min, mean_psd, psd_sigma)
+dataset = datos.crea_dataset(data_norm, z_vals, psd_max, psd_min, mean_psd, psd_sigma)
 
 #Cargamos el Discriminador y Generador
-generator = Generator_film3(filter1 = 128, filter2 = 64, filter3 = 32)
+generator = Generator_film3(filter1 = 256, filter2 = 128, filter3 = 64)
 discriminator = Discriminator_projection(filter1 = 32, filter2 = 64, filter3 = 128, layer = "F")
 
 
 #Cargamos la red principal
-cgan = Training(data_class = datos, discriminator = discriminator, generator = generator, batch_size = batch_size1, ncritic = ncritic3, 
+cgan = Training(data_class = datos, discriminator = discriminator, generator = generator, batch_size = batch_size1, ncritic = ncritic2, 
                 trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder, lambda_psd_schedule = lambda_psd_schedule,
                 lambda_term = 20, use_psd = False, use_psd_loss = False)
 cgan.compile(d_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.00005, beta_1 = 0, beta_2 = 0.9),
