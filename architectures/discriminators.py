@@ -16,6 +16,7 @@ class Discriminator_projection(tf.keras.Model):
         self.filter1 = filter1
         self.filter2 = filter2
         self.filter3 = filter3
+
         self.layer = layer
 
         if self.layer == "GAP":
@@ -32,7 +33,7 @@ class Discriminator_projection(tf.keras.Model):
             tf.keras.layers.Dense(embedding_dim, activation='linear'),
         ])
 
-        # Red convolucional modificada
+        # Capas convolucionales que estraen las características de la imagen y pasan por la capa final Flaten para aplanarlas
         self.extract_features = tf.keras.Sequential([
             tf.keras.layers.Conv3D(self.filter1, kernel_size=4, strides=2, padding="same",
                                    kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True),
@@ -49,194 +50,40 @@ class Discriminator_projection(tf.keras.Model):
             final_layer
            
         ])
-        self.features_dense = tf.keras.layers.Dense(embedding_dim)
+        
+        #Capa final dense, que saca el score de la wgan (hasta aquí sería una wgan normal sin condicionar)
         self.final_dense = tf.keras.layers.Dense(1, activation='linear', kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02))  # WGAN critic output
+        
+        #Esta capa es para embeber las caracteristicas de la imagen y que estén en el mismo espacio que las condiciones
+        self.features_dense = tf.keras.layers.Dense(embedding_dim)
         
 
     def call(self, inputs, training=True, use_psd=False):
         image, z = inputs
-        
-        f = self.extract_features(image)
-        f = self.features_dense(f)
-        u = self.final_dense(f)
 
-        z_embed = self.z_embedding(z)
+        # Primero, sacamos el mapa de características 3D aplanado de la imagen
+        f = self.extract_features(image, training = training)
 
-        projection = tf.reduce_sum(f * z_embed, axis = -1, keepdims = True)
+        #Después proyectamos las características al espacio del embedding
+        f_projected = self.features_dense(f, training = training)
+
+        #Sacamos el score de la wgan
+        u = self.final_dense(f, training = training)
+
+        #Embebemos la condición
+        z_embed = self.z_embedding(z, training = training)
+
+        #Producto interno de los embebidos
+        projection = tf.reduce_sum(f_projected * z_embed, axis = -1, keepdims = True)
+
         out = u + projection
-        return out
 
-
-
-class Discriminator_projection_big(tf.keras.Model):
-    def __init__(self, filter1, filter2, filter3, filter4, layer):
-        super().__init__()
-        self.filter1 = filter1
-        self.filter2 = filter2
-        self.filter3 = filter3
-        self.filter4 = filter4
-        self.layer = layer
-
-        if self.layer == "GAP":
-            final_layer = tf.keras.layers.GlobalAveragePooling3D()
-        if self.layer == "GMP":
-            final_layer = tf.keras.layers.GlobalMaxPooling3D()
-        if self.layer == "F":
-            final_layer = tf.keras.layers.Flatten()
-           
-
-        # Embedding del redshift
-        self.z_embedding = tf.keras.Sequential([
-            tf.keras.layers.Dense(embedding_dim, activation='linear'),
-            tf.keras.layers.Dense(embedding_dim, activation='linear'),
-        ])
-
-        # Red convolucional modificada
-        self.extract_features = tf.keras.Sequential([
-            tf.keras.layers.Conv3D(self.filter1, kernel_size=4, strides=2, padding="same",
-                                   kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True),
-            tf.keras.layers.LeakyReLU(0.2),
-            #tf.keras.layers.MaxPooling3D(pool_size=2),
-
-            tf.keras.layers.Conv3D(self.filter2, kernel_size=4, strides=2, padding="same",
-                                   kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True),
-            tf.keras.layers.LeakyReLU(0.2),
-            #tf.keras.layers.MaxPooling3D(pool_size=2),
-
-            tf.keras.layers.Conv3D(self.filter3, kernel_size=3, strides=2, padding="same",
-                                   kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True),
-            tf.keras.layers.LeakyReLU(0.2),
-            #tf.keras.layers.MaxPooling3D(pool_size=2),
-
-            tf.keras.layers.Conv3D(self.filter4, kernel_size=3, strides=2, padding="same",
-                                   kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True),
-            tf.keras.layers.LeakyReLU(0.2),
-
-            final_layer
-           
-        ])
-        self.features_dense = tf.keras.layers.Dense(embedding_dim)
-        self.final_dense = tf.keras.layers.Dense(1, activation='linear', kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02))  # WGAN critic output
-        
-
-    def call(self, inputs, training=True, use_psd=False):
-        image, z = inputs
-        
-        f = self.extract_features(image)
-        f = self.features_dense(f)
-        u = self.final_dense(f)
-
-        z_embed = self.z_embedding(z)
-
-        projection = tf.reduce_sum(f * z_embed, axis = -1, keepdims = True)
-        out = u + projection
         return out
 
 
 
 
-class Discriminator_projection2(tf.keras.Model):
-    def __init__(self, filter1, filter2, filter3):
-        super().__init__()
-        self.filter1 = filter1
-        self.filter2 = filter2
-        self.filter3 = filter3
 
-        # Embedding del redshift
-        self.z_embedding = tf.keras.Sequential([
-            tf.keras.layers.Dense(embedding_dim, activation='linear'),
-            tf.keras.layers.Dense(embedding_dim, activation='linear'),
-        ])
-
-        # Red convolucional modificada
-        self.extract_features = tf.keras.Sequential([
-            tf.keras.layers.Conv3D(self.filter1, kernel_size=4, strides=2, padding="same",
-                                   kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True),
-            tf.keras.layers.LeakyReLU(0.2),
-            #tf.keras.layers.MaxPooling3D(pool_size=2),
-
-            tf.keras.layers.Conv3D(self.filter2, kernel_size=4, strides=2, padding="same",
-                                   kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True),
-            tf.keras.layers.LeakyReLU(0.2),
-            #tf.keras.layers.MaxPooling3D(pool_size=2),
-
-            tf.keras.layers.Conv3D(self.filter3, kernel_size=3, strides=2, padding="same",
-                                   kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True),
-            tf.keras.layers.LeakyReLU(0.2),
-            #tf.keras.layers.MaxPooling3D(pool_size=2),
-
-            tf.keras.layers.Flatten(),
-           
-        ])
-        self.features_dense = tf.keras.layers.Dense(embedding_dim)
-        self.final_dense = tf.keras.layers.Dense(1, activation='linear', kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02))  # WGAN critic output
-        
-
-    def call(self, inputs, training=True, use_psd=False):
-        image, z = inputs
-        
-        f = self.extract_features(image)
-        f = self.features_dense(f)
-        u = self.final_dense(f)
-
-        z_embed = self.z_embedding(z)
-
-        projection = tf.reduce_sum(f * z_embed, axis = -1, keepdims = True)
-        out = u + projection
-        return out
-
-
-
-
-class Discriminator_projection3(tf.keras.Model):
-    def __init__(self, filter1, filter2, filter3):
-        super().__init__()
-        self.filter1 = filter1
-        self.filter2 = filter2
-        self.filter3 = filter3
-
-        # Embedding del redshift
-        self.z_embedding = tf.keras.Sequential([
-            tf.keras.layers.Dense(embedding_dim, activation='linear'),
-            tf.keras.layers.Dense(embedding_dim, activation='linear'),
-        ])
-
-        # Red convolucional modificada
-        self.extract_features = tf.keras.Sequential([
-            tf.keras.layers.Conv3D(self.filter1, kernel_size=4, strides=1, padding="same",
-                                   kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True),
-            tf.keras.layers.LeakyReLU(0.2),
-            tf.keras.layers.MaxPooling3D(pool_size=2),
-
-            tf.keras.layers.Conv3D(self.filter2, kernel_size=4, strides=1, padding="same",
-                                   kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True),
-            tf.keras.layers.LeakyReLU(0.2),
-            tf.keras.layers.MaxPooling3D(pool_size=2),
-
-            tf.keras.layers.Conv3D(self.filter3, kernel_size=3, strides=1, padding="same",
-                                   kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True),
-            tf.keras.layers.LeakyReLU(0.2),
-            tf.keras.layers.MaxPooling3D(pool_size=2),
-
-            tf.keras.layers.Flatten(),
-           
-        ])
-        self.features_dense = tf.keras.layers.Dense(embedding_dim)
-        self.final_dense = tf.keras.layers.Dense(1, activation='linear', kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02))  # WGAN critic output
-        
-
-    def call(self, inputs, training=True, use_psd=False):
-        image, z = inputs
-        
-        f = self.extract_features(image)
-        f = self.features_dense(f)
-        u = self.final_dense(f)
-
-        z_embed = self.z_embedding(z)
-
-        projection = tf.reduce_sum(f * z_embed, axis = -1, keepdims = True)
-        out = u + projection
-        return out
 
 
 class Discriminator_projection_SN(tf.keras.Model):
@@ -266,46 +113,68 @@ class Discriminator_projection_SN(tf.keras.Model):
             tfa.layers.SpectralNormalization(tf.keras.layers.Conv3D(self.filter1, kernel_size=4, strides=2, padding="same",
                                    kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True)),
             tf.keras.layers.LeakyReLU(0.2),
-            #tf.keras.layers.MaxPooling3D(pool_size=2),
+            #tf.keras.layers.Dropout(0.2),
 
             tfa.layers.SpectralNormalization(tf.keras.layers.Conv3D(self.filter2, kernel_size=4, strides=2, padding="same",
                                    kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True)),
             tf.keras.layers.LeakyReLU(0.2),
-            #tf.keras.layers.MaxPooling3D(pool_size=2),
+            #tf.keras.layers.Dropout(0.2),
 
-            tfa.layers.SpectralNormalization(tf.keras.layers.Conv3D(self.filter3, kernel_size=3, strides=2, padding="same",
+            tfa.layers.SpectralNormalization(tf.keras.layers.Conv3D(self.filter3, kernel_size=4, strides=2, padding="same",
                                    kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True)),
             tf.keras.layers.LeakyReLU(0.2),
-            #tf.keras.layers.MaxPooling3D(pool_size=2),
+            #tf.keras.layers.Dropout(0.2),
+
+
             final_layer
             
         ])
-        self.features_dense = tfa.layers.SpectralNormalization(tf.keras.layers.Dense(embedding_dim))
         self.final_dense = tfa.layers.SpectralNormalization(tf.keras.layers.Dense(1, activation='linear', kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02))) 
+        
+        self.features_dense = tfa.layers.SpectralNormalization(tf.keras.layers.Dense(embedding_dim))
         
 
     def call(self, inputs, training=True, use_psd=False):
         image, z = inputs
-        
-        f = self.extract_features(image)
-        f = self.features_dense(f)
 
-        u = self.final_dense(f)
+        # Primero, sacamos el mapa de características 3D aplanado de la imagen
+        f = self.extract_features(image, training = training)
 
-        z_embed = self.z_embedding(z)
+        #Después proyectamos las características al espacio del embedding
+        f_projected = self.features_dense(f, training = training)
 
-        projection = tf.reduce_sum(f * z_embed, axis = -1, keepdims = True)
+        #Sacamos el score de la wgan
+        u = self.final_dense(f, training = training)
+
+        #Embebemos la condición
+        z_embed = self.z_embedding(z, training = training)
+
+        #Producto interno de los embebidos
+        #f_projected = tf.math.l2_normalize(f_projected, axis = -1)
+        #z_embed = tf.math.l2_normalize(z_embed, axis = -1)
+        projection = tf.reduce_sum(f_projected * z_embed, axis = -1, keepdims = True)
+
         out = u + projection
+
         return out
 
 
 
 class Discriminator_concat(tf.keras.Model):
-    def __init__(self, filter1, filter2, filter3):
+    def __init__(self, filter1, filter2, filter3, layer):
         super().__init__()
         self.filter1 = filter1
         self.filter2 = filter2
         self.filter3 = filter3
+        self.layer = layer
+
+        if self.layer == "GAP":
+            final_layer = tf.keras.layers.GlobalAveragePooling3D()
+        if self.layer == "GMP":
+            final_layer = tf.keras.layers.GlobalMaxPooling3D()
+        if self.layer == "F":
+            final_layer = tf.keras.layers.Flatten()
+
 
         # Embedding del redshift
         self.z_embedding = tf.keras.Sequential([
@@ -315,22 +184,17 @@ class Discriminator_concat(tf.keras.Model):
 
         # Red convolucional modificada
         self.conv_layers = tf.keras.Sequential([
-            tf.keras.layers.Conv3D(self.filter1, kernel_size=4, strides=1, padding="same",
-                                   kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True),
+            tf.keras.layers.Conv3D(self.filter1, kernel_size=4, strides=2, padding="same", kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True),
             tf.keras.layers.LeakyReLU(0.2),
-            #tf.keras.layers.MaxPooling3D(pool_size=2),
 
-            tf.keras.layers.Conv3D(self.filter2, kernel_size=4, strides=1, padding="same",
-                                   kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True),
+            tf.keras.layers.Conv3D(self.filter2, kernel_size=4, strides=2, padding="same", kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True),
             tf.keras.layers.LeakyReLU(0.2),
-            #tf.keras.layers.MaxPooling3D(pool_size=2),
 
-            tf.keras.layers.Conv3D(self.filter3, kernel_size=3, strides=1, padding="same",
-                                   kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True),
+            tf.keras.layers.Conv3D(self.filter3, kernel_size=3, strides=2, padding="same", kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias=True),
             tf.keras.layers.LeakyReLU(0.2),
-           # tf.keras.layers.MaxPooling3D(pool_size=2),
 
-            tf.keras.layers.GlobalAveragePooling3D(),
+            final_layer,
+
             tf.keras.layers.Dense(1, activation='linear', kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02))  # WGAN critic output
         ])
 
@@ -343,6 +207,7 @@ class Discriminator_concat(tf.keras.Model):
         z_embed_broadcast = tf.tile(z_embed, [1, 64, 64, 64, 1]) 
 
         x = tf.concat([image, z_embed_broadcast], axis=-1)  
+
         return self.conv_layers(x)
 
 
@@ -506,7 +371,7 @@ class Discriminator_pca(tf.keras.Model):
         self.final_dense = tfa.layers.SpectralNormalization(tf.keras.layers.Dense(1, activation='linear', kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02)))  # WGAN critic output
             
 
-    def call(self, inputs, training=True):
+    def call(self, inputs, training=True, use_psd=False):
         image, z, coeff1, coeff2, coeff3 = inputs
             
         f = self.extract_features(image)
