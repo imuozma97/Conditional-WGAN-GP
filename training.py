@@ -52,6 +52,7 @@ class Training(tf.keras.Model):
                 
             with tf.GradientTape() as disc_tape:
                 generated_images = self.generator([noise, z_values], training=True)
+                #print("Shape generados: ", generated_images.shape)
                 psd_gen = self.power.compute_all_psd(generated_images)
 
                 #Si el D tiene psd o no:
@@ -80,6 +81,7 @@ class Training(tf.keras.Model):
         with tf.GradientTape() as gen_tape:
                 
             generated_images = self.generator([noise, z_values], training=True)
+            #print("min de G: ", tf.reduce_min(generated_images), "MAximo: ", tf.reduce_max(generated_images))
             psd_gen = self.power.compute_all_psd(generated_images)
 
             #Si el D tiene psd o no:
@@ -113,7 +115,7 @@ class Training(tf.keras.Model):
         #ratio2 = norm_adv / (norm_psd + 1e-8)
         #ratio3 = norm_disc / (norm_adv + 1e-8)
 
-        return wass_loss, disc_loss_real, disc_loss_fake, loss_adv, loss_psd, percent, grads_norm_mean, ratio1, psd_gen, psd_max, psd_min
+        return wass_loss, disc_loss_real, disc_loss_fake, loss_adv, loss_psd, percent, grads_norm_mean, ratio1, norm_disc, norm_gen #,psd_gen, psd_max, psd_min, 
         
     
 
@@ -148,6 +150,8 @@ class Training(tf.keras.Model):
                 grad_pen = data.get('grad_pen', [])
                 percents = data.get('percents', [])
                 ratios1 = data.get('ratio1', [])
+                norms_disc = data.get('norms_disc', [])
+                norms_gen = data.get('norms_gen', [])
 
                 best_epoch = data.get('best_epoch', [])
                 best_psd = data.get('best_psd', [])
@@ -173,8 +177,10 @@ class Training(tf.keras.Model):
                 
             grad_pen = []
             percents = []
-                
+
             ratios1 = []
+                
+            norms_disc, norms_gen= [], []
 
             best_percent_metric = float("inf")
             best_psd_metric = float("inf")
@@ -191,7 +197,8 @@ class Training(tf.keras.Model):
             gp = 0
             percent = 0
             ratio1 = 0
-        
+
+            norm_disc, norm_gen = 0 , 0
             
             print('Currently training on epoch {} (out of {}).'.format(epoch, epochs))
 
@@ -208,11 +215,15 @@ class Training(tf.keras.Model):
                 gp += losses[6]
                     
                 ratio1 += losses[7]
+                norm_disc += losses[8]
+                norm_gen += losses[9]
                 
-                psd_gen_batch = losses[8]
-                psd_max_batch = losses[9]
-                psd_min_batch = losses[10]
-                percent_batch = losses[5]
+                #psd_gen_batch = losses[8]
+                #psd_max_batch = losses[9]
+                #psd_min_batch = losses[10]
+                #percent_batch = losses[5]
+
+                
                     
                 batch_count += 1
                     
@@ -228,6 +239,9 @@ class Training(tf.keras.Model):
             gp /= batch_count
                 
             ratio1 /= batch_count
+
+            norm_disc /= batch_count
+            norm_gen /= batch_count
                 
 
             
@@ -293,6 +307,10 @@ class Training(tf.keras.Model):
                 
             grad_pen.append(float(gp.numpy()))
             ratios1.append(float(ratio1.numpy()))
+
+            norms_disc.append(float(norm_disc.numpy()))
+            norms_gen.append(float(norm_gen.numpy()))
+
             epoch_vect.append(epoch)
 
             checkpoint.epoch.assign(epoch)
@@ -316,6 +334,8 @@ class Training(tf.keras.Model):
                         'best_percent' : best_percent,
                         'best_epoch_percent' : best_epoch_percent,
                         'ratio1' : ratios1, 
+                        'norm_disc' : norms_disc, 
+                        'nom_gen' : norms_gen
                     }, f)
             os.replace(tmp_file, loss_file)
 
