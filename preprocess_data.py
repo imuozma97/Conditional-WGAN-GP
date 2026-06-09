@@ -8,7 +8,7 @@ import h5py
 import os
 
 from config import num_classes, num_cv
-from transforms import forward, forward_custom
+from transforms import forward
 
 class Dataset(tf.keras.Model):
     def __init__(self, batch_size, n_bar, buffer_size):
@@ -151,10 +151,6 @@ class Dataset(tf.keras.Model):
             norm_data, max_desnorm, min_desnorm = self.normalizar_datos_tanh(forw)
             return norm_data, z_vals, max_desnorm, min_desnorm 
 
-        if data_mode == "global_norm_tanh_new":
-            forw_new = forward_custom(delta)
-            forw_new = np.expand_dims(forw_new, -1)
-            return forw_new, z_vals
 
         elif data_mode == "redshift_norm":
             mu, sigma = self.compute_mu_sigma(forw) #Se lo doy por evoluciones porque compute ya lo reagrupa dentro, y salen por evoluciones, como los datos

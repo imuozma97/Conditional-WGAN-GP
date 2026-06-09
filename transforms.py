@@ -4,7 +4,7 @@ Funciones forward y backward de momento. Mirar si aquó podría añdir más func
 import tensorflow as tf
 from functools import partial
 
-from config import shift, c
+from config import shift, c, c_128
 
 
 
@@ -54,5 +54,6 @@ backward = partial(stat_backward, shift=shift, c=c)
 forward = partial(stat_forward, shift=shift, c=c)
 
 
-
+forward_128 = partial(stat_forward, shift=shift, c=c_128)
+backward_128 = partial(stat_backward, shift=shift, c=c_128)
 
