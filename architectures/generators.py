@@ -45,19 +45,19 @@ class Generator_film(tf.keras.Model):
 
         # Bloque 1
         self.conv1 = tf.keras.layers.Conv3DTranspose(filter1, 4, strides=2, padding='same', kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02),
-        use_bias=False)
+        use_bias=True)
         self.film1 = FiLMLayer(filter1)
         self.act1 = tf.keras.layers.ReLU()
 
         # Bloque 2
         self.conv2 = tf.keras.layers.Conv3DTranspose(filter2, 4, strides=2, padding='same', kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02),
-        use_bias=False)
+        use_bias=True)
         self.film2 = FiLMLayer(filter2)
         self.act2 = tf.keras.layers.ReLU()
 
         # Bloque 3
-        self.conv3 = tf.keras.layers.Conv3DTranspose(filter3, 3, strides=2, padding='same', kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02),
-        use_bias=False)
+        self.conv3 = tf.keras.layers.Conv3DTranspose(filter3, 4, strides=2, padding='same', kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02),
+        use_bias=True)
         self.film3 = FiLMLayer(filter3)
         self.act3 = tf.keras.layers.ReLU()
 
@@ -70,24 +70,28 @@ class Generator_film(tf.keras.Model):
         # Condición por el embedding
         z = self.z_embedding(z_condition)
 
-        # Dense y reshape del ruido---¿Debería poner también la condición desde el principio?
         x = self.dense(z_latent)
         x = self.reshape(x)
 
-        # Bloques con FiLM
+        noise1 = tf.random.normal(tf.shape(x))
+        x = x + noise1 
         x = self.conv1(x)
         x = self.film1(x, z)
         x = self.act1(x)
 
+        noise2 = tf.random.normal(tf.shape(x))
+        x = x + noise2 
         x = self.conv2(x)
         x = self.film2(x, z)
         x = self.act2(x)
 
+        noise3 = tf.random.normal(tf.shape(x))
+        x = x + noise3
         x = self.conv3(x)
         x = self.film3(x, z)
         x = self.act3(x)
 
-        return self.out(x)
+        return self.out(x, training = training)
 
 
 
@@ -520,6 +524,144 @@ class Generator_film_linear(tf.keras.Model):
         x = self.act3(x)
 
         return self.out(x, training = training)
+
+
+
+class Generator_film_linear2(tf.keras.Model):
+    def __init__(self, filter1, filter2, filter3):
+        super().__init__()
+        self.filter1 = filter1
+        self.filter2 = filter2
+        self.filter3 = filter3
+
+        self.z_embedding = tf.keras.Sequential([
+            tf.keras.layers.Dense(embedding_dim),
+            tf.keras.layers.Dense(embedding_dim),
+        ])
+
+       #Cubo inicial y reshape
+        self.dense = tf.keras.layers.Dense(8 * 8 * 8 * filter1)
+        self.reshape = tf.keras.layers.Reshape((8, 8, 8, filter1))
+
+        # Bloque 1
+        self.conv1 = tf.keras.layers.Conv3DTranspose(filter1, 4, strides=2, padding='same', kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02),
+        use_bias = True)
+        self.film1 = FiLMLayer(filter1)
+        self.act1 = tf.keras.layers.ReLU()
+
+        # Bloque 2
+        self.conv2 = tf.keras.layers.Conv3DTranspose(filter2, 4, strides=2, padding='same', kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02),
+        use_bias = True)
+        self.film2 = FiLMLayer(filter2)
+        self.act2 = tf.keras.layers.ReLU()
+
+        # Bloque 3
+        self.conv3 = tf.keras.layers.Conv3DTranspose(filter3, 4, strides=2, padding='same', kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02),
+        use_bias = True)
+        self.film3 = FiLMLayer(filter3)
+        self.act3 = tf.keras.layers.ReLU()
+
+        #Última capa
+        self.out = tf.keras.layers.Conv3D(1, 3, padding='same', activation='linear',  kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02))
+
+    def call(self, inputs, training=True):
+        z_latent, z_condition = inputs
+
+        # Condición por el embedding
+        z = self.z_embedding(z_condition)
+
+        x = self.dense(z_latent)
+        x = self.reshape(x)
+
+        noise1 = tf.random.normal(tf.shape(x))
+        x = x + noise1 
+        x = self.conv1(x)
+        x = self.film1(x, z)
+        x = self.act1(x)
+
+        noise2 = tf.random.normal(tf.shape(x))
+        x = x + noise2 
+        x = self.conv2(x)
+        x = self.film2(x, z)
+        x = self.act2(x)
+
+        noise3 = tf.random.normal(tf.shape(x))
+        x = x + noise3
+        x = self.conv3(x)
+        x = self.film3(x, z)
+        x = self.act3(x)
+
+        return self.out(x, training = training)
+
+
+
+
+
+class Generator_film_linear_swish(tf.keras.Model):
+    def __init__(self, filter1, filter2, filter3):
+        super().__init__()
+        self.filter1 = filter1
+        self.filter2 = filter2
+        self.filter3 = filter3
+
+        self.z_embedding = tf.keras.Sequential([
+            tf.keras.layers.Dense(embedding_dim, activation='swish'),
+            tf.keras.layers.Dense(embedding_dim, activation='swish'),
+        ])
+
+       #Cubo inicial y reshape
+        self.dense = tf.keras.layers.Dense(8 * 8 * 8 * filter1)
+        self.reshape = tf.keras.layers.Reshape((8, 8, 8, filter1))
+
+        # Bloque 1
+        self.conv1 = tf.keras.layers.Conv3DTranspose(filter1, 4, strides=2, padding='same', kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02),
+        use_bias = True)
+        self.film1 = FiLMLayer(filter1)
+        self.act1 = tf.keras.layers.ReLU()
+
+        # Bloque 2
+        self.conv2 = tf.keras.layers.Conv3DTranspose(filter2, 4, strides=2, padding='same', kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02),
+        use_bias = True)
+        self.film2 = FiLMLayer(filter2)
+        self.act2 = tf.keras.layers.ReLU()
+
+        # Bloque 3
+        self.conv3 = tf.keras.layers.Conv3DTranspose(filter3, 4, strides=2, padding='same', kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02),
+        use_bias = True)
+        self.film3 = FiLMLayer(filter3)
+        self.act3 = tf.keras.layers.ReLU()
+
+        #Última capa
+        self.out = tf.keras.layers.Conv3D(1, 3, padding='same', activation='linear',  kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02))
+
+    def call(self, inputs, training=True):
+        z_latent, z_condition = inputs
+
+        # Condición por el embedding
+        z = self.z_embedding(z_condition, training = training)
+
+        concat = tf.concat([z_latent, z], axis=-1)
+
+        x = self.dense(concat)
+        x = self.reshape(x)
+
+        # Bloques con FiLM
+        x = self.conv1(x)
+        x = self.film1(x, z)
+        x = self.act1(x)
+
+        x = self.conv2(x)
+        x = self.film2(x, z)
+        x = self.act2(x)
+
+        x = self.conv3(x)
+        x = self.film3(x, z)
+        x = self.act3(x)
+
+        return self.out(x, training = training)
+
+
+
 
 
 class Generator_film_linear_new(tf.keras.Model):
@@ -991,6 +1133,48 @@ class Generator_concat(tf.keras.Model): #TAL VEZ TENDRÍA QUE QUITAR BACHNORM
 
     def call(self, inputs, training=True):
         z_latent, z_condition = inputs  
-        z_embed = self.z_embedding(z_condition)  
+        z_embed = self.z_embedding(z_condition, training = training)  
         concat_input = tf.concat([z_latent, z_embed], axis=-1)
         return self.net(concat_input)
+
+
+
+class Generator_concat_linear(tf.keras.Model): #TAL VEZ TENDRÍA QUE QUITAR BACHNORM
+    def __init__(self, filter1, filter2, filter3):
+        super().__init__()
+        self.filter1 = filter1
+        self.filter2 = filter2
+        self.filter3 = filter3
+        
+        #Embedding de la condición
+        self.z_embedding = tf.keras.Sequential([
+            tf.keras.layers.Dense(embedding_dim, activation='linear'),
+            tf.keras.layers.Dense(embedding_dim, activation='linear'),
+        ])
+
+        self.net = tf.keras.Sequential([
+            # Capa densa inicial para crear un cubo base 4x4x4 con 128 canales
+            tf.keras.layers.Dense(8 * 8 * 8 * filter1),
+            tf.keras.layers.Reshape((8, 8, 8, filter1)), 
+
+            # Bloque1
+            tf.keras.layers.Conv3DTranspose(filter1, kernel_size=4, strides=2, padding='same', kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias = True),
+            tf.keras.layers.ReLU(),
+
+            # Bloque2
+            tf.keras.layers.Conv3DTranspose(filter2, kernel_size=4, strides=2, padding='same', kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias = True),
+            tf.keras.layers.ReLU(),
+            
+            #Bloque3
+            tf.keras.layers.Conv3DTranspose(filter3, kernel_size=4, strides=2, padding='same', kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02), use_bias = True),
+            tf.keras.layers.ReLU(),
+
+            # Capa de salida
+            tf.keras.layers.Conv3D(1, kernel_size=4, padding='same', activation='linear', kernel_initializer=tf.keras.initializers.RandomNormal(0.0, 0.02))
+            ])
+
+    def call(self, inputs, training=True):
+        z_latent, z_condition = inputs  
+        z_embed = self.z_embedding(z_condition, training = training)  
+        concat_input = tf.concat([z_latent, z_embed], axis=-1)
+        return self.net(concat_input, training = training)
