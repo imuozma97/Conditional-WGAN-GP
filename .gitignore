@@ -11,3 +11,4 @@ Training3D/
 *.sh
 *.sub
 *.hdf5
+*.png
