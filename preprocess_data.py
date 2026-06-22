@@ -8,7 +8,7 @@ import h5py
 import os
 
 from config import num_classes, num_cv
-from transforms import forward
+from transforms import forward_1, forward_2
 
 class Dataset(tf.keras.Model):
     def __init__(self, batch_size, n_bar, buffer_size):
@@ -26,6 +26,7 @@ class Dataset(tf.keras.Model):
         f = h5py.File(file, 'r')
         maps = f['train_maps'][:]
         red = np.array(f['train_labels'])[:]
+        maps = np.expand_dims(maps, -1)
         
         return maps, red
     
@@ -34,7 +35,7 @@ class Dataset(tf.keras.Model):
     def delta(self, images):
         
         delta = (images - self.n_bar)/self.n_bar
-        delta = np.expand_dims(delta, -1)
+        #delta = np.expand_dims(delta, -1)
         return delta
 
     def deshacer_delta(self, delta):
@@ -83,7 +84,10 @@ class Dataset(tf.keras.Model):
         max_val = np.max(images)
             
         normalized_data = 2 * (images - min_val) / (max_val - min_val) - 1
-        normalized_data = np.expand_dims(normalized_data, -1)
+        #normalized_data = np.expand_dims(normalized_data, -1)
+        #print("Image norm shape:", normalized_data.shape)
+        #print("Max norm1 shape:", np.max(normalized_data).shape)
+        #print("Min norm1 shape:", np.min(normalized_data).shape)
 
         return normalized_data, max_val, min_val
 
@@ -95,7 +99,9 @@ class Dataset(tf.keras.Model):
 
 
     def desnormalizar_datos_tanh(self, images, maximo, minimo):
-        
+       # print("Images shape:", images.shape)
+       # print("Maximo shape:", maximo.shape)
+       # print("Minimo shape:", minimo.shape)
         original_data =  ((images + 1) / 2) * (maximo - minimo) + minimo
         #original_data =  images * (maximo - minimo) + minimo
         
@@ -181,7 +187,7 @@ class Dataset(tf.keras.Model):
         return psd_max, psd_min, psd_mean, psd_sigma, all_psd
     
     def load_k_values(self):
-        load_psd = np.load("psd-data/PSD_norm.npz")
+        load_psd = np.load("PSD_delta.npz")
         k_values = load_psd["k_values"]
 
         return k_values
