@@ -9,6 +9,7 @@ image_size = 64
 image_size2 = 128
 
 latent_dim = 128
+latent_dim2 = 64
 num_cv = 27
 mass = 6.5e7 #Msol/h
 boxsize = 25 #Poner unidades
@@ -30,7 +31,12 @@ ncritic5 = 5
 
 #N = 27
 
-shift = 3
-c = 20000
+shift_1 = 0.1
+c_1 = 20000
+
+shift_2 = 0.0001
+c_2 = 300
+
+
 c_128 = 1000
 #c = 7
