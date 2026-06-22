@@ -201,7 +201,7 @@ class Power(tf.keras.Model):
             if tipo == "norm":
                 plt.ylim(10**-4, 10**5)
             elif tipo == "desnorm":
-                plt.ylim(10**3, 10**12)
+                plt.ylim(1, 10**7)
 
             
             if not os.path.exists(os.path.join(generated_images_folder, carpeta)):
@@ -236,7 +236,7 @@ class Power(tf.keras.Model):
             if tipo == "norm":
                 plt.ylim(10**-4, 10**5)
             elif tipo == "desnorm":
-                plt.ylim(10**3, 10**12)
+                plt.ylim(1, 10**7)
 
             
             if not os.path.exists(os.path.join(generated_images_folder, carpeta)):
@@ -337,10 +337,34 @@ class Power(tf.keras.Model):
             if tipo == "norm":
                 plt.ylim(10**-4, 10**5)
             elif tipo == "desnorm":
-                plt.ylim(10**3, 10**12)
+                plt.ylim(1, 10**7)
 
             path = os.path.join(generated_images_folder, carpeta)
             if not os.path.exists(path): os.makedirs(path)
 
             plt.savefig(os.path.join(path, f"psd_{i:02d}.png"), bbox_inches='tight', format='png')
             plt.show()
+
+
+    def generate_psd_real(self, k_values, mean_real1, mean_real2, generated_images_folder, carpeta = "graficas_seminario"):
+ 
+        plt.figure(figsize=(8, 5))
+
+        plt.plot(k_values, mean_real1, '-o', ms = 4, color = 'blue', label = "z = 0")
+        plt.plot(k_values, mean_real2, '-o', ms = 4, color = 'purple', label = "z = 6")
+        
+        plt.yscale('log')
+        plt.xlabel("$k$ [h/Mpc]", fontsize = 20)
+        plt.ylabel("P(k)", fontsize = 20)
+
+        plt.title("PSD vs. $k$")
+        plt.legend(fontsize = 14)
+
+        plt.ylim(1, 10**7)
+
+            
+        if not os.path.exists(os.path.join(generated_images_folder, carpeta)):
+            os.makedirs(os.path.join(generated_images_folder, carpeta))
+
+        plt.savefig(os.path.join(generated_images_folder , carpeta, f"Grafica_psd.png"), bbox_inches='tight', format='png')
+        plt.show()
