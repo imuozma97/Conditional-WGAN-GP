@@ -3,7 +3,6 @@ Funciones principales del entrenamiento
 -train step: hace cada batch
 """
 
-
 import tensorflow as tf
 import os
 import json
@@ -15,12 +14,12 @@ from grad_pen import gradient_penalty
 from power import Power
 from psd_utils import psd_out_of_band_fraction, psd_loss
 from loss_plot import plot_loss_graph
-from transforms import backward_1
+from transforms import backward_2
 
 
-class Training2(tf.keras.Model):
+class Training1(tf.keras.Model):
 
-    def __init__(self, data_class, discriminator, generator, batch_size, ncritic, trained_models_folder, generated_images_folder, lambda_psd_schedule, lambda_term, use_psd=True, use_psd_loss = True):
+    def __init__(self, data_class, discriminator, generator, batch_size, ncritic, trained_models_folder, generated_images_folder, lambda_psd_schedule, lambda_term, max_desnorm, min_desnorm, use_psd=True, use_psd_loss = True):
         super().__init__()
         self.discriminator = discriminator
         self.generator = generator
@@ -34,7 +33,8 @@ class Training2(tf.keras.Model):
         self.data_class = data_class
         self.lambda_psd_schedule = lambda_psd_schedule
         self.lambda_term = lambda_term
-
+        self.max_desnorm = max_desnorm
+        self.min_desnorm = min_desnorm
         self.power = Power(image_size)
 
 
@@ -81,8 +81,8 @@ class Training2(tf.keras.Model):
         with tf.GradientTape() as gen_tape:
                 
             generated_images = self.generator([noise, z_values], training=True)
-            num_part = backward_1(generated_images) - 1
-            delta = self.data_class.delta(num_part)
+            desnorm_gen_images = self.data_class.desnormalizar_datos_tanh(generated_images, self.max_desnorm, self.min_desnorm)
+            delta = backward_2(desnorm_gen_images) - 1
             psd_gen = self.power.compute_all_psd(delta)
 
             #Si el D tiene psd o no:

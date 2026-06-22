@@ -3,7 +3,6 @@ Funciones principales del entrenamiento
 -train step: hace cada batch
 """
 
-
 import tensorflow as tf
 import os
 import json
@@ -15,10 +14,10 @@ from grad_pen import gradient_penalty
 from power import Power
 from psd_utils import psd_out_of_band_fraction, psd_loss
 from loss_plot import plot_loss_graph
-from transforms import backward_1
+from transforms import backward
 
 
-class Training2(tf.keras.Model):
+class Training6(tf.keras.Model):
 
     def __init__(self, data_class, discriminator, generator, batch_size, ncritic, trained_models_folder, generated_images_folder, lambda_psd_schedule, lambda_term, use_psd=True, use_psd_loss = True):
         super().__init__()
@@ -54,6 +53,9 @@ class Training2(tf.keras.Model):
                 
             with tf.GradientTape() as disc_tape:
                 generated_images = self.generator([noise, z_values], training=True)
+                gen_images_back = backward(generated_images)
+                
+                psd_gen = self.power.compute_all_psd(gen_images_back)
 
                 #Si el D tiene psd o no:
                 if self.use_psd:
@@ -78,12 +80,11 @@ class Training2(tf.keras.Model):
 
             # Generador
         noise = tf.random.normal([self.batch_size, latent_dim]) 
-        with tf.GradientTape() as gen_tape:
+        with tf.GradientTape(persistent=True) as gen_tape:
                 
             generated_images = self.generator([noise, z_values], training=True)
-            num_part = backward_1(generated_images) - 1
-            delta = self.data_class.delta(num_part)
-            psd_gen = self.power.compute_all_psd(delta)
+            gen_images_back = backward(generated_images)
+            psd_gen = self.power.compute_all_psd(gen_images_back)
 
             #Si el D tiene psd o no:
             if self.use_psd:
@@ -97,16 +98,17 @@ class Training2(tf.keras.Model):
             loss_psd = psd_loss(psd_gen, psd_mean, sigma_log) 
 
             if self.use_psd_loss:
-                lambda_psd = self.lambda_psd_schedule(self.current_epoch)
-                gen_loss = loss_adv + lambda_psd*loss_psd
+                lambda_psd = tf.stop_gradient(loss_adv / (loss_psd + 1e-8))
+                gen_loss = loss_adv + lambda_psd * loss_psd
             else:  
                 gen_loss = loss_adv
                 
 
         grads_gen = gen_tape.gradient(gen_loss, self.generator.trainable_variables)
+        grads_psd = gen_tape.gradient(psd_loss, self.generator.trainable_variables)
 
         norm_gen = tf.linalg.global_norm(grads_gen)
-        #norm_psd = tf.linalg.global_norm(grads_psd)
+        norm_psd = tf.linalg.global_norm(grads_psd)
         #norm_adv = tf.linalg.global_norm(grads_adv)
     
             
@@ -116,7 +118,7 @@ class Training2(tf.keras.Model):
         #ratio2 = norm_adv / (norm_psd + 1e-8)
         #ratio3 = norm_disc / (norm_adv + 1e-8)
 
-        return wass_loss, disc_loss_real, disc_loss_fake, loss_adv, loss_psd, percent, grads_norm_mean, ratio1, norm_disc, norm_gen #,psd_gen, psd_max, psd_min, 
+        return wass_loss, disc_loss_real, disc_loss_fake, loss_adv, loss_psd, percent, grads_norm_mean, ratio1, norm_disc, norm_gen , norm_psd#,psd_gen, psd_max, psd_min, 
         
     
 
@@ -153,6 +155,7 @@ class Training2(tf.keras.Model):
                 ratios1 = data.get('ratio1', [])
                 norms_disc = data.get('norms_disc', [])
                 norms_gen = data.get('norms_gen', [])
+                norms_psd = data.get('norms_psd', [])
 
                 best_epoch = data.get('best_epoch', [])
                 best_psd = data.get('best_psd', [])
@@ -181,7 +184,7 @@ class Training2(tf.keras.Model):
 
             ratios1 = []
                 
-            norms_disc, norms_gen= [], []
+            norms_disc, norms_gen, norms_psd = [], [], []
 
             best_percent_metric = float("inf")
             best_psd_metric = float("inf")
@@ -199,7 +202,7 @@ class Training2(tf.keras.Model):
             percent = 0
             ratio1 = 0
 
-            norm_disc, norm_gen = 0 , 0
+            norm_disc, norm_gen, norm_psd = 0 , 0, 0
             
             print('Currently training on epoch {} (out of {}).'.format(epoch, epochs))
 
@@ -218,7 +221,7 @@ class Training2(tf.keras.Model):
                 ratio1 += losses[7]
                 norm_disc += losses[8]
                 norm_gen += losses[9]
-                
+                norm_psd += losses[10]
                 #psd_gen_batch = losses[8]
                 #psd_max_batch = losses[9]
                 #psd_min_batch = losses[10]
@@ -243,6 +246,7 @@ class Training2(tf.keras.Model):
 
             norm_disc /= batch_count
             norm_gen /= batch_count
+            norm_psd /= batch_count
                 
 
             
@@ -311,7 +315,7 @@ class Training2(tf.keras.Model):
 
             norms_disc.append(float(norm_disc.numpy()))
             norms_gen.append(float(norm_gen.numpy()))
-
+            norms_psd.append(float(norm_psd.numpy()))
             epoch_vect.append(epoch)
 
             checkpoint.epoch.assign(epoch)
@@ -336,7 +340,9 @@ class Training2(tf.keras.Model):
                         'best_epoch_percent' : best_epoch_percent,
                         'ratio1' : ratios1, 
                         'norm_disc' : norms_disc, 
-                        'nom_gen' : norms_gen
+                        'norm_gen' : norms_gen,
+                        'norm_psd' : norms_psd,
+                        'nom_gen' : norms_gen,
                     }, f)
             os.replace(tmp_file, loss_file)
 

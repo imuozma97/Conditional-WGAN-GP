@@ -14,6 +14,7 @@ from grad_pen import gradient_penalty
 from power import Power
 from psd_utils import psd_out_of_band_fraction, psd_loss
 from loss_plot import plot_loss_graph
+from transforms import backward_2
 
 
 class Training(tf.keras.Model):
@@ -52,8 +53,6 @@ class Training(tf.keras.Model):
                 
             with tf.GradientTape() as disc_tape:
                 generated_images = self.generator([noise, z_values], training=True)
-                #print("Shape generados: ", generated_images.shape)
-                psd_gen = self.power.compute_all_psd(generated_images)
 
                 #Si el D tiene psd o no:
                 if self.use_psd:
@@ -81,8 +80,8 @@ class Training(tf.keras.Model):
         with tf.GradientTape() as gen_tape:
                 
             generated_images = self.generator([noise, z_values], training=True)
-            #print("min de G: ", tf.reduce_min(generated_images), "MAximo: ", tf.reduce_max(generated_images))
-            psd_gen = self.power.compute_all_psd(generated_images)
+            delta = backward_2(generated_images) - 1
+            psd_gen = self.power.compute_all_psd(delta)
 
             #Si el D tiene psd o no:
             if self.use_psd:

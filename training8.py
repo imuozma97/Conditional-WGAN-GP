@@ -3,22 +3,21 @@ Funciones principales del entrenamiento
 -train step: hace cada batch
 """
 
-
 import tensorflow as tf
 import os
 import json
 import numpy as np
 
 
-from config import latent_dim, image_size
+from config import latent_dim2, image_size
 from grad_pen import gradient_penalty
 from power import Power
 from psd_utils import psd_out_of_band_fraction, psd_loss
 from loss_plot import plot_loss_graph
-from transforms import backward_1
+from transforms import backward_2
 
 
-class Training2(tf.keras.Model):
+class Training8(tf.keras.Model):
 
     def __init__(self, data_class, discriminator, generator, batch_size, ncritic, trained_models_folder, generated_images_folder, lambda_psd_schedule, lambda_term, use_psd=True, use_psd_loss = True):
         super().__init__()
@@ -50,7 +49,7 @@ class Training2(tf.keras.Model):
         real_images, z_values, psd_max, psd_min,  psd_mean, sigma_log = data  
 
         for _ in range(self.ncritic):
-            noise = tf.random.normal([self.batch_size, latent_dim]) 
+            noise = tf.random.normal([self.batch_size, latent_dim2]) 
                 
             with tf.GradientTape() as disc_tape:
                 generated_images = self.generator([noise, z_values], training=True)
@@ -77,12 +76,11 @@ class Training2(tf.keras.Model):
             self.d_optimizer.apply_gradients(zip(grads_disc, self.discriminator.trainable_variables))
 
             # Generador
-        noise = tf.random.normal([self.batch_size, latent_dim]) 
+        noise = tf.random.normal([self.batch_size, latent_dim2]) 
         with tf.GradientTape() as gen_tape:
                 
             generated_images = self.generator([noise, z_values], training=True)
-            num_part = backward_1(generated_images) - 1
-            delta = self.data_class.delta(num_part)
+            delta = backward_2(generated_images) - 1
             psd_gen = self.power.compute_all_psd(delta)
 
             #Si el D tiene psd o no:
