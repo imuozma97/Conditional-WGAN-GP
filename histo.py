@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np
 from config import num_classes, num_cv
+from scipy.interpolate import make_interp_spline
 
 class Histogramas:
     def __init__(self, generated_images_folder, redshifts):
@@ -37,33 +38,17 @@ class Histogramas:
         plt.legend()
         plt.ylim(1, 10**7)
 
-        if tipo == "norm":
-            #plt.xlim(-20, 140)
-            plt.xlim(-1, 1)
-            filename = f"histo_norm_{i:02d}.png"
-            carpeta = f"histogramas_normalizados_{epoch}"
-            if not os.path.exists(os.path.join(self.generated_images_folder, carpeta)):
-                os.makedirs(os.path.join(self.generated_images_folder, carpeta))
-
-        if tipo == "desnorm":
-            #plt.xlim(0, 4500)
-            filename = f"histo_desnorm_{i:02d}.png"
-            carpeta = f"histogramas_desnormalizados_{epoch}"
-            if not os.path.exists(os.path.join(self.generated_images_folder, carpeta)):
-                os.makedirs(os.path.join(self.generated_images_folder, carpeta))
-
-        if tipo == "log-desnorm":
-            plt.xlim(-1, 9)
-            filename = f"histo_desnorm_{i:02d}.png"
-            carpeta = f"histogramas_desnormalizados_{epoch}"
-            if not os.path.exists(os.path.join(self.generated_images_folder, carpeta)):
-                os.makedirs(os.path.join(self.generated_images_folder, carpeta))
-        
+        filename = f"histo_{i:02d}.png"
+        carpeta = f"histogramas_prueba_{epoch}"
+        if not os.path.exists(os.path.join(self.generated_images_folder, carpeta)):
+            os.makedirs(os.path.join(self.generated_images_folder, carpeta))
         
         filepath = os.path.join(self.generated_images_folder, carpeta, filename)
         plt.savefig(filepath, dpi=150, bbox_inches='tight')
         #plt.show()
         plt.close()
+
+
 
     def all_histogramas(self, N, fake_agrupado, real_agrupado, tipo, epoch):
         for i in range(num_classes):
@@ -338,3 +323,256 @@ class Histogramas:
 
         # Finalmente, se despliega en pantalla
         plt.show()
+
+
+
+
+
+
+    def histograma_medio(self, data1, data2, tipo, epoch, i=None):
+
+        # Mismos bins para fake y real
+        all_values = np.concatenate([
+            data1.flatten(),
+            data2.flatten()
+        ])
+        bins = np.linspace(all_values.min(), all_values.max(), 51)
+
+        # Histograma medio fake
+        hist_fake = []
+        for sample in data1:
+            h, _ = np.histogram(sample.flatten(), bins=bins)
+            hist_fake.append(h)
+
+        hist_fake = np.mean(hist_fake, axis=0)
+
+        # Histograma medio real
+        hist_real = []
+        for sample in data2:
+            h, _ = np.histogram(sample.flatten(), bins=bins)
+            hist_real.append(h)
+
+        hist_real = np.mean(hist_real, axis=0)
+
+        # Centros de los bins
+        centers = 0.5 * (bins[:-1] + bins[1:])
+        width = np.diff(bins)
+
+        plt.figure(figsize=(6,4))
+        plt.bar(centers, hist_fake, width=width,
+                alpha=0.4, color='blue', edgecolor='black', linewidth=0.8, label='Fake')
+
+        plt.bar(centers, hist_real, width=width,
+                alpha=0.4, color='purple', edgecolor='black', linewidth=0.8, label='Real')
+
+        plt.yscale('log')
+        plt.xlabel("Valor en el voxel")
+        plt.ylabel("Número medio de vóxeles")
+        plt.ylim(0.1, 10**6)
+        plt.title(f"Distribución en z = {self.redshifts[i]}")
+        plt.legend()
+
+        filename = f"histo_{i:02d}.png"
+        carpeta = f"histogramas_prueba_{epoch}"
+        if not os.path.exists(os.path.join(self.generated_images_folder, carpeta)):
+            os.makedirs(os.path.join(self.generated_images_folder, carpeta))
+        
+        filepath = os.path.join(self.generated_images_folder, carpeta, filename)
+        plt.savefig(filepath, dpi=150, bbox_inches='tight')
+        #plt.show()
+        plt.close()
+
+    
+
+    def all_histogramas_medios(self, N, fake_agrupado, real_agrupado, tipo, epoch):
+        for i in range(num_classes):
+            self.histograma_medio(fake_agrupado[i*N : N + N*i], real_agrupado[i*num_cv : num_cv + num_cv*i], tipo, epoch, i)
+
+
+
+
+
+    def histograma_medio_residuos(self, data1, data2, tipo, epoch, i=None):
+
+        # Mismos bins para fake y real
+        all_values = np.concatenate([
+            data1.flatten(),
+            data2.flatten()
+        ])
+        bins = np.linspace(all_values.min(), all_values.max(), 51)
+
+        # Histograma medio fake
+        hist_fake = []
+        for sample in data1:
+            h, _ = np.histogram(sample.flatten(), bins=bins)
+            hist_fake.append(h)
+        hist_fake = np.mean(hist_fake, axis=0)
+
+        # Histograma medio real
+        hist_real = []
+        for sample in data2:
+            h, _ = np.histogram(sample.flatten(), bins=bins)
+            hist_real.append(h)
+        hist_real = np.mean(hist_real, axis=0)
+
+        # Centros de los bins
+        centers = 0.5 * (bins[:-1] + bins[1:])
+        width = np.diff(bins)
+
+        # Residuo relativo
+        residual = np.zeros_like(hist_real, dtype=float)
+        mask = hist_real > 0
+        residual[mask] = (hist_fake[mask] - hist_real[mask]) / hist_real[mask]
+
+        # Figura con dos paneles (el inferior más pequeño)
+        fig, (ax1, ax2) = plt.subplots(
+            2, 1,
+            figsize=(6, 6),
+            sharex=True,
+            gridspec_kw={'height_ratios': [3, 1], 'hspace': 0.05}
+        )
+
+        # Histograma
+        ax1.bar(
+            centers, hist_fake, width=width,
+            alpha=0.4, color='red',
+            edgecolor='black', linewidth=0.8,
+            label='Fake'
+        )
+
+        ax1.bar(
+            centers, hist_real, width=width,
+            alpha=0.4, color='blue',
+            edgecolor='black', linewidth=0.8,
+            label='Real'
+        )
+
+        ax1.set_yscale('log')
+        ax1.set_ylim(0.1, 1e6)
+        ax1.set_ylabel("Number of voxels", fontsize = 20)
+        ax1.set_title(f"Maxx histogram - z = {self.redshifts[i]}")
+        ax1.legend(fontsize=20)
+
+        # Residuos relativos
+        ax2.axhline(0, color='gray', linewidth=1)
+        ax2.plot(centers, residual, color = 'green', markersize=3, linewidth=1.5)
+
+        ax2.set_ylabel(r'$\Delta/N$')
+        ax2.set_xlabel("Voxel value", fontsize=20)
+        #ax2.set_ylim(-1, 1)      # ajusta este rango si lo necesitas
+        ax2.grid(True, alpha=0.3)
+
+        filename = f"histo_{i:02d}.png"
+        carpeta = f"histogramas_prueba_residuos{epoch}"
+        if not os.path.exists(os.path.join(self.generated_images_folder, carpeta)):
+            os.makedirs(os.path.join(self.generated_images_folder, carpeta))
+
+        filepath = os.path.join(self.generated_images_folder, carpeta, filename)
+        plt.savefig(filepath, dpi=150, bbox_inches='tight')
+        plt.close()
+
+
+    def all_histogramas_medio_residuos(self, N, fake_agrupado, real_agrupado, tipo, epoch):
+        for i in range(num_classes):
+            self.histograma_medio_residuos(fake_agrupado[i*N : N + N*i], real_agrupado[i*num_cv : num_cv + num_cv*i], tipo, epoch, i)
+
+
+
+
+    def histograma_medio_residuos_p90(self, data1, data2, tipo, epoch, redshift, i=None):
+
+        # Mismos bins
+        all_values = np.concatenate([
+            data1.flatten(),
+            data2.flatten()
+        ])
+        bins = np.linspace(all_values.min(), all_values.max(), 51)
+
+        # --- Histograma de referencia (real) ---
+        hist_real_samples = []
+        for sample in data2:
+            h, _ = np.histogram(sample.flatten(), bins=bins)
+            hist_real_samples.append(h)
+        hist_real_samples = np.array(hist_real_samples)
+        hist_real_mean = np.mean(hist_real_samples, axis=0)
+
+        # --- Histograma fake por muestra ---
+        hist_fake_samples = []
+        for sample in data1:
+            h, _ = np.histogram(sample.flatten(), bins=bins)
+            hist_fake_samples.append(h)
+        hist_fake_samples = np.array(hist_fake_samples)
+
+        # --- Selección de los 90 más cercanos a la media real ---
+        distances = np.linalg.norm(hist_fake_samples - hist_real_mean, axis=1)
+
+        idx_sorted = np.argsort(distances)
+        idx_selected = idx_sorted[:90]
+
+        hist_fake_selected = hist_fake_samples[idx_selected]
+        hist_fake = np.mean(hist_fake_selected, axis=0)
+
+        # --- Histograma real medio ---
+        hist_real = np.mean(hist_real_samples, axis=0)
+
+        # Centros
+        centers = 0.5 * (bins[:-1] + bins[1:])
+        width = np.diff(bins)
+
+        # Residuo relativo
+        residual = np.zeros_like(hist_real, dtype=float)
+        mask = hist_real > 0
+        residual[mask] = (hist_fake[mask] - hist_real[mask]) / hist_real[mask]
+
+        # --- Plot ---
+        fig, (ax1, ax2) = plt.subplots(
+                2, 1,
+                figsize=(8, 5),
+                gridspec_kw={'height_ratios': [3, 1], 'hspace': 0.03},
+                sharex=True
+            )
+
+        ax1.bar(centers, hist_fake, width=width,
+                alpha=0.4, color='red',
+                edgecolor='black', linewidth=0.8,
+                label='Fake')
+
+        ax1.bar(centers, hist_real, width=width,
+                alpha=0.4, color='blue',
+                edgecolor='black', linewidth=0.8,
+                label='Real')
+
+        ax1.set_yscale('log')
+        ax1.set_ylim(0.1, 1e6)
+        ax1.set_ylabel("Number of cells", fontsize=20)
+        ax1.set_title("Mass histogram at z = {:.2f}".format(float(redshift[i])), fontsize=24)
+        ax1.tick_params(axis = 'y', labelsize = 16)
+
+        if i == 0:
+            ax1.legend(fontsize=17)
+
+        ax2.axhline(0, color='gray', linewidth=1)
+        ax2.plot(centers, residual, color='green', markersize=3, linewidth=1.5)
+
+        ax2.set_ylabel(r'$\Delta/N$', fontsize=20)
+        ax2.set_xlabel("$\delta$", fontsize=20)
+        ax2.grid(True, alpha=0.3)
+        ax2.tick_params(axis = 'both', labelsize = 16)
+
+        filename = f"histo_{i:02d}.png"
+        carpeta = f"histogramas_p90_{epoch}"
+        os.makedirs(os.path.join(self.generated_images_folder, carpeta), exist_ok=True)
+
+        filepath = os.path.join(self.generated_images_folder, carpeta, filename)
+        plt.savefig(filepath, dpi=300, bbox_inches='tight')
+        plt.close()
+
+
+    def all_histogramas_medio_residuos_p90(self, N, fake_agrupado, real_agrupado, tipo, epoch, redshift):
+        for i in range(num_classes):
+            self.histograma_medio_residuos_p90(fake_agrupado[i*N : N + N*i], real_agrupado[i*num_cv : num_cv + num_cv*i], tipo, epoch,redshift, i)
+
+
+    def all_histogramas_medio_p90_nuevo(self, N, fake_agrupado, real_agrupado, tipo, epoch, redshift, n_classes):
+        for i in range(n_classes):
+            self.histograma_medio_residuos_p90(fake_agrupado[i*N : N + N*i], real_agrupado[i*num_cv : num_cv + num_cv*i], tipo, epoch, redshift, i)

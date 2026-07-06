@@ -16,6 +16,20 @@ def psd_loss(gen_psd, mean_psd, sigma_log):
         
     return loss
 
+
+
+def psd_loss_log(gen_psd, mean_psd):
+        
+    log_fake = tf.math.log1p(gen_psd)
+    log_mean = tf.math.log1p(mean_psd)
+
+    psd_loss = (log_fake - log_mean)**2
+
+    loss = tf.reduce_mean(psd_loss)
+        
+    return loss
+
+
 """
 def lambda_psd_schedule(epoch):  #De este hacer revisión cuando lo vaya a usar
         
@@ -40,6 +54,9 @@ def lambda_psd_schedule(epoch):
         lambda_psd = 0.5
 
     elif epoch < 500:
+        lambda_psd = 1
+
+    else:
         lambda_psd = 1
 
 
@@ -69,6 +86,33 @@ def lambda_psd_schedule2(epoch):
         lambda_psd = 1.5
 
     return lambda_psd
+
+
+
+
+def lambda_psd_schedule3(epoch):
+
+    if epoch < 300:
+        lambda_psd = 0.0
+
+    elif epoch < 500:
+        #lambda_psd = 0.5 + (1 - 0.5) * (epoch - 150) / (400 - 150)
+        lambda_psd = 0.5
+
+    elif epoch < 800:
+        #lambda_psd = 1 + (1.3 - 1) * (epoch - 400) / (800 - 400)
+        lambda_psd = 1
+
+    #elif epoch < 1200:
+        # se mantiene en 1.0
+     #   lambda_psd = 1.3
+
+    else:
+        lambda_psd = 1.5
+
+    return lambda_psd
+
+
 
 
 

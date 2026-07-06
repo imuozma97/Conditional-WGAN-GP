@@ -216,6 +216,30 @@ class Dataset(tf.keras.Model):
         return tuple(reordered)
 
 
+    def reordenacion_nueva(self, muestras, n_classes, *arrays):
+
+        """
+        En el caso de querer reordenar las muestras reales, muestras = num_cv, y de las flasas será N
+        """
+        reordered = [[] for _ in arrays]
+
+        for j in range(n_classes):
+            for i in range(muestras):
+
+                idx = j + n_classes * i
+
+                for k, arr in enumerate(arrays):
+                    reordered[k].append(arr[idx])
+
+        reordered = [np.array(r) for r in reordered]
+
+        if len(reordered) == 1:
+            return reordered[0]
+
+        return tuple(reordered)
+
+
+
     def ordenar_datos_evoluciones(self, images, redshifts):
         
         """

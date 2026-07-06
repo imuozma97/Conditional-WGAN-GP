@@ -52,6 +52,39 @@ class Fake_images(tf.keras.Model):
 
 
 
+    def generate_images_nuevo(self, z_values, name, n_classes): 
+        """
+        Genera imágenes cargando el modelo guardado.
+        """
+        model_path = os.path.join(self.trained_models_folder, name)
+        generator = tf.keras.models.load_model(model_path, compile=False)
+
+        generated_images = []
+        redshift = []
+        
+        j = 1
+        while j < self.N + 1:
+            print('Evolución: ', j)
+            
+            noise = tf.random.normal([1, latent_dim])
+            
+            for i in range(n_classes):
+                
+                generated_data = generator([noise, np.expand_dims(z_values[i], 0)], training=False)
+                
+                generated_images.append(generated_data.numpy())
+                redshift.append(z_values[i])
+                
+            j += 1
+                    
+        generated_images = np.array(generated_images).reshape(self.N*n_classes, image_size, image_size, image_size, 1)
+        redshift = np.array(redshift)
+
+        return generated_images, redshift
+
+
+
+
     def generate_images_interpolated(self, name): 
         """
         Genera imágenes cargando el modelo guardado.
