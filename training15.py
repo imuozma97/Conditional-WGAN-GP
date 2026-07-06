@@ -12,12 +12,12 @@ import numpy as np
 from config import latent_dim, image_size
 from grad_pen import gradient_penalty
 from power import Power
-from psd_utils import psd_out_of_band_fraction, psd_loss
+from psd_utils import psd_out_of_band_fraction, psd_loss_log
 from loss_plot import plot_loss_graph
 from transforms import backward_2
 
 
-class Training(tf.keras.Model):
+class Training15(tf.keras.Model):
 
     def __init__(self, data_class, discriminator, generator, batch_size, ncritic, trained_models_folder, generated_images_folder, lambda_psd_schedule, lambda_term, use_psd=True, use_psd_loss = True):
         super().__init__()
@@ -46,7 +46,7 @@ class Training(tf.keras.Model):
     @tf.function    
     def train_step(self, data):
             
-        real_images, z_values, psd_max, psd_min,  psd_mean, sigma_log = data  
+        real_images, z_values, psd_max, psd_min,  psd_mean = data  
 
         for _ in range(self.ncritic):
             noise = tf.random.normal([self.batch_size, latent_dim]) 
@@ -92,7 +92,7 @@ class Training(tf.keras.Model):
             loss_adv = -tf.reduce_mean(fake_predictions)
             percent = psd_out_of_band_fraction(psd_gen, psd_min, psd_max)
 
-            loss_psd = psd_loss(psd_gen, psd_mean, sigma_log) 
+            loss_psd = psd_loss_log(psd_gen, psd_mean) 
 
             if self.use_psd_loss:
                 lambda_psd = self.lambda_psd_schedule(self.current_epoch)
