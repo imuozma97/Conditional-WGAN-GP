@@ -12,12 +12,12 @@ from power import Power
 from config import batch_size1, image_size, num_cv, n_bar
 from histo import Histogramas
 from gif import gif
-from transforms import forward_2,backward_2
+from transforms import forward_1,backward_1
 
-trained_models_folder = "Training3D/0-models"
-generated_images_folder = "Training3D/0-images"
-epoch = "00573"
-N=100
+trained_models_folder = "Training3D/3-models"
+generated_images_folder = "Training3D/3-images"
+epoch = "00603"
+N = 100
 
 datos= Dataset(batch_size1, n_bar, buffer_size = 918)
 power = Power(image_size)
@@ -25,15 +25,16 @@ power = Power(image_size)
 
 #DATOS REALES
 n_part, red = datos.load_npart("Data3D-64.hdf5")
-delta = datos.delta(n_part)
-forw = forward_2(delta+1) #Esto es lo que recibe la red
+forw = forward_1(n_part) #Esto es lo que recibe la red
 
 #Normalizamos el redshift
 z_vals = datos.factor_escala(red)
 
 forw_agrupados = datos.reordenacion(num_cv, forw)
-desnorm_data = backward_2(forw) -1 #Esto es delta
-desnorm_data_agrupados = datos.reordenacion(num_cv, desnorm_data)
+desnorm_data = backward_1(forw)
+delta = datos.delta(desnorm_data)
+desnorm_data_agrupados = datos.reordenacion(num_cv, delta)
+
 
 
 """
@@ -70,8 +71,9 @@ norm_fake_agrupados = datos.reordenacion(N, norm_fake)
 
 #Desnormalizamos los datos generados
 
-desnorm_fake = backward_2(norm_fake) -1
-desnorm_fake_agrupados  = datos.reordenacion(N, desnorm_fake)
+desnorm_fake = backward_1(norm_fake) -1
+delta_fake = datos.delta(desnorm_fake)
+desnorm_fake_agrupados  = datos.reordenacion(N, delta_fake)
 
 
 
