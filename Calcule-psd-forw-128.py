@@ -6,7 +6,7 @@ import os
 import numpy as np
 from preprocess_data import Dataset
 from power import Power
-from transforms import forward, backward
+from transforms import forward_2, backward_2
 from config import batch_size1, num_cv, n_bar, image_size2
 
 
@@ -16,40 +16,21 @@ power = Power(image_size2)
 
 print("Cargo datos")
 n_part, red = datos.load_npart("Data3D-128.hdf5")
-forw = forward(n_part)
-forw = np.expand_dims(forw, -1)
-norm, _, _ = datos.normalizar_datos_tanh(forw)
+delta = datos.delta(n_part)
+forw = forward_2(delta+1)
 print("Máx: ", np.max(norm), "Mín: ", np.min(norm))
 
-"""
+
 k_values = power.compute_psd(np.squeeze(forw[0]))[1]
 
 print("PSD")
-#Sacamos todos los psd de los datos normalizados
 
-psd_norm = power.compute_all_psd(norm)      
-psd_norm_agrupado = datos.reordenacion(num_cv, psd_norm)
-#Calculamos las medias de psd para cada redshift con los datos agrupados
-all_mean_norm = power.compute_all_mean(psd_norm_agrupado, num_cv)
-psd_mean_norm = np.tile(all_mean_norm[0], (27, 1))
-psd_max_norm = np.tile(all_mean_norm[1], (27, 1))
-psd_min_norm = np.tile(all_mean_norm[2], (27, 1))
-sigma_norm = np.tile(all_mean_norm[3], (27, 1))
-sigma_log_norm = np.tile(all_mean_norm[4], (27, 1))
-#k_values = np.tile(k_values, (27, 1))
+#Habría que deshacerlo de la misma forma. Si hago psd de delta puede cambiar un poco de si hago los mismos pasos que en el generado
+delta_desnorm =  backward_2(forw) -1
 
 
-np.savez("PSD_forw_norm.npz", psd = psd_norm, psd_agrupado = psd_norm_agrupado, mean = psd_mean_norm , sigma = sigma_norm,  sigma_log = sigma_log_norm, psd_max = psd_max_norm , psd_min = psd_min_norm , k_values = k_values)
-
-
-#CASO DESNORMALIZADO
-
-#Habría que deshacerlo de la misma forma. Si hago psd de delta puede cambiar un poco de si hago los mismos pasos que en el generador
-forw_data = datos.desnormalizar_mu_sigma(norm_data, mu, sigma)
-delta_data = backward(forw_data)
-
-psd_delta = power.compute_all_psd(delta_data)           
-psd_delta_agrupado = datos.reordenacion(psd_delta, data[1])[0]
+psd_delta = power.compute_all_psd(delta_desnorm)           
+psd_delta_agrupado = datos.reordenacion(num_cv, psd_delta)
                 
 all_mean = power.compute_all_mean(psd_delta_agrupado, num_cv)
 psd_mean = np.tile(all_mean[0], (27, 1))
@@ -59,19 +40,4 @@ sigma = np.tile(all_mean[3], (27, 1))
 sigma_log = np.tile(all_mean[4], (27, 1))
 
 
-np.savez("PSD_delta_c100_128", psd = psd_delta, psd_agrupado = psd_delta_agrupado, mean = psd_mean, sigma = sigma, sigma_log = sigma_log, psd_max = psd_max, psd_min = psd_min, k_values = k_values)
-
-
-part_data = datos.deshacer_delta(delta_data)
-psd_part = power.compute_all_psd(part_data)           
-psd_part_agrupado = datos.reordenacion(psd_part, data[1], num_cv)[0]
-                
-all_mean_part = power.compute_all_mean(psd_part_agrupado, num_cv)
-psd_mean_part = np.tile(all_mean_part[0], (27, 1))
-psd_max_part = np.tile(all_mean_part[1], (27, 1))
-psd_min_part = np.tile(all_mean_part[2], (27, 1))
-sigma_part = np.tile(all_mean_part[3], (27, 1))
-sigma_log_part = np.tile(all_mean_part[4], (27, 1))
-
-np.savez("PSD_part_c100", psd = psd_part, psd_agrupado = psd_part_agrupado, mean = psd_mean_part, sigma = sigma_part, sigma_log = sigma_log_part, psd_max = psd_max_part, psd_min = psd_min_part, k_values = k_values)
-"""
+np.savez("PSD_delta_128", psd = psd_delta, psd_agrupado = psd_delta_agrupado, mean = psd_mean, sigma = sigma, sigma_log = sigma_log, psd_max = psd_max, psd_min = psd_min, k_values = k_values)
