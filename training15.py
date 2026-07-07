@@ -9,7 +9,7 @@ import json
 import numpy as np
 
 
-from config import latent_dim, image_size
+from config import latent_dim
 from grad_pen import gradient_penalty
 from power import Power
 from psd_utils import psd_out_of_band_fraction, psd_loss_log
@@ -19,7 +19,7 @@ from transforms import backward_2
 
 class Training15(tf.keras.Model):
 
-    def __init__(self, data_class, discriminator, generator, batch_size, ncritic, trained_models_folder, generated_images_folder, lambda_psd_schedule, lambda_term, use_psd=True, use_psd_loss = True):
+    def __init__(self, data_class, discriminator, generator, batch_size, ncritic, trained_models_folder, generated_images_folder, lambda_psd_schedule, lambda_term, image_size, use_psd=True, use_psd_loss = True):
         super().__init__()
         self.discriminator = discriminator
         self.generator = generator
@@ -33,8 +33,9 @@ class Training15(tf.keras.Model):
         self.data_class = data_class
         self.lambda_psd_schedule = lambda_psd_schedule
         self.lambda_term = lambda_term
+        self.image_size = image_size
 
-        self.power = Power(image_size)
+        self.power = Power(self.image_size)
 
 
     def compile(self, d_optimizer, g_optimizer):
