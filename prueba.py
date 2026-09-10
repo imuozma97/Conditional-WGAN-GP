@@ -1,12 +1,9 @@
-<<<<<<< Updated upstream
 import os
 
 from config import num_cv, num_classes, n_bar
 import numpy as np
 from transforms import forward_1, forward_2
 import h5py
-=======
->>>>>>> Stashed changes
 import tensorflow as tf
 import os
 import numpy as np
@@ -21,76 +18,6 @@ from transforms import forward_2,backward_2
 import glob
 import matplotlib.pyplot as plt
 
-<<<<<<< Updated upstream
-
-=======
-#trained_models_folder = "Training128/15-models"
-#generated_images_folder = "Training128/15-images"
-epoch = "00761"
-N=27
-
-datos= Dataset(batch_size1, n_bar2, buffer_size = 918)
-power = Power(image_size2)
-
-
-
-#k_values, k_values_2 = datos.load_k_values(image_size2)
-#print("k_values", k_values.shape, k_values_2.shape, k_values, k_values_2)
-
-load_psd = np.load("PSD_delta-128.npz")
-k_values = load_psd["k_values"]
-print("k_values", k_values.shape)
-
-load_psd_2 = np.load("PSD_delta_128.npz")
-k_values_2 = load_psd_2["k_values"]
-print("k_values_2", k_values_2.shape)
-#PSD DATOS REALES DESNORMALIZADOS 
-
-
-print("PSD datos reales: artemisa")
-psd_max_desnorm, psd_min_desnorm, psd_mean_desnorm, psd_sigma_desnorm, all_psd = datos.load_psd("PSD_delta-128.npz")
-psd_mean_desnorm = psd_mean_desnorm[0:34]
-psd_sigma_desnorm = psd_sigma_desnorm[0:34]
-psd_max_desnorm = psd_max_desnorm[0:34]
-psd_min_desnorm = psd_min_desnorm[0:34]
-
-print("psd", psd_mean_desnorm[0])
-
-
-print("PSD datos reales: vives")
-psd_max_desnorm2, psd_min_desnorm2, psd_mean_desnorm2, psd_sigma_desnorm2, all_psd2 = datos.load_psd("PSD_delta_128.npz")
-psd_mean_desnorm2 = psd_mean_desnorm2[0:34]
-psd_sigma_desnorm2 = psd_sigma_desnorm2[0:34]
-psd_max_desnorm2 = psd_max_desnorm2[0:34]
-psd_min_desnorm2 = psd_min_desnorm2[0:34]
-
-print("psd", psd_mean_desnorm2[0])
-
-
-
-plt.figure(figsize=(8, 5))
-
-plt.plot(k_values, psd_mean_desnorm[33], '-o', ms = 4, color = 'blue', label = "z = 0")
-plt.plot(k_values, psd_mean_desnorm[0], '-o', ms = 4, color = 'purple', label = "z = 6")
-        
-plt.yscale('log')
-plt.xlabel("$k$ [h/Mpc]", fontsize = 20)
-plt.ylabel("P(k)", fontsize = 20)
-
-plt.legend(fontsize = 14)
-
-plt.ylim(1, 10**8)
-carpeta = "prueba_psd"
-if not os.path.exists(carpeta):
-        os.makedirs(carpeta)
-plt.savefig(os.path.join(carpeta, f"Grafica_psd.png"), bbox_inches='tight', format='png')
-plt.show()
-
-print("ya")
-
-
-"""
->>>>>>> Stashed changes
 def histograma(data, name, z):
      
         values = data.numpy().flatten() if hasattr(data, "numpy") else data.flatten()
@@ -118,15 +45,9 @@ def histograma(data, name, z):
 
 def reordenacion(num_classes, muestras, *arrays):
 
-<<<<<<< Updated upstream
         """
         En el caso de querer reordenar las muestras reales, muestras = num_cv, y de las flasas será N
         """
-=======
-        
-        En el caso de querer reordenar las muestras reales, muestras = num_cv, y de las flasas será N
-        
->>>>>>> Stashed changes
         reordered = [[] for _ in arrays]
 
         for j in range(num_classes):
@@ -207,11 +128,7 @@ plt.close()
 
 
 #k = 8000
-<<<<<<< Updated upstream
 """
-=======
-
->>>>>>> Stashed changes
 #rho_transf = 2*maps_ordenados/(maps_ordenados + k) -1 #Aquí ya están agrupados por redshift
 forw = forward_1(maps_ordenados)
 print("Max rho:", np.max(forw), "Min rho:", np.min(forw)) #Esto es para comprobar que la transformación se ha hecho bien, el rango es de -1 a 1
