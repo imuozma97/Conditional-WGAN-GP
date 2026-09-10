@@ -489,22 +489,22 @@ class Power(tf.keras.Model):
             psd_max_top90 = psd_top90.max(axis=0)
             psd_min_top90 = psd_top90.min(axis=0)
 
-            plt.plot(k_values, mean_real_i, '-o', ms=4, color='blue', label="Mean-Real")
-            plt.plot(k_values, mean_top90, '-o', ms=4, color='red', label="Mean-Fake (top90)")
-            plt.fill_between(k_values, psd_min_real[i], psd_max_real[i], color='blue', alpha=0.2, label="max-min real")
-            plt.fill_between(k_values, psd_min_top90, psd_max_top90, color='red', alpha=0.25, label="max-min fake (top90)")
-            
+            plt.plot(k_values, mean_real_i, '-o', ms=4, color='blue', label=r"$\overline{\mathrm{PSD}}_{\mathrm{real}}$")
+            plt.plot(k_values, mean_top90, '-o', ms=4, color='red', label=r"$\overline{\mathrm{PSD}}_{\mathrm{fake}}$ (p90)")
+            plt.fill_between(k_values, psd_min_real[i], psd_max_real[i], color='blue', alpha=0.2, label=r"$Range_{\mathrm{real}}$")
+            plt.fill_between(k_values, psd_min_top90, psd_max_top90, color='red', alpha=0.25, label=r"$Range_{\mathrm{fake}}$ (p90)")
 
             plt.yscale('log')
             plt.xlabel("$k$ [h/Mpc]", fontsize=20)
             plt.ylabel("P(k)", fontsize=20)
             plt.title("PSD vs. $k$ at z = {:.2f}".format(float(redshift[i])), fontsize=24)
             plt.legend(fontsize=14)
+            plt.tick_params(axis = 'both', labelsize = 16)
 
             if tipo == "norm":
                 plt.ylim(10**-4, 10**5)
             elif tipo == "desnorm":
-                plt.ylim(1, 10**7)
+                plt.ylim(1, 10**6)
 
             path = os.path.join(generated_images_folder, carpeta)
             if not os.path.exists(path): os.makedirs(path)
@@ -551,10 +551,14 @@ class Power(tf.keras.Model):
 
             ax1.set_yscale('log')
             ax1.set_ylabel("P(k)", fontsize=20)
-            ax1.set_title("PSD vs. $k$ at z = {:.2f}".format(float(redshift[i])), fontsize=26)
+
+            z = float(redshift[i])
+            z_str = f"{z:.2f}".rstrip("0").rstrip(".")
+            ax1.set_title(r"$z \sim " + z_str + r"$", fontsize=26)
+            #ax1.set_title(r"PSD vs. $k$ at z$\sim${:.1f}".format(float(redshift[i])), fontsize=26)
             ax1.tick_params(axis = 'y', labelsize = 18)
 
-            if i == 0:
+            if i == 4:
                 ax1.legend(fontsize=17)
 
             ax2.plot(k_values, residuals, color='green', linewidth=1.5)

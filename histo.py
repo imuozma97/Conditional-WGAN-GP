@@ -544,23 +544,25 @@ class Histogramas:
 
         ax1.set_yscale('log')
         ax1.set_ylim(0.1, 1e6)
-        ax1.set_ylabel("Number of cells", fontsize=20)
-        ax1.set_title("Mass histogram at z = {:.2f}".format(float(redshift[i])), fontsize=24)
+        ax1.set_ylabel("N", fontsize=20)
+        z = float(redshift[i])
+        z_str = f"{z:.2f}".rstrip("0").rstrip(".")
+        ax1.set_title(r"$z \sim " + z_str + r"$", fontsize=26)
         ax1.tick_params(axis = 'y', labelsize = 16)
 
-        if i == 0:
+        if i == 4:
             ax1.legend(fontsize=17)
 
         ax2.axhline(0, color='gray', linewidth=1)
         ax2.plot(centers, residual, color='green', markersize=3, linewidth=1.5)
 
-        ax2.set_ylabel(r'$\Delta/N$', fontsize=20)
+        ax2.set_ylabel(r'$\Delta N / N$', fontsize=20)
         ax2.set_xlabel("$\delta$", fontsize=20)
         ax2.grid(True, alpha=0.3)
         ax2.tick_params(axis = 'both', labelsize = 16)
 
         filename = f"histo_{i:02d}.png"
-        carpeta = f"histogramas_p90_{epoch}"
+        carpeta = f"histogramas_paper_{epoch}"
         os.makedirs(os.path.join(self.generated_images_folder, carpeta), exist_ok=True)
 
         filepath = os.path.join(self.generated_images_folder, carpeta, filename)
