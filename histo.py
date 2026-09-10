@@ -543,17 +543,10 @@ class Histogramas:
                 label='Real')
 
         ax1.set_yscale('log')
-<<<<<<< Updated upstream
         ax1.set_ylim(0.1, 1e6)
         ax1.set_ylabel("N", fontsize=20)
         z = float(redshift[i])
         z_str = f"{z:.2f}".rstrip("0").rstrip(".")
-=======
-        ax1.set_ylim(0.1, 1e8)
-        ax1.set_ylabel("N", fontsize=20)
-        z = float(redshift[i])
-        z_str = f"{z:.1f}".rstrip("0").rstrip(".")
->>>>>>> Stashed changes
         ax1.set_title(r"$z \sim " + z_str + r"$", fontsize=26)
         ax1.tick_params(axis = 'y', labelsize = 16)
 

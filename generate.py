@@ -18,7 +18,7 @@ class Fake_images(tf.keras.Model):
         self.trained_models_folder =  trained_models_folder
         self.generated_images_folder = generated_images_folder
         self.N = N
-        self.image_size = image_size
+        self.image_size = image_size 
     
     
     def generate_images(self, z_values, name): 
