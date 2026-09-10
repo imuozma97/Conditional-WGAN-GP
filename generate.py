@@ -8,16 +8,17 @@ import numpy as np
 import pyvista as pv
 
 from preprocess_data import Dataset
-from config import num_classes, image_size, latent_dim, num_cv, mass, boxsize
+from config import num_classes, latent_dim, num_cv, mass, boxsize
 
 
 class Fake_images(tf.keras.Model):
     
-    def __init__(self, N, trained_models_folder, generated_images_folder):
+    def __init__(self, N, image_size, trained_models_folder, generated_images_folder):
         super().__init__()
         self.trained_models_folder =  trained_models_folder
         self.generated_images_folder = generated_images_folder
         self.N = N
+        self.image_size = image_size
     
     
     def generate_images(self, z_values, name): 
@@ -45,7 +46,7 @@ class Fake_images(tf.keras.Model):
                 
             j += 1
                     
-        generated_images = np.array(generated_images).reshape(self.N*num_classes, image_size, image_size, image_size, 1)
+        generated_images = np.array(generated_images).reshape(self.N*num_classes, self.image_size, self.image_size, self.image_size, 1)
         redshift = np.array(redshift)
 
         return generated_images, redshift
@@ -204,3 +205,4 @@ class Fake_images(tf.keras.Model):
                 grid.save(filename)
 
             print(f"Simulación {sim} guardada")
+            
