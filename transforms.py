@@ -9,14 +9,15 @@ from config import shift_1, shift_2, c_1, c_2, c_128
 
 
 def stat_forward_0(x, c):
+    print("stat forward 0")
     
     x = tf.convert_to_tensor(x, dtype=tf.float32)
     c = tf.cast(c, tf.float32)
-
     mask = x > c
     maski = tf.logical_not(mask)
-
     res = tf.zeros_like(x, dtype=tf.float32)
+
+    res = tf.where(maski, tf.math.log(x+1), res)
     res = tf.where(maski, tf.math.log(x + 1), res)
     res = tf.where(mask, tf.math.log(c + 1) + (x / c - 1), res)
 
@@ -43,6 +44,7 @@ def stat_backward_0(x, c):
 
 
 def stat_forward(x, c, shift):
+    print("star_forward")
     return stat_forward_0(x + shift, c=c) - stat_forward_0(shift, c=c)
 
 

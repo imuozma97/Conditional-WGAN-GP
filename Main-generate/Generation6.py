@@ -59,8 +59,8 @@ psd_min_desnorm = psd_min_desnorm[0:34]
 
 imagenes = Fake_images(N = N, trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder) 
 print("Generando imágenes falsas...")
-#gen_images = imagenes.generate_images(z_vals, f"best_psd_generator/epoch_{epoch}")
-#imagenes.save_data(f"datos_gen_{epoch}.npz", gen_images[0], gen_images[1])
+gen_images = imagenes.generate_images(z_vals, f"best_psd_generator/epoch_{epoch}")
+imagenes.save_data(f"datos_gen_{epoch}.npz", gen_images[0], gen_images[1])
 
 
 #Cargamos los datos generados para calcular espectros
