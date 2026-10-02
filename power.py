@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-from config import boxsize, num_classes
+from config import boxsize, num_classes, num_cv
 
 
 class Power(tf.keras.Model):
@@ -518,6 +518,7 @@ class Power(tf.keras.Model):
     def compare_psd_percentil_residuos(self, k_values, mean_real, mean_fake, psd_fake, psd_max_real, psd_min_real, redshift, generated_images_folder, carpeta, tipo, samples):
         num_classes = mean_real.shape[0]
         eps = 1e-12
+        error_res = []
 
         for i in range(num_classes):
 
@@ -543,7 +544,8 @@ class Power(tf.keras.Model):
             psd_min_top90 = psd_top90.min(axis=0)
 
             residuals = (mean_top90 - mean_real_i) / (mean_real_i + eps)
-
+            error_res.append(np.mean(np.abs(residuals)))
+            
             ax1.plot(k_values, mean_real_i, '-o', ms=4, color='blue', label=r"$\overline{\mathrm{PSD}}_{\mathrm{real}}$")
             ax1.plot(k_values, mean_top90, '-o', ms=4, color='red', label=r"$\overline{\mathrm{PSD}}_{\mathrm{fake}}$")
             ax1.fill_between(k_values, psd_min_real[i], psd_max_real[i], color='blue', alpha=0.2, label=r"$Range_{\mathrm{real}}$")
@@ -553,7 +555,7 @@ class Power(tf.keras.Model):
             ax1.set_ylabel("P(k)", fontsize=20)
 
             z = float(redshift[i])
-            z_str = f"{z:.2f}".rstrip("0").rstrip(".")
+            z_str = f"{z:.1f}".rstrip("0").rstrip(".")
             ax1.set_title(r"$z \sim " + z_str + r"$", fontsize=26)
             #ax1.set_title(r"PSD vs. $k$ at z$\sim${:.1f}".format(float(redshift[i])), fontsize=26)
             ax1.tick_params(axis = 'y', labelsize = 18)
@@ -576,5 +578,77 @@ class Power(tf.keras.Model):
             if not os.path.exists(path):
                 os.makedirs(path)
 
-            plt.savefig(os.path.join(path, f"psd_{i:02d}.png"), bbox_inches='tight', format='png')
-            plt.show()
+            #plt.savefig(os.path.join(path, f"psd_{i:02d}.png"), bbox_inches='tight', format='png')
+            #plt.show()
+
+        error_total = np.mean(error_res)
+        
+        print("Vector de residuos: ", error_res)
+        print("Media error: ", error_total)
+
+
+
+
+    def error_residuos(self, k_values, mean_real, mean_fake, psd_fake, psd_max_real, psd_min_real, redshift, generated_images_folder, carpeta, tipo, samples):
+        num_classes = mean_real.shape[0]
+        eps = 1e-12
+        error_res = []
+
+        for i in range(num_classes):
+
+            psd_class = np.array(psd_fake[i * samples:(i + 1) * samples])
+            mean_real_i = np.array(mean_real[i])
+            mean_fake_i = np.array(mean_fake[i])
+
+            distances = np.linalg.norm(np.log10(psd_class + eps) - np.log10(mean_real_i + eps), axis=1)
+
+            n_keep = min(90, len(psd_class))
+            idx_sorted = np.argsort(distances)[:n_keep]
+            psd_top90 = psd_class[idx_sorted]
+
+            mean_top90 = psd_top90.mean(axis=0)
+            psd_max_top90 = psd_top90.max(axis=0)
+            psd_min_top90 = psd_top90.min(axis=0)
+
+            residuals = (mean_top90 - mean_real_i) / (mean_real_i + eps)
+            print("Residuals shape", residuals.shape)
+            error_res.append(np.mean(np.abs(residuals)))
+
+
+
+        error_res = np.array(error_res)
+        error_total = np.mean(error_res)
+        print("Error residuos: ", error_res)
+        print("Error total", error_total)
+
+
+    def error_dispersion(self, k_values, psd_fake, psd_real, mean_real, redshift, generated_images_folder, carpeta, tipo, samples):
+        eps = 1e-12
+        error_res = []
+
+        for i in range(num_classes):
+            #Primero ordenamos para tener los 90 más cercanos
+            psd_class = np.array(psd_fake[i * samples:(i + 1) * samples])
+            mean_real_i = np.array(mean_real[i])
+
+            distances = np.linalg.norm(np.log10(psd_class + eps) - np.log10(mean_real_i + eps), axis=1)
+
+            n_keep = min(90, len(psd_class))
+            idx_sorted = np.argsort(distances)[:n_keep]
+            psd_top90 = psd_class[idx_sorted]
+            #print(psd_top90, psd_top90.shape)
+
+            #Ahora calculamos la std de ambos grupos. Para el real hay que agrupar por redshifts
+            std_fake_i = np.std(psd_class, axis = 0)
+            psd_real_class = np.array(psd_real[i * num_cv:(i + 1) * num_cv])
+            std_real_i = np.std(psd_real_class, axis = 0)
+
+            residual = ((std_fake_i - std_real_i)/(std_real_i + eps))
+
+
+        residual = np.array(residual)
+        error_total = np.mean(np.abs(residual))
+        print("Error residuos: ", residual)
+        print("Error total", error_total)
+
+    

@@ -524,6 +524,9 @@ class Histogramas:
         mask = hist_real > 0
         residual[mask] = (hist_fake[mask] - hist_real[mask]) / hist_real[mask]
 
+        error_res = np.mean(np.abs(residual[mask]))
+        print("Residual res: ", error_res)
+
         # --- Plot ---
         fig, (ax1, ax2) = plt.subplots(
                 2, 1,
@@ -546,11 +549,11 @@ class Histogramas:
         ax1.set_ylim(0.1, 1e6)
         ax1.set_ylabel("N", fontsize=20)
         z = float(redshift[i])
-        z_str = f"{z:.2f}".rstrip("0").rstrip(".")
+        z_str = f"{z:.1f}".rstrip("0").rstrip(".")
         ax1.set_title(r"$z \sim " + z_str + r"$", fontsize=26)
         ax1.tick_params(axis = 'y', labelsize = 16)
 
-        if i == 4:
+        if i == 0:
             ax1.legend(fontsize=17)
 
         ax2.axhline(0, color='gray', linewidth=1)
@@ -561,12 +564,12 @@ class Histogramas:
         ax2.grid(True, alpha=0.3)
         ax2.tick_params(axis = 'both', labelsize = 16)
 
-        filename = f"histo_{i:02d}.png"
-        carpeta = f"histogramas_paper_{epoch}"
-        os.makedirs(os.path.join(self.generated_images_folder, carpeta), exist_ok=True)
+        #filename = f"histo_{i:02d}.png"
+        #carpeta = f"histogramas_paper_{epoch}"
+        #os.makedirs(os.path.join(self.generated_images_folder, carpeta), exist_ok=True)
 
-        filepath = os.path.join(self.generated_images_folder, carpeta, filename)
-        plt.savefig(filepath, dpi=300, bbox_inches='tight')
+        #filepath = os.path.join(self.generated_images_folder, carpeta, filename)
+        #plt.savefig(filepath, dpi=300, bbox_inches='tight')
         plt.close()
 
 
@@ -578,3 +581,100 @@ class Histogramas:
     def all_histogramas_medio_p90_nuevo(self, N, fake_agrupado, real_agrupado, tipo, epoch, redshift, n_classes):
         for i in range(n_classes):
             self.histograma_medio_residuos_p90(fake_agrupado[i*N : N + N*i], real_agrupado[i*num_cv : num_cv + num_cv*i], tipo, epoch, redshift, i)
+
+
+
+
+    def histograma_errores(self, data1, data2, tipo, epoch, redshift, i=None):
+
+        # Mismos bins para real y fake
+        all_values = np.concatenate([data1.flatten(), data2.flatten()])
+        bins = np.linspace(all_values.min(), all_values.max(), 51)
+
+        eps = 1e-12
+
+        # --- Histogramas reales ---
+        hist_real_samples = []
+
+        for sample in data2:
+            h, _ = np.histogram(sample.flatten(), bins=bins)
+            hist_real_samples.append(h)
+
+        hist_real_samples = np.array(hist_real_samples)
+
+        hist_real_mean = np.mean(hist_real_samples, axis=0)
+        hist_real_std = np.std(hist_real_samples, axis=0)
+
+        # --- Histogramas fake ---
+        hist_fake_samples = []
+
+        for sample in data1:
+            h, _ = np.histogram(sample.flatten(), bins=bins)
+            hist_fake_samples.append(h)
+
+        hist_fake_samples = np.array(hist_fake_samples)
+
+        # --- Selección de los 90 fake más cercanos a la media real ---
+        distances = np.linalg.norm(hist_fake_samples - hist_real_mean, axis=1)
+
+        idx_sorted = np.argsort(distances)
+        idx_selected = idx_sorted[:90]
+
+        hist_fake_selected = hist_fake_samples[idx_selected]
+
+        hist_fake_mean = np.mean(hist_fake_selected, axis=0)
+        hist_fake_std = np.std(hist_fake_selected, axis=0)
+
+        # ==========================================================
+        # ERROR LOGARÍTMICO ENTRE LAS MEDIAS
+        # ==========================================================
+
+        mask = (hist_real_mean > 0) & (hist_fake_mean > 0)
+
+        residual = np.zeros_like(hist_real_mean, dtype=float)
+
+        residual[mask] = (hist_fake_mean[mask] - hist_real_mean[mask]) / (hist_real_mean[mask] + eps)
+
+        error_res = np.mean(np.abs(residual[mask]))
+
+        # ==========================================================
+        # ERROR LOGARÍTMICO ENTRE LAS DISPERSIONES
+        # ==========================================================
+
+        mask_std = (hist_real_std > 0) & (hist_fake_std > 0)
+
+        residual_std = np.zeros_like(hist_real_std, dtype=float)
+
+        residual_std[mask_std] = (hist_fake_std[mask_std] - hist_real_std[mask_std])/(hist_real_std[mask_std] + eps)
+
+
+        error_dispersion = np.mean(np.abs(residual_std[mask_std]))
+
+        return error_res, error_dispersion
+
+
+
+    def all_histogramas_errores(self, N, fake_agrupado, real_agrupado, tipo, epoch, redshift):
+
+        errores_res = []
+        errores_dispersion = []
+
+        for i in range(num_classes):
+
+            error_res, error_dispersion = self.histograma_errores(
+                fake_agrupado[i*N:N + N*i],
+                real_agrupado[i*num_cv:num_cv + num_cv*i],
+                tipo, epoch, redshift, i
+            )
+
+            errores_res.append(error_res)
+            errores_dispersion.append(error_dispersion)
+
+        # Media global sobre los 34 redshifts
+        error_res_global = np.mean(errores_res)
+        error_dispersion_global = np.mean(errores_dispersion)
+
+        print("Error logarítmico medio global del histograma:", error_res_global)
+        print("Error logarítmico medio global de la dispersión:", error_dispersion_global)
+
+        return error_res_global, error_dispersion_global
