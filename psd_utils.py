@@ -4,19 +4,6 @@ En este archivo voy a guardar las diferentes opciones de losses del espectro; y 
 import tensorflow as tf
 
 
-def psd_loss(gen_psd, mean_psd, sigma_log):
-        
-    log_fake = tf.math.log1p(gen_psd)
-    log_mean = tf.math.log1p(mean_psd)
-
-    #sigma es ya el sigma de los logaritmos
-    psd_loss = ((log_fake - log_mean)/(sigma_log + 1e-5))**2
-
-    loss = tf.reduce_mean(psd_loss)
-        
-    return loss
-
-
 
 def psd_loss_log(gen_psd, mean_psd):
         

@@ -22,7 +22,7 @@ from preprocess_data import Dataset
 from config import batch_size1, ncritic3, n_bar_64, image_size_64
 from architectures.generators import Generator_film_linear_swish
 from architectures.discriminators import Discriminator_projection_swish
-from training15 import Training15
+from training import Training
 from transforms import forward_2
 from psd_utils import lambda_psd_schedule
 
@@ -42,7 +42,7 @@ forw = forward_2(delta+1)
 #Normalizamos el redshift
 z_vals = datos.factor_escala(red)
 
-psd_max, psd_min, mean_psd, psd_sigma, _ = datos.load_psd("psd-data/PSD_delta.npz")
+psd_max, psd_min, mean_psd, _, _ = datos.load_psd("psd-data/PSD_delta.npz")
 
 dataset = datos.crea_dataset(forw, z_vals, psd_max, psd_min, mean_psd)
 
@@ -52,7 +52,7 @@ discriminator = Discriminator_projection_swish(filter1 = 32, filter2 = 64, filte
 
 
 #Cargamos la red principal
-cgan = Training15(data_class = datos, discriminator = discriminator, generator = generator, batch_size = batch_size1, ncritic = ncritic3, 
+cgan = Training(data_class = datos, discriminator = discriminator, generator = generator, batch_size = batch_size1, ncritic = ncritic3, 
                 trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder, lambda_psd_schedule = lambda_psd_schedule,
                 lambda_term = 20, image_size = image_size_64, use_psd = False, use_psd_loss = True)
 cgan.compile(d_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.00005, beta_1 = 0, beta_2 = 0.9),

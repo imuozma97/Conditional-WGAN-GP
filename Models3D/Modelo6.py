@@ -42,9 +42,9 @@ forw = forward_2(delta+1)
 #Normalizamos el redshift
 z_vals = datos.factor_escala(red)
 
-psd_max, psd_min, mean_psd, psd_sigma, _ = datos.load_psd("psd-data/PSD_delta.npz")
+psd_max, psd_min, mean_psd, _, _ = datos.load_psd("psd-data/PSD_delta.npz")
 
-dataset = datos.crea_dataset(forw, z_vals, psd_max, psd_min, mean_psd, psd_sigma)
+dataset = datos.crea_dataset(forw, z_vals, psd_max, psd_min, mean_psd)
 
 #Cargamos el Discriminador y Generador
 generator = Generator_film_linear_swish(filter1 = 256, filter2 = 128, filter3 = 64)
