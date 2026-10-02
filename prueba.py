@@ -5,8 +5,18 @@ import numpy as np
 from transforms import forward_1, forward_2
 import h5py
 import tensorflow as tf
-import matplotlib.pyplot as plt
+import os
+import numpy as np
 
+from generate import Fake_images
+from preprocess_data import Dataset
+from power import Power
+from config import batch_size1, image_size2, num_cv, n_bar2, num_classes
+from histo import Histogramas
+from gif import gif
+from transforms import forward_2,backward_2
+import glob
+import matplotlib.pyplot as plt
 
 def histograma(data, name, z):
      

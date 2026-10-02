@@ -11,10 +11,9 @@ from config import num_classes, num_cv
 from transforms import forward_1, forward_2
 
 class Dataset(tf.keras.Model):
-    def __init__(self, batch_size, n_bar, buffer_size):
+    def __init__(self, batch_size, buffer_size):
         super().__init__()
         self.batch_size = batch_size #Tiene que ser input porque no siempre es el mismo
-        self.n_bar = n_bar
         self.buffer_size = buffer_size
 
         
@@ -32,14 +31,14 @@ class Dataset(tf.keras.Model):
     
     
     
-    def delta(self, images):
+    def delta(self, images, n_bar):
         
-        delta = (images - self.n_bar)/self.n_bar
+        delta = (images - n_bar)/n_bar
         #delta = np.expand_dims(delta, -1)
         return delta
 
-    def deshacer_delta(self, delta):
-        images = delta * self.n_bar + self.n_bar
+    def deshacer_delta(self, delta, n_bar):
+        images = delta * n_bar + n_bar
         return images
 
 
@@ -186,8 +185,11 @@ class Dataset(tf.keras.Model):
 
         return psd_max, psd_min, psd_mean, psd_sigma, all_psd
     
-    def load_k_values(self):
-        load_psd = np.load("PSD_delta.npz")
+    def load_k_values(self, image_size):
+        if image_size == 64:
+            load_psd = np.load("PSD_delta.npz")
+        if image_size == 128:
+            load_psd = np.load("PSD_delta_128.npz")
         k_values = load_psd["k_values"]
 
         return k_values

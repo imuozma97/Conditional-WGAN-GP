@@ -5,8 +5,8 @@ Parámetros que se mantienen constantes durante el entrenamiento.
 
 num_classes = 34 
 
-image_size = 64
-image_size2 = 128
+image_size_64 = 64
+image_size_128 = 128
 
 latent_dim = 128
 latent_dim2 = 64
@@ -14,8 +14,8 @@ num_cv = 27
 mass = 6.5e7 #Msol/h
 boxsize = 25 #Poner unidades
 
-n_bar = 256**3 / 64**3
-n_bar2 = 256**3 / 128**3
+n_bar_64 = 256**3 / 64**3
+n_bar_128 = 256**3 / 128**3
 
 embedding_dim = 32
 buffer_size = 918
@@ -38,5 +38,5 @@ shift_2 = 0.0001
 c_2 = 300
 
 
-c_128 = 1000
+c_128 = 100
 #c = 7
