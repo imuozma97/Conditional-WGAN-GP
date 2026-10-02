@@ -28,7 +28,6 @@ class Training(tf.keras.Model):
         self.generated_images_folder = generated_images_folder
         self.current_epoch = 0
         self.ncritic = ncritic
-        self.use_psd = use_psd
         self.use_psd_loss = use_psd_loss
         self.data_class = data_class
         self.lambda_psd_schedule = lambda_psd_schedule
@@ -89,7 +88,7 @@ class Training(tf.keras.Model):
             loss_psd = psd_loss_log(psd_gen, psd_mean) 
 
             if self.use_psd_loss:
-                lambda_psd = self.lambda_psd_schedule(self.current_epoch)
+                lambda_psd = self.lambda_psd(self.current_epoch)
                 gen_loss = loss_adv + lambda_psd*loss_psd
             else:  
                 gen_loss = loss_adv

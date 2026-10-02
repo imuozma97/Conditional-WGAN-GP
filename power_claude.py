@@ -68,33 +68,20 @@ class Power(tf.keras.Model):
         self.bin_centers = tf.constant(self.k_centers)
 
 
-
-           
     def compute_psd(self, image):
-        """
-        Computa PSD para una imagen
-        image: (L, L, L)
-        Retorna: (psd, bin_centers)
-        """
         image = tf.cast(image, tf.float32)
-        #print("imagen3: ", image.shape)
-        
-        # FFT 3D
         fft3 = tf.signal.fft3d(tf.cast(image, tf.complex64))
-        power = tf.math.abs(fft3)**2 * boxsize**3 / self.image_size**6
-        
-        # centrar k=0
-        power = tf.signal.fftshift(power, axes=(-3, -2, -1))
-        
-        # aplanar
-        power_flat = tf.reshape(power, [-1])
-        bin_idx_flat = tf.reshape(self.bin_indices, [-1])
- 
-        # media por bin radial
-        psd = tf.math.unsorted_segment_mean(power_flat, bin_idx_flat, self.nbins + 1)[:-1]
+        # Re^2 + Im^2 en vez de abs()**2: evita gradiente NaN si F = 0
+        power = tf.math.square(tf.math.real(fft3)) + tf.math.square(tf.math.imag(fft3))
+        power = power * self.mode_factor
 
-        power = tf.math.abs(fft3)**2 * boxsize**3 / self.image_size**6
-        return psd, self.bin_centers 
+        psd = tf.math.unsorted_segment_mean(
+            data=tf.reshape(power, [-1]),
+            segment_ids=self.segment_ids,
+            num_segments=self.nbins + 1
+        )[:self.nbins]
+
+        return psd, self.bin_centers
     
     
     """
