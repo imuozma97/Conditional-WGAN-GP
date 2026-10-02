@@ -9,10 +9,9 @@ image_size_64 = 64
 image_size_128 = 128
 
 latent_dim = 128
-latent_dim2 = 64
 num_cv = 27
 mass = 6.5e7 #Msol/h
-boxsize = 25 #Poner unidades
+boxsize = 25 # (Mpc/h)^3
 
 n_bar_64 = 256**3 / 64**3
 n_bar_128 = 256**3 / 128**3
