@@ -8,7 +8,6 @@ import h5py
 import os
 
 from config import num_classes, num_cv
-from transforms import forward_1, forward_2
 
 class Dataset(tf.keras.Model):
     def __init__(self, batch_size, buffer_size):
@@ -42,69 +41,13 @@ class Dataset(tf.keras.Model):
         return images
 
 
-    def replace_extreme_voxels(self, data, quit=20): #Pruebo a quitar más??
-
-        data_new = data.copy()
-        flat = data_new.ravel()
-
-        # índices de los N valores más grandes
-        idx = np.argpartition(flat, -quit)[-quit:]
-
-        # convertir a coordenadas (cubo,x,y,z)
-        coords = np.array(np.unravel_index(idx, data_new.shape)).T
-
-        for cube, x, y, z in coords:
-
-            field = data_new[cube]
-
-            # vecinos 3x3x3
-            x0, x1 = max(x-1,0), min(x+2, field.shape[0])
-            y0, y1 = max(y-1,0), min(y+2, field.shape[1])
-            z0, z1 = max(z-1,0), min(z+2, field.shape[2])
-
-            neighborhood = field[x0:x1, y0:y1, z0:z1]
-
-            # eliminar el voxel central
-            neighbors = neighborhood.flatten()
-            center_index = (x-x0)*((y1-y0)*(z1-z0)) + (y-y0)*(z1-z0) + (z-z0)
-            neighbors = np.delete(neighbors, center_index)
-
-            neighbor_mean = np.mean(neighbors)
-
-            data_new[cube, x, y, z] = neighbor_mean
-
-        return data_new
-
     
-    
-    def normalizar_datos_tanh(self, images):
-
-        min_val = np.min(images)
-        max_val = np.max(images)
-            
-        normalized_data = 2 * (images - min_val) / (max_val - min_val) - 1
-        #normalized_data = np.expand_dims(normalized_data, -1)
-        #print("Image norm shape:", normalized_data.shape)
-        #print("Max norm1 shape:", np.max(normalized_data).shape)
-        #print("Min norm1 shape:", np.min(normalized_data).shape)
-
-        return normalized_data, max_val, min_val
 
     def normalizar_z(self, redshifts):
         return (redshifts - np.min(redshifts))/(np.max(redshifts)- np.min(redshifts)).astype("float32")
     
     def factor_escala(self, redshifts):
         return 1/(1+redshifts).astype("float32")
-
-
-    def desnormalizar_datos_tanh(self, images, maximo, minimo):
-       # print("Images shape:", images.shape)
-       # print("Maximo shape:", maximo.shape)
-       # print("Minimo shape:", minimo.shape)
-        original_data =  ((images + 1) / 2) * (maximo - minimo) + minimo
-        #original_data =  images * (maximo - minimo) + minimo
-        
-        return original_data
     
 
     
@@ -132,48 +75,6 @@ class Dataset(tf.keras.Model):
         return rho_original
 
 
-    def rotation(self, cube, k):
-        # Rotar 90 grados en el plano de los dos primeros ejes espaciales (ejes 1 y 2)
-        # k=1 significa 90°, k=2 es 180°, k=3 es 270°
-        cubos_rotados = np.rot90(cube, k , axes=(1, 2))
-        return cubos_rotados
-
-
-
-
-    def load_data(self, file, data_mode):
-
-        output = os.path.join("Camels_data", file)
-        images, red = self.data0(output)
-        delta = self.delta(images)
-        forw = forward(delta)
-    
-        #z_vals = self.normalizar_z(red)
-        z_vals = self.factor_escala(red)
-
-
-        if data_mode == "global_norm_tanh":
-            norm_data, max_desnorm, min_desnorm = self.normalizar_datos_tanh(forw)
-            return norm_data, z_vals, max_desnorm, min_desnorm 
-
-
-        elif data_mode == "redshift_norm":
-            mu, sigma = self.compute_mu_sigma(forw) #Se lo doy por evoluciones porque compute ya lo reagrupa dentro, y salen por evoluciones, como los datos
-            norm_data = self.normalizar_mu_sigma(forw, mu, sigma)
-            return norm_data, z_vals, mu, sigma
-
-        elif data_mode == "forw": #Este para el caso linear sin hacer la "norm" de mu y sigma
-            forw = np.expand_dims(forw, -1)
-            return forw, z_vals
-
-
-        #Trrndría que añadir otro más en caso de querer hacer ambas cosas; hacer la norm de redshift y luego tanh
-
-        else:
-            raise ValueError("Elige bien el data_mode, 'global_norm' o 'redshift_norm'")
-
-
-
     def load_psd(self, psd_file):
 
         load_psd = np.load(psd_file)
@@ -185,11 +86,12 @@ class Dataset(tf.keras.Model):
 
         return psd_max, psd_min, psd_mean, psd_sigma, all_psd
     
+
     def load_k_values(self, image_size):
         if image_size == 64:
-            load_psd = np.load("PSD_delta.npz")
+            load_psd = np.load("psd-data/PSD_delta.npz")
         if image_size == 128:
-            load_psd = np.load("PSD_delta_128.npz")
+            load_psd = np.load("psd-data/PSD_delta_128.npz")
         k_values = load_psd["k_values"]
 
         return k_values
@@ -264,128 +166,3 @@ class Dataset(tf.keras.Model):
         
         return order_images, order_redshifts
 
-
-
-
-    def compute_mu_sigma(self, snap):
-
-        snap_ordenado = self.reordenacion(num_cv, snap)
-        mu = []
-        sigma = []
-        for i in range(num_classes):
-            mu.append(np.mean(snap_ordenado[i*num_cv:(i+1)*num_cv]))
-            sigma.append(np.std(snap_ordenado[i*num_cv:(i+1)*num_cv]))
-
-        mu = np.array(mu)
-        sigma = np.array(sigma)
-
-        mu_expanded = np.tile(mu, num_cv)
-        sigma_expanded = np.tile(sigma, num_cv)
-
-        return mu_expanded, sigma_expanded
-
-
-
-
-    def normalizar_mu_sigma(self, images, mu, sigma):
-
-        mu = tf.reshape(mu, (-1, 1, 1, 1))
-        sigma = tf.reshape(sigma, (-1, 1, 1, 1))
-
-        normalized_data = (images - mu) / sigma
-        normalized_data = np.expand_dims(normalized_data, -1)
-
-        return normalized_data
-
-    def desnormalizar_mu_sigma(self, images, mu, sigma):
-
-        mu = tf.reshape(mu, (-1, 1, 1, 1))
-        sigma = tf.reshape(sigma, (-1, 1, 1, 1))
-        images = np.squeeze(images, axis=-1)
-        print("images shape", images.shape)
-        print("mu shape", mu.shape)
-        print("sigma shape", sigma.shape)
-        original_data = images * sigma + mu
-        original_data = np.expand_dims(original_data, -1)
-
-        return original_data    
-
-
-
-    def load_data_new(self, data_mode, salida = None):
-
-        images, red = self.data0('Camels_data/Data3D-64.hdf5')
-        #images_clean = self.replace_extreme_voxels(images, quit=20) #Quito los 20 valores extremos
-        delta = self.delta(images_clean)
-        forw = forward(delta)
-
-        z_vals = self.normalizar_z(red)
-
-        mu, sigma = self.compute_mu_sigma(forw) #Se lo doy por evoluciones porque compute ya lo reagrupa dentro, y salen por evoluciones, como los datos
-
-        if data_mode == "norm":
-            if salida == "tanh": 
-                norm_data = self.normalizar_mu_sigma(forw, mu, sigma)
-                min_val = np.min(norm_data)
-                max_val = np.max(norm_data)
-                norm_data = 2 * (norm_data - min_val) / (max_val - min_val) - 1
-
-                return norm_data, z_vals, mu, sigma, min_val, max_val
-
-
-            if salida == "sigmoid":
-                norm_data = self.normalizar_mu_sigma(forw, mu, sigma)
-                min_val = np.min(norm_data)
-                max_val = np.max(norm_data)
-                norm_data = (norm_data - min_val) / (max_val - min_val)
-
-                return norm_data, z_vals, mu, sigma, min_val, max_val
-
-            if salida == "linear":
-                norm_data = self.normalizar_mu_sigma(forw, mu, sigma)
-                return norm_data, z_vals, mu, sigma
-            
-
-
-        elif data_mode == "desnorm":
-            return forw, z_vals
-
-        else:
-            raise ValueError("data_mode debe ser 'norm' o 'desnorm'")
-    
-
-
-    def load_data_2d(self, file, data_mode):
-
-        
-
-        output = os.path.join("Camels_data", file)
-        images, red = self.data0(output)
-
-        images_ord, red_ord = self.reordenacion(images, red)
-
-        delta = self.delta(images_ord)
-        forw = forward(delta)
-    
-        #z_vals = self.normalizar_z(red)
-        z_vals = self.factor_escala(red_ord)
-
-
-        if data_mode == "global_norm_tanh":
-            norm_data, max_desnorm, min_desnorm = self.normalizar_datos_tanh(forw)
-            return norm_data, z_vals, max_desnorm, min_desnorm 
-
-        elif data_mode == "redshift_norm":
-            mu, sigma = self.compute_mu_sigma(forw) #Se lo doy por evoluciones porque compute ya lo reagrupa dentro, y salen por evoluciones, como los datos
-            norm_data = self.normalizar_mu_sigma(forw, mu, sigma)
-            return norm_data, z_vals, mu, sigma
-
-        elif data_mode == "forw": #Este para el caso linear sin hacer la "norm" de mu y sigma
-            forw = np.expand_dims(forw, -1)
-            return forw, z_vals
-
-
-        #Trrndría que añadir otro más en caso de querer hacer ambas cosas; hacer la norm de redshift y luego tanh
-
-        else:
-            raise ValueError("Elige bien el data_mode, 'global_norm' o 'redshift_norm'")
