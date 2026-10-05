@@ -558,7 +558,7 @@ class Power(tf.keras.Model):
             ax1.tick_params(axis = 'y', labelsize = 18)
 
             if i == 4:
-                ax1.legend(fontsize=17)
+                ax1.legend(fontsize=14)
 
             ax2.plot(k_values, residuals, color='green', linewidth=1.5)
             ax2.axhline(0, color='gray', linewidth=1)
@@ -575,8 +575,8 @@ class Power(tf.keras.Model):
             if not os.path.exists(path):
                 os.makedirs(path)
 
-            #plt.savefig(os.path.join(path, f"psd_{i:02d}.png"), bbox_inches='tight', format='png')
-            #plt.show()
+            plt.savefig(os.path.join(path, f"psd_{i:02d}.png"), bbox_inches='tight', format='png')
+            plt.show()
 
         error_total = np.mean(error_res)
         
@@ -586,66 +586,48 @@ class Power(tf.keras.Model):
 
 
 
-    def error_residuos(self, k_values, mean_real, mean_fake, psd_fake, psd_max_real, psd_min_real, redshift, generated_images_folder, carpeta, tipo, samples):
-        num_classes = mean_real.shape[0]
+    def error_residuos(self, k_values, mean_real, mean_fake, psd_fake, psd_max_real, psd_min_real, redshift, generated_images_folder, carpeta, tipo, samples, psd_real = None):
+        """
+        Error relativo medio de la media: |<P_gen> - <P_real>| / <P_real>, promediado en k, por redshift.
+        Usa TODAS las muestras generadas. Si se pasa psd_real, calcula también el nivel de ruido esperado
+        para un generador perfecto (por tener solo num_cv reales y samples generados).
+        """
         eps = 1e-12
-        error_res = []
-
+        error_res, floor_res = [], []
         for i in range(num_classes):
-
             psd_class = np.array(psd_fake[i * samples:(i + 1) * samples])
             mean_real_i = np.array(mean_real[i])
-            mean_fake_i = np.array(mean_fake[i])
-
-            distances = np.linalg.norm(np.log10(psd_class + eps) - np.log10(mean_real_i + eps), axis=1)
-
-            n_keep = min(90, len(psd_class))
-            idx_sorted = np.argsort(distances)[:n_keep]
-            psd_top90 = psd_class[idx_sorted]
-
-            mean_top90 = psd_top90.mean(axis=0)
-            psd_max_top90 = psd_top90.max(axis=0)
-            psd_min_top90 = psd_top90.min(axis=0)
-
-            residuals = (mean_top90 - mean_real_i) / (mean_real_i + eps)
-            print("Residuals shape", residuals.shape)
-            error_res.append(np.mean(np.abs(residuals)))
-
-
-
+            mean_fake_i = psd_class.mean(axis = 0)
+            error_res.append(np.mean(np.abs(mean_fake_i - mean_real_i) / (mean_real_i + eps)))
+            if psd_real is not None:
+                psd_real_class = np.array(psd_real[i * num_cv:(i + 1) * num_cv])
+                sd = np.sqrt(psd_real_class.var(axis = 0, ddof = 1) / num_cv + psd_class.var(axis = 0, ddof = 1) / samples)
+                floor_res.append(np.mean(np.sqrt(2 / np.pi) * sd / (mean_real_i + eps)))
         error_res = np.array(error_res)
-        error_total = np.mean(error_res)
-        print("Error residuos: ", error_res)
-        print("Error total", error_total)
+        print("Error de la media por redshift:", np.round(error_res, 4))
+        print("Error total de la media:", np.mean(error_res))
+        if floor_res:
+            print("Nivel de ruido esperado (generador perfecto):", np.mean(floor_res))
+        return error_res
 
 
     def error_dispersion(self, k_values, psd_fake, psd_real, mean_real, redshift, generated_images_folder, carpeta, tipo, samples):
+        """
+        Error relativo de la dispersión: (sigma_gen - sigma_real) / sigma_real de log10 P, por k y redshift.
+        Usa todas las muestras y ddof = 1. Devuelve (34, nbins).
+        """
         eps = 1e-12
-        error_res = []
-
+        residuals = []
         for i in range(num_classes):
-            #Primero ordenamos para tener los 90 más cercanos
             psd_class = np.array(psd_fake[i * samples:(i + 1) * samples])
-            mean_real_i = np.array(mean_real[i])
-
-            distances = np.linalg.norm(np.log10(psd_class + eps) - np.log10(mean_real_i + eps), axis=1)
-
-            n_keep = min(90, len(psd_class))
-            idx_sorted = np.argsort(distances)[:n_keep]
-            psd_top90 = psd_class[idx_sorted]
-            #print(psd_top90, psd_top90.shape)
-
-            #Ahora calculamos la std de ambos grupos. Para el real hay que agrupar por redshifts
-            std_fake_i = np.std(psd_class, axis = 0)
             psd_real_class = np.array(psd_real[i * num_cv:(i + 1) * num_cv])
-            std_real_i = np.std(psd_real_class, axis = 0)
-
-            residual = ((std_fake_i - std_real_i)/(std_real_i + eps))
-
-
-        residual = np.array(residual)
-        error_total = np.mean(np.abs(residual))
-        print("Error residuos: ", residual)
-        print("Error total", error_total)
-
-    
+            std_fake_i = np.std(np.log10(psd_class + eps), axis = 0, ddof = 1)
+            std_real_i = np.std(np.log10(psd_real_class + eps), axis = 0, ddof = 1)
+            residuals.append((std_fake_i - std_real_i) / (std_real_i + eps))
+        residuals = np.array(residuals)
+        floor = np.sqrt(2 / np.pi) * np.sqrt(1 / (2 * (num_cv - 1)) + 1 / (2 * (samples - 1)))
+        print("Error de la dispersión por redshift:", np.round(np.mean(np.abs(residuals), axis = 1), 4))
+        print("Error total de la dispersión:", np.mean(np.abs(residuals)))
+        print("Sesgo medio (negativo = menos dispersión que los reales):", np.mean(residuals))
+        print("Nivel de ruido esperado (generador perfecto, aprox. gaussiana):", floor)
+        return residuals
