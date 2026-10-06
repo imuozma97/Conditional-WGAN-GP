@@ -512,7 +512,7 @@ class Power(tf.keras.Model):
     
 
 
-    def compare_psd_percentil_residuos(self, k_values, mean_real, mean_fake, psd_fake, psd_max_real, psd_min_real, redshift, generated_images_folder, carpeta, tipo, samples):
+    def compare_psd_percentil_residuos(self, k_values, mean_real, mean_fake, psd_fake, psd_max_real, psd_min_real, redshift, generated_images_folder, carpeta, samples):
         num_classes = mean_real.shape[0]
         eps = 1e-12
         error_res = []
@@ -566,10 +566,7 @@ class Power(tf.keras.Model):
             ax2.set_xlabel("$k$ [h/Mpc]", fontsize=20)
             ax2.tick_params(axis = 'both', labelsize = 16)
 
-            if tipo == "norm":
-                ax1.set_ylim(10**-4, 10**5)
-            elif tipo == "desnorm":
-                ax1.set_ylim(1, 10**6)
+            ax1.set_ylim(1, 10**6)
 
             path = os.path.join(generated_images_folder, carpeta)
             if not os.path.exists(path):
@@ -578,42 +575,49 @@ class Power(tf.keras.Model):
             plt.savefig(os.path.join(path, f"psd_{i:02d}.png"), bbox_inches='tight', format='png')
             plt.close(fig)
 
-        error_total = np.mean(error_res)
-        
-        print("Vector de residuos: ", error_res)
-        print("Media error: ", error_total)
+    
 
 
-
-
-    def error_media(self, k_values, mean_real, mean_fake, psd_fake, psd_max_real, psd_min_real, redshift, generated_images_folder, carpeta, tipo, samples, psd_real = None):
+    def error_media(self, k_values, mean_real, psd_fake, psd_real, samples, p_lo = 5, p_hi = 95):
         """
-        Error relativo medio de la media: |<P_gen> - <P_real>| / <P_real>, promediado en k, por redshift.
-        <P_gen> se calcula con los 90 generados más cercanos a la media real (igual que en la figura).
-        Si se pasa psd_real, calcula también el nivel de ruido esperado para un generador perfecto.
+        Coherente con compare_psd_claude:
+          - Error relativo medio de la media, |<P_gen> - <P_real>| / <P_real>, con TODOS los generados,
+            promediado en k, por redshift, y su nivel de ruido esperado para un generador perfecto.
+          - Cobertura: fracción de valores reales (cubo, k) dentro de la banda [P_p_lo, P_p_hi] de los generados.
+            Para un generador perfecto vale (p_hi - p_lo)/100 (0.90 para 5-95); menos indica generados
+            demasiado estrechos o desplazados, más indica generados demasiado anchos.
+        Devuelve un diccionario con los valores por redshift.
         """
         eps = 1e-12
-        error_res, floor_res = [], []
+        error_res, floor_res, cobertura = [], [], []
+
         for i in range(num_classes):
             psd_class = np.array(psd_fake[i * samples:(i + 1) * samples])
+            psd_real_class = np.array(psd_real[i * num_cv:(i + 1) * num_cv])
             mean_real_i = np.array(mean_real[i])
-            distances = np.linalg.norm(np.log10(psd_class + eps) - np.log10(mean_real_i + eps), axis = 1)
-            psd_class = psd_class[np.argsort(distances)[:min(90, len(psd_class))]]
             mean_fake_i = psd_class.mean(axis = 0)
+
             error_res.append(np.mean(np.abs(mean_fake_i - mean_real_i) / (mean_real_i + eps)))
-            if psd_real is not None:
-                psd_real_class = np.array(psd_real[i * num_cv:(i + 1) * num_cv])
-                sd = np.sqrt(psd_real_class.var(axis = 0, ddof = 1) / num_cv + psd_class.var(axis = 0, ddof = 1) / len(psd_class))
-                floor_res.append(np.mean(np.sqrt(2 / np.pi) * sd / (mean_real_i + eps)))
-        error_res = np.array(error_res)
-        print("Error de la media por redshift:", np.round(error_res, 4))
-        print("Error total de la media:", np.mean(error_res))
-        if floor_res:
-            print("Nivel de ruido esperado (generador perfecto):", np.mean(floor_res))
-        return error_res
+
+            sd = np.sqrt(psd_real_class.var(axis = 0, ddof = 1) / num_cv + psd_class.var(axis = 0, ddof = 1) / samples)
+            floor_res.append(np.mean(np.sqrt(2 / np.pi) * sd / (mean_real_i + eps)))
+
+            lo_fake, hi_fake = np.percentile(psd_class, [p_lo, p_hi], axis = 0)
+            cobertura.append(np.mean((psd_real_class >= lo_fake) & (psd_real_class <= hi_fake)))
+
+        error_res, floor_res, cobertura = np.array(error_res), np.array(floor_res), np.array(cobertura)
+        esperada = (p_hi - p_lo) / 100
+
+        print("Error de la media por redshift (todas las muestras):", np.round(error_res, 4))
+        print("Error total de la media (todas las muestras):", np.mean(error_res))
+        print("Nivel de ruido esperado (generador perfecto):", np.mean(floor_res))
+        print(f"Cobertura de los reales en la banda P{p_lo}-P{p_hi} de los generados por redshift:", np.round(cobertura, 3))
+        print(f"Cobertura total: {np.mean(cobertura):.3f} (esperada para un generador perfecto: {esperada:.2f})")
+
+        return {"error_media": error_res, "ruido": floor_res, "cobertura": cobertura}
 
 
-    def error_dispersion(self, k_values, psd_fake, psd_real, mean_real, redshift, generated_images_folder, carpeta, tipo, samples):
+    def error_dispersion(self, k_values, psd_fake, psd_real, mean_real, samples):
         """
         Error relativo de la dispersión: (sigma_gen - sigma_real) / sigma_real de log10 P, por k y redshift.
         Usa todas las muestras y ddof = 1. Devuelve (34, nbins).
@@ -636,35 +640,52 @@ class Power(tf.keras.Model):
 
 
 
-
-    def compare_psd_new(self, k_values, mean_real, mean_fake, psd_max_real, psd_min_real, psd_max_fake, psd_min_fake, redshift, generated_images_folder, carpeta, samples):
-        num_classes = mean_real.shape[0]
+    def compare_psd_claude(self, k_values, mean_real, psd_fake, psd_real, redshift, generated_images_folder, carpeta, samples, p_lo = 5, p_hi = 95):
+        """
+        Media real frente a media generada por redshift, con TODAS las muestras, y bandas entre los
+        percentiles p_lo y p_hi (por defecto 5 y 95) calculadas bin a bin, igual para reales y generados.
+        psd_fake: P(k) generados en orden z-mayor (samples por redshift).
+        psd_real: P(k) reales en orden z-mayor (num_cv por redshift).
+        """
         eps = 1e-12
         error_res = []
 
         for i in range(num_classes):
 
-            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 5), gridspec_kw={'height_ratios': [3, 1], 'hspace': 0.05}, sharex=True)
+            fig, (ax1, ax2) = plt.subplots(
+                2, 1,
+                figsize=(8, 5),
+                gridspec_kw={'height_ratios': [3, 1], 'hspace': 0.05},
+                sharex=True
+            )
 
-            ax1.plot(k_values, mean_real[i], '-o', ms=4, color='blue', label=r"$\overline{\mathrm{PSD}}_{\mathrm{real}}$")
-            ax1.plot(k_values, mean_fake[i], '-o', ms=4, color='red', label=r"$\overline{\mathrm{PSD}}_{\mathrm{fake}}$")
-            ax1.fill_between(k_values, psd_min_real[i], psd_max_real[i], color='blue', alpha=0.2, label=r"$Range_{\mathrm{real}}$")
-            ax1.fill_between(k_values, psd_min_fake[i], psd_max_fake[i], color='red', alpha=0.25, label=r"$Range_{\mathrm{fake}}$")
+            psd_class = np.array(psd_fake[i * samples:(i + 1) * samples])
+            psd_real_class = np.array(psd_real[i * num_cv:(i + 1) * num_cv])
+            mean_real_i = np.array(mean_real[i])
+            mean_fake_i = psd_class.mean(axis=0)
+
+            lo_real, hi_real = np.percentile(psd_real_class, [p_lo, p_hi], axis=0)
+            lo_fake, hi_fake = np.percentile(psd_class, [p_lo, p_hi], axis=0)
+
+            residuals = (mean_fake_i - mean_real_i) / (mean_real_i + eps)
+            error_res.append(np.mean(np.abs(residuals)))
+
+            ax1.plot(k_values, mean_real_i, '-o', ms=4, color='blue', label=r"$\overline{\mathrm{PSD}}_{\mathrm{real}}$")
+            ax1.plot(k_values, mean_fake_i, '-o', ms=4, color='red', label=r"$\overline{\mathrm{PSD}}_{\mathrm{fake}}$")
+            ax1.fill_between(k_values, lo_real, hi_real, color='blue', alpha=0.2, label=r"$P_{%d}$–$P_{%d}$ real" % (p_lo, p_hi))
+            ax1.fill_between(k_values, lo_fake, hi_fake, color='red', alpha=0.25, label=r"$P_{%d}$–$P_{%d}$ fake" % (p_lo, p_hi))
 
             ax1.set_yscale('log')
             ax1.set_ylabel("P(k)", fontsize=20)
 
-            z = float(redshift[i])
+            z = float(np.ravel(redshift)[i])
             z_str = f"{z:.1f}".rstrip("0").rstrip(".")
             ax1.set_title(r"$z \sim " + z_str + r"$", fontsize=26)
-            #ax1.set_title(r"PSD vs. $k$ at z$\sim${:.1f}".format(float(redshift[i])), fontsize=26)
             ax1.tick_params(axis = 'y', labelsize = 18)
 
             if i == 4:
                 ax1.legend(fontsize=14)
 
-
-            residuals = (mean_fake[i] - mean_real[i]) / (mean_real[i] + eps)
             ax2.plot(k_values, residuals, color='green', linewidth=1.5)
             ax2.axhline(0, color='gray', linewidth=1)
             ax2.set_ylabel(r'$\Delta P / P$', fontsize=20)
@@ -680,7 +701,12 @@ class Power(tf.keras.Model):
             plt.savefig(os.path.join(path, f"psd_{i:02d}.png"), bbox_inches='tight', format='png')
             plt.close(fig)
 
-        error_total = np.mean(error_res)
-        
-        print("Vector de residuos: ", error_res)
-        print("Media error: ", error_total)
+        error_res = np.array(error_res)
+        #print("Error de la media por redshift (todas las muestras):", np.round(error_res, 4))
+        #print("Error total de la media (todas las muestras):", np.mean(error_res))
+        return error_res
+
+
+
+    
+    
