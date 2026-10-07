@@ -11,7 +11,7 @@ import numpy as np
 
 from config import latent_dim
 from grad_pen import gradient_penalty
-from power import Power
+from power_claude import Power
 from psd_utils import psd_out_of_band_fraction, psd_loss_log
 from loss_plot import plot_loss_graph
 from transforms import backward_2
@@ -19,12 +19,11 @@ from transforms import backward_2
 
 class Training128(tf.keras.Model):
 
-    def __init__(self, data_class, discriminator, generator, batch_size, ncritic, trained_models_folder, generated_images_folder, lambda_psd_schedule, lambda_term, image_size, use_psd_loss = True,
+    def __init__(self, data_class, discriminator, generator, ncritic, trained_models_folder, generated_images_folder, lambda_psd_schedule, lambda_term, image_size, use_psd_loss = True,
                 grad_ratio = 1.0, lambda_beta = 0.99, lambda_max = 1000.0, warmup_epochs = 0):
         super().__init__()
         self.discriminator = discriminator
         self.generator = generator
-        self.batch_size = batch_size
         self.trained_models_folder= trained_models_folder
         self.generated_images_folder = generated_images_folder
         self.current_epoch = 0
@@ -55,18 +54,19 @@ class Training128(tf.keras.Model):
     @tf.function    
     def train_step(self, data):
             
-        real_images, z_values, psd_max, psd_min,  psd_mean = data  
+        real_images, z_values, psd_max, psd_min,  psd_mean = data
+        batch_actual = tf.shape(real_images)[0]
 
         for _ in range(self.ncritic):
-            noise = tf.random.normal([self.batch_size, latent_dim]) 
-                
+            noise = tf.random.normal([batch_actual, latent_dim]) 
+            
+            generated_images = tf.stop_gradient(self.generator([noise, z_values], training=True))
             with tf.GradientTape() as disc_tape:
-                generated_images = self.generator([noise, z_values], training=True)
-
+                
                 fake_predictions = self.discriminator([generated_images, z_values], training=True)
                 real_predictions = self.discriminator([real_images, z_values], training=True)
                 
-                gp, grads_norm_mean = gradient_penalty(real_images, generated_images, z_values, self.discriminator, self.batch_size)
+                gp, grads_norm_mean = gradient_penalty(real_images, generated_images, z_values, self.discriminator, batch_actual)
                     
                 disc_loss_fake = tf.reduce_mean(fake_predictions)
                 disc_loss_real = tf.reduce_mean(real_predictions)
@@ -79,7 +79,7 @@ class Training128(tf.keras.Model):
             self.d_optimizer.apply_gradients(zip(grads_disc, self.discriminator.trainable_variables))
 
             # Generador
-        noise = tf.random.normal([self.batch_size, latent_dim])
+        noise = tf.random.normal([batch_actual, latent_dim])
         with tf.GradientTape(persistent=True) as gen_tape:
 
             generated_images = self.generator([noise, z_values], training=True)
@@ -380,104 +380,3 @@ class Training128(tf.keras.Model):
 
 
 
-"""
-    @tf.function    
-    def train_step(self, data):
-        #print("Entra al train-step")
-            
-        real_images, z_values, psd_max, psd_min,  psd_mean = data  
-        sub_batch = 4
-
-        for _ in range(self.ncritic):
-            noise = tf.random.normal([self.batch_size, latent_dim])
-
-            generated_parts = []
-
-            for i in range(0, self.batch_size, sub_batch):
-                noise_part = noise[i:i + sub_batch]
-                z_part = z_values[i:i + sub_batch]
-
-                generated_part = self.generator([noise_part, z_part], training=True)
-                generated_parts.append(tf.stop_gradient(generated_part))
-
-            generated_images = tf.concat(generated_parts, axis=0)
-
-            with tf.GradientTape() as disc_tape:
-
-                if self.use_psd:
-                    fake_predictions = self.discriminator([generated_images, z_values, psd_gen], training=True)
-                    real_predictions = self.discriminator([real_images, z_values, psd_mean], training=True)
-                else:
-                    fake_predictions = self.discriminator([generated_images, z_values], training=True)
-                    real_predictions = self.discriminator([real_images, z_values], training=True)
-
-                gp, grads_norm_mean = gradient_penalty(real_images, generated_images, z_values, self.discriminator, self.batch_size)
-
-                disc_loss_fake = tf.reduce_mean(fake_predictions)
-                disc_loss_real = tf.reduce_mean(real_predictions)
-                wass_loss = disc_loss_fake - disc_loss_real
-                disc_loss = wass_loss + self.lambda_term * gp
-
-            grads_disc = disc_tape.gradient(disc_loss, self.discriminator.trainable_variables)
-            norm_disc = tf.linalg.global_norm(grads_disc)
-            self.d_optimizer.apply_gradients(zip(grads_disc, self.discriminator.trainable_variables))
-
-            # Generador
-        noise = tf.random.normal([self.batch_size, latent_dim])
-
-        if self.use_psd_loss:
-            lambda_psd = self.lambda_psd_schedule(self.current_epoch)
-
-        batch_size_actual = noise.shape[0]
-
-        accum_grads = [tf.zeros_like(var) for var in self.generator.trainable_variables]
-        psd_parts = []
-        for i in range(0, batch_size_actual, sub_batch):
-
-            noise_part = noise[i:i + sub_batch]
-            z_part = z_values[i:i + sub_batch]
-            psd_mean_part = psd_mean[i:i + sub_batch]
-
-            with tf.GradientTape() as gen_tape:
-                generated_images = self.generator([noise_part, z_part], training=True)
-                delta_part = self.backward(generated_images) - 1
-                psd_part = self.power.compute_all_psd(delta_part)
-                psd_parts.append(psd_part)
-
-                if self.use_psd:
-                    fake_predictions = self.discriminator([generated_images, z_part, psd_part], training=True)
-                else:
-                    fake_predictions = self.discriminator([generated_images, z_part], training=True)
-
-                loss_adv = -tf.reduce_mean(fake_predictions)
-                loss_psd = psd_loss_log(psd_part, psd_mean_part)
-
-                if self.use_psd_loss:
-                    gen_loss = loss_adv + lambda_psd * loss_psd
-                else:
-                    gen_loss = loss_adv
-
-                
-                weight = tf.cast(tf.shape(noise_part)[0], tf.float32) / tf.cast(batch_size_actual, tf.float32)
-                gen_loss_weighted = gen_loss * weight
-
-            grads = gen_tape.gradient(gen_loss_weighted, self.generator.trainable_variables)
-            accum_grads = [acc + (g if g is not None else tf.zeros_like(var)) for acc, g, var in zip(accum_grads, grads, self.generator.trainable_variables)]
-
-
-        psd_gen = tf.concat(psd_parts, axis=0)
-        percent = psd_out_of_band_fraction(psd_gen, psd_min, psd_max)
-
-        norm_gen = tf.linalg.global_norm(accum_grads)
-        self.g_optimizer.apply_gradients(zip(accum_grads, self.generator.trainable_variables))
-        #norm_psd = tf.linalg.global_norm(grads_psd)
-        #norm_adv = tf.linalg.global_norm(grads_adv)
-            
-        ratio1 = norm_disc / (norm_gen + 1e-8)
-        #ratio2 = norm_adv / (norm_psd + 1e-8)
-        #ratio3 = norm_disc / (norm_adv + 1e-8)
-
-        return wass_loss, disc_loss_real, disc_loss_fake, gen_loss, loss_psd, percent, grads_norm_mean, norm_disc, norm_gen #,psd_gen, psd_max, psd_min, 
-        
-
-"""
