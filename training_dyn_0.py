@@ -11,19 +11,21 @@ import numpy as np
 
 from config import latent_dim
 from grad_pen import gradient_penalty
-from power_claude import Power
+from power_dc import Power
 from psd_utils import psd_out_of_band_fraction, psd_loss_log
 from loss_plot import plot_loss_graph
 from transforms import backward_2
 
 
-class Training128(tf.keras.Model):
+class Training(tf.keras.Model):
 
-    def __init__(self, data_class, discriminator, generator, ncritic, trained_models_folder, generated_images_folder, lambda_psd_schedule, lambda_term, image_size, use_psd_loss = True,
-                grad_ratio = 1.0, lambda_beta = 0.99, lambda_max = 1000.0, warmup_epochs = 0, sub_batch = 4):
+    def __init__(self, data_class, discriminator, generator, batch_size, ncritic, trained_models_folder, generated_images_folder,
+                 lambda_psd_schedule, lambda_term, image_size, use_psd_loss = True,
+                 grad_ratio = 1.0, lambda_beta = 0.99, lambda_max = 1000.0, warmup_epochs = 0):
         super().__init__()
         self.discriminator = discriminator
         self.generator = generator
+        self.batch_size = batch_size
         self.trained_models_folder= trained_models_folder
         self.generated_images_folder = generated_images_folder
         self.current_epoch = 0
@@ -33,11 +35,10 @@ class Training128(tf.keras.Model):
         self.lambda_psd_schedule = lambda_psd_schedule
         self.lambda_term = lambda_term
         self.image_size = image_size
-        self.sub_batch = sub_batch
 
         self.power = Power(self.image_size)
 
-         # lambda_t = r * ||grad L_adv|| / ||grad L_psd||, suavizado con una media móvil (EMA)
+        # lambda_t = r * ||grad L_adv|| / ||grad L_psd||, suavizado con una media móvil (EMA)
         self.grad_ratio_value = grad_ratio
         self.warmup_epochs = warmup_epochs
         self.lambda_beta = lambda_beta
@@ -45,29 +46,29 @@ class Training128(tf.keras.Model):
         self.grad_ratio = tf.Variable(0.0, trainable=False, dtype=tf.float32, name="grad_ratio")
         self.lambda_psd = tf.Variable(-1.0, trainable=False, dtype=tf.float32, name="lambda_psd")  # -1 = EMA sin iniciar
 
+
+
     def compile(self, d_optimizer, g_optimizer):
         super().compile()
         self.d_optimizer = d_optimizer
         self.g_optimizer = g_optimizer
 
 
-
     @tf.function    
     def train_step(self, data):
             
-        real_images, z_values, psd_max, psd_min,  psd_mean = data
-        batch_actual = tf.shape(real_images)[0]
+        real_images, z_values, psd_max, psd_min,  psd_mean = data  
 
         for _ in range(self.ncritic):
-            noise = tf.random.normal([batch_actual, latent_dim]) 
-            
-            generated_images = tf.stop_gradient(self.generator([noise, z_values], training=True))
-            with tf.GradientTape() as disc_tape:
+            noise = tf.random.normal([self.batch_size, latent_dim]) 
                 
+            with tf.GradientTape() as disc_tape:
+                generated_images = self.generator([noise, z_values], training=True)
+
                 fake_predictions = self.discriminator([generated_images, z_values], training=True)
                 real_predictions = self.discriminator([real_images, z_values], training=True)
                 
-                gp, grads_norm_mean = gradient_penalty(real_images, generated_images, z_values, self.discriminator, batch_actual)
+                gp, grads_norm_mean = gradient_penalty(real_images, generated_images, z_values, self.discriminator, self.batch_size)
                     
                 disc_loss_fake = tf.reduce_mean(fake_predictions)
                 disc_loss_real = tf.reduce_mean(real_predictions)
@@ -79,60 +80,37 @@ class Training128(tf.keras.Model):
             norm_disc = tf.linalg.global_norm(grads_disc)
             self.d_optimizer.apply_gradients(zip(grads_disc, self.discriminator.trainable_variables))
 
-            
-        # Generador: acumulación por sub-batches. Los gradientes acumulados son exactamente los del batch
-        # completo (el generador no tiene BatchNorm), así que lambda_t = r*||g_adv||/||g_psd|| no cambia.
+            # Generador
+        noise = tf.random.normal([self.batch_size, latent_dim])
+        with tf.GradientTape(persistent=True) as gen_tape:
+
+            generated_images = self.generator([noise, z_values], training=True)
+            delta = backward_2(generated_images) - 1
+            psd_gen = self.power.compute_all_psd(delta)
+
+            fake_predictions = self.discriminator([generated_images, z_values], training=True)
+
+            loss_adv = -tf.reduce_mean(fake_predictions)
+            percent = psd_out_of_band_fraction(psd_gen, psd_min, psd_max)
+            loss_psd = psd_loss_log(psd_gen, psd_mean)
+
         g_vars = self.generator.trainable_variables
-        sub = self.sub_batch
-        batch_f = tf.cast(batch_actual, tf.float32)
-        noise = tf.random.normal([batch_actual, latent_dim])
-
-        grads_adv = [tf.zeros_like(v) for v in g_vars]
-        grads_psd = [tf.zeros_like(v) for v in g_vars]
-        loss_adv = tf.constant(0.0)
-        loss_psd = tf.constant(0.0)
-        percent = tf.constant(0.0)
-
-        n_sub = (batch_actual + sub - 1) // sub
-        for i in tf.range(n_sub):
-            i0 = i * sub
-            noise_part = noise[i0:i0 + sub]
-            z_part = z_values[i0:i0 + sub]
-            mean_part = psd_mean[i0:i0 + sub]
-            w = tf.cast(tf.shape(noise_part)[0], tf.float32) / batch_f   # peso del sub-batch en la media del batch
-
-            with tf.GradientTape(persistent=True) as gen_tape:
-                generated_part = self.generator([noise_part, z_part], training=True)
-                delta_part = backward_2(generated_part) - 1
-                psd_part = self.power.compute_all_psd(delta_part)
-                fake_part = self.discriminator([generated_part, z_part], training=True)
-                loss_adv_part = -tf.reduce_mean(fake_part) * w
-                loss_psd_part = psd_loss_log(psd_part, mean_part) * w
-
-            ga_part = gen_tape.gradient(loss_adv_part, g_vars)
-            gp_part = gen_tape.gradient(loss_psd_part, g_vars)
-            del gen_tape
-
-            grads_adv = [acc + (tf.zeros_like(v) if g is None else g) for acc, g, v in zip(grads_adv, ga_part, g_vars)]
-            grads_psd = [acc + (tf.zeros_like(v) if g is None else g) for acc, g, v in zip(grads_psd, gp_part, g_vars)]
-            loss_adv += loss_adv_part
-            loss_psd += loss_psd_part
-            percent += psd_out_of_band_fraction(psd_part, psd_min[i0:i0 + sub], psd_max[i0:i0 + sub]) * w
+        grads_adv = gen_tape.gradient(loss_adv, g_vars)
+        grads_psd = gen_tape.gradient(loss_psd, g_vars)
+        del gen_tape
+        grads_psd = [tf.zeros_like(v) if g is None else g for g, v in zip(grads_psd, g_vars)]
 
         norm_adv = tf.linalg.global_norm(grads_adv)
         norm_psd = tf.linalg.global_norm(grads_psd)
         dot = tf.add_n([tf.reduce_sum(ga * gp) for ga, gp in zip(grads_adv, grads_psd)])
         cos_adv_psd = dot / (norm_adv * norm_psd + 1e-12)   # < 0: los dos términos tiran en sentidos opuestos
 
-        finite = tf.math.is_finite(norm_adv) & tf.math.is_finite(norm_psd)
-
         if self.use_psd_loss:
             lambda_t = self.grad_ratio * norm_adv / (norm_psd + 1e-12)
             lambda_t = tf.clip_by_value(lambda_t, 0.0, self.lambda_max)
             lam = tf.where(self.lambda_psd < 0.0, lambda_t,
                            self.lambda_beta * self.lambda_psd + (1.0 - self.lambda_beta) * lambda_t)
-            lam = tf.where(finite, lam, tf.maximum(self.lambda_psd, 0.0))
-            self.lambda_psd.assign(tf.where(finite, lam, self.lambda_psd))
+            self.lambda_psd.assign(lam)
             grads_gen = [ga + lam * gp for ga, gp in zip(grads_adv, grads_psd)]
             gen_loss = loss_adv + lam * loss_psd
         else:
@@ -141,9 +119,6 @@ class Training128(tf.keras.Model):
             gen_loss = loss_adv
 
         norm_gen = tf.linalg.global_norm(grads_gen)
-        ok = tf.math.is_finite(norm_gen)
-        # si el batch da gradientes no finitos, se anula la actualización (con beta_1 = 0, Adam no mueve los pesos)
-        grads_gen = [tf.where(ok, g, tf.zeros_like(g)) for g in grads_gen]
         self.g_optimizer.apply_gradients(zip(grads_gen, g_vars))
             
         ratio1 = norm_disc / (norm_gen + 1e-8)
@@ -163,27 +138,11 @@ class Training128(tf.keras.Model):
         
         loss_file = os.path.join(self.trained_models_folder, "loss_data.json")
 
-        # Valores por defecto: se usan al empezar de cero y también al reanudar si falta el JSON o alguna clave
-        start_epoch = 0
-        epoch_vect = []
-        wass_losses = []
-        disc_losses_r, disc_losses_f  = [],  []
-        adv_losses = []
-        psd_losses = []
-        grad_pen = []
-        percents = []
-        ratios1 = []
-        norms_disc, norms_gen = [], []
-        best_percent_metric = float("inf")
-        best_psd_metric = float("inf")
-        best_psd, best_epoch_psd, best_percent, best_epoch_percent = [], [], [], []
-        lambdas, norms_adv, norms_psd, cosines = [], [], [], []
-
         # Restaurar si existe un checkpoint previo
         if checkpoint_manager.latest_checkpoint:
             print(f"Restaurando desde {checkpoint_manager.latest_checkpoint}")
             checkpoint.restore(checkpoint_manager.latest_checkpoint)
-            start_epoch = int(checkpoint.epoch.numpy()) + 1  # checkpoint.epoch guarda la última época completada
+            start_epoch = int(checkpoint.epoch.numpy())  # Recuperar la última época guardada
 
             if os.path.exists(loss_file):
                 print("Cargando histórico de pérdidas...")
@@ -199,9 +158,10 @@ class Training128(tf.keras.Model):
                 grad_pen = data.get('grad_pen', [])
                 percents = data.get('percents', [])
                 ratios1 = data.get('ratio1', [])
-                norms_disc = data.get('norm_disc', data.get('norms_disc', []))   # se guarda como 'norm_disc'
-                norms_gen = data.get('nom_gen', data.get('norms_gen', []))       # se guarda como 'nom_gen'
+                norms_disc = data.get('norms_disc', [])
+                norms_gen = data.get('norms_gen', [])
 
+                best_epoch = data.get('best_epoch', [])
                 best_psd = data.get('best_psd', [])
                 best_percent = data.get('best_percent', [])
                 best_epoch_psd = data.get('best_epoch_psd', [])
@@ -211,19 +171,37 @@ class Training128(tf.keras.Model):
                 norms_adv = data.get('norm_adv', [])
                 norms_psd = data.get('norm_psd', [])
                 cosines = data.get('cos_adv_psd', [])
-                if lambdas and np.isfinite(lambdas[-1]):
+                if lambdas:
                     self.lambda_psd.assign(lambdas[-1])
 
-                # Las listas de mejores modelos están vacías si se interrumpió antes de la época 150
-                if best_percent:
-                    best_percent_metric = best_percent[-1]
-                if best_psd:
-                    best_psd_metric = best_psd[-1]
-            else:
-                print("No se encontró loss_data.json: el histórico de pérdidas empieza vacío.")
+                best_percent_metric = best_percent[-1]
+                best_psd_metric = best_psd[-1]
+
+
 
         else:
             print("No se encontraron checkpoints previos, iniciando desde cero.")
+            start_epoch = 0
+        
+            epoch_vect = []
+            wass_losses = []
+            disc_losses_r, disc_losses_f  = [],  []
+                
+            adv_losses = []
+            psd_losses = []
+                
+            grad_pen = []
+            percents = []
+
+            ratios1 = []
+                
+            norms_disc, norms_gen= [], []
+
+            best_percent_metric = float("inf")
+            best_psd_metric = float("inf")
+            best_psd, best_epoch_psd, best_percent, best_epoch_percent = [], [], [], []
+
+            lambdas, norms_adv, norms_psd, cosines = [], [], [], []
         
             
         for epoch in range(start_epoch, epochs):
@@ -401,6 +379,3 @@ class Training128(tf.keras.Model):
             plot_loss_graph(epoch_vect, disc_losses_f, disc_losses_r, "Distance-Loss.pdf", "Disc Loss Fake", "Disc Loss Real", self.generated_images_folder)
             plot_loss_graph(epoch_vect, grad_pen, None,  "Gradient-penalty.pdf", "Gradient Penalty", "GP" ,self.generated_images_folder)
                 
-
-
-

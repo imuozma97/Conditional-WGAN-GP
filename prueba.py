@@ -75,10 +75,11 @@ file = "Camels_data/Data3D-64.hdf5"
 f = h5py.File(file, 'r')
 maps = f['train_maps'][:]
 red = np.array(f['train_labels'])[:]
+print("red", red[0:34])
 
 #percentil = np.percentile(maps, 99.99)
 #print("percentil: ", percentil)
-
+"""
 
 maps_ordenados = reordenacion(num_classes, num_cv, maps)
 maps_z0 = maps_ordenados[891:]
@@ -128,7 +129,7 @@ plt.close()
 
 
 #k = 8000
-"""
+
 #rho_transf = 2*maps_ordenados/(maps_ordenados + k) -1 #Aquí ya están agrupados por redshift
 forw = forward_1(maps_ordenados)
 print("Max rho:", np.max(forw), "Min rho:", np.min(forw)) #Esto es para comprobar que la transformación se ha hecho bien, el rango es de -1 a 1

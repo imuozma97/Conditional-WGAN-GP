@@ -552,7 +552,7 @@ class Power(tf.keras.Model):
             ax1.set_ylabel("P(k)", fontsize=20)
 
             z = float(redshift[i])
-            z_str = f"{z:.1f}".rstrip("0").rstrip(".")
+            z_str = f"{z:.2f}".rstrip("0").rstrip(".")
             ax1.set_title(r"$z \sim " + z_str + r"$", fontsize=26)
             #ax1.set_title(r"PSD vs. $k$ at z$\sim${:.1f}".format(float(redshift[i])), fontsize=26)
             ax1.tick_params(axis = 'y', labelsize = 18)

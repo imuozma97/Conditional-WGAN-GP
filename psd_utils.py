@@ -54,18 +54,10 @@ def lambda_psd_schedule(epoch):
 
 def lambda_psd_schedule2(epoch):
 
-    if epoch < 150:
-        lambda_psd = 1
-
-    elif epoch < 400:
-        #lambda_psd = 0.5 + (1 - 0.5) * (epoch - 150) / (400 - 150)
-        lambda_psd = 5
-
-    elif epoch < 800:
-        #lambda_psd = 1 + (1.3 - 1) * (epoch - 400) / (800 - 400)
-        lambda_psd = 10
+    if epoch < 0:
+        lambda_psd = 0.5
     else:
-        lambda_psd = 1
+        lambda_psd =  0.5
 
     return lambda_psd
 

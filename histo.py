@@ -716,14 +716,145 @@ class Histogramas:
         plt.savefig(filepath, dpi = 300, bbox_inches = 'tight')
         plt.close()
         return {"error": error_res, "ruido": floor_res, "vacias_real": vacias_real, "vacias_fake": vacias_fake,
-                "neg_fake": neg_fake, "sobre_fake": sobre_fake}
+                "neg_fake": neg_fake, "sobre_fake": sobre_fake, "error_mean":np.mean(np.abs(error_res))}
 
 
     def all_histogramas_claude(self, N, fake_agrupado, real_agrupado, tipo, epoch, redshift, carpeta):
         for i in range(num_classes):
-            self.histograma_claude(fake_agrupado[i*N : N + N*i], real_agrupado[i*num_cv : num_cv + num_cv*i], tipo, epoch,redshift, carpeta=f"histogramas_medio_residuos_p90_{epoch}", i=i)
+            self.histograma_claude(fake_agrupado[i*N : N + N*i], real_agrupado[i*num_cv : num_cv + num_cv*i], tipo, epoch,redshift, carpeta, i=i)
 
 
+
+
+
+    def histograma_curva(self, data1, data2, tipo, epoch, redshift, carpeta, i = None,
+                          n_keep = 90, nb = 50, dequant = True, min_count = 10, p_lo = 5, p_hi = 95, seed = 0, guardar_figuras = True):
+        """
+        Número de celdas por bin frente a 1+delta, en curvas: generados (data1) frente a reales (data2).
+          - Bins logarítmicos de igual anchura en log10(1+delta), fijados SOLO con los reales.
+          - dequant: ruido uniforme de +-0.5 partículas en las celdas reales no vacías (conteos enteros
+            frente a generados continuos).
+          - Curvas: media real y media de los n_keep generados más cercanos a la media real (None = todos).
+            Bandas: percentiles p_lo-p_hi entre cubos, con TODOS los cubos.
+          - Panel inferior: residuo relativo de la media, con la banda de +-1 sigma esperada.
+        Errores (en bins con >= min_count celdas por cubo real de media):
+          - err_media: |N_gen - N_real| / N_real medio (con los n_keep), y su nivel de ruido.
+          - err_disp: |sigma_gen / sigma_real - 1| medio (con TODOS los generados), su nivel de ruido y su sesgo.
+        """
+        n_bar = 256**3 / data2[0].size                          # partículas por celda: 64 para 64^3, 8 para 128^3
+        rng = np.random.default_rng(seed)
+
+        real = 1 + np.asarray(data2, dtype = np.float64).reshape(len(data2), -1)
+        fake = 1 + np.asarray(data1, dtype = np.float64).reshape(len(data1), -1)
+        if dequant:
+            nz = real > 0
+            real[nz] += rng.uniform(-0.5, 0.5, nz.sum()) / n_bar
+
+        # Bins: solo con los reales
+        lo, hi = max(0.5 / n_bar, real[real > 0].min()), real.max()
+        bins = np.logspace(np.log10(lo), np.log10(hi), nb + 1)
+        centers = np.sqrt(bins[:-1] * bins[1:])
+
+        h_r = np.array([np.histogram(s, bins = bins)[0] for s in real], dtype = float)
+        h_f_todos = np.array([np.histogram(s, bins = bins)[0] for s in fake], dtype = float)
+        m_r = h_r.mean(axis = 0)
+
+        # Fuera del rango de los bins (se informan aparte)
+        vacias_real = np.mean(real < lo)
+        vacias_fake = np.mean((fake < lo) & (fake >= 0))
+        neg_fake = np.mean(fake < 0)
+        sobre_fake = np.mean(fake > hi)
+
+        # Media de los generados: n_keep más cercanos a la media real (distancia en log)
+        h_f = h_f_todos
+        if n_keep is not None:
+            d = np.linalg.norm(np.log10(h_f_todos + 1) - np.log10(m_r + 1), axis = 1)
+            h_f = h_f_todos[np.argsort(d)[:min(n_keep, len(h_f_todos))]]
+        m_f = h_f.mean(axis = 0)
+
+        # Error de la media y su nivel de ruido
+        ok = m_r >= min_count
+        res = np.full_like(m_r, np.nan)
+        res[ok] = (m_f[ok] - m_r[ok]) / m_r[ok]
+        ruido = np.full_like(m_r, np.nan)
+        ruido[ok] = np.sqrt(h_r[:, ok].var(axis = 0, ddof = 1) / len(h_r) + h_f[:, ok].var(axis = 0, ddof = 1) / len(h_f)) / m_r[ok]
+        err_media = np.mean(np.abs(res[ok]))
+        floor_media = np.mean(np.sqrt(2 / np.pi) * ruido[ok])
+
+        # Error de la dispersión (todos los generados) y su nivel de ruido
+        s_r = h_r.std(axis = 0, ddof = 1)
+        s_f = h_f_todos.std(axis = 0, ddof = 1)
+        ok_s = ok & (s_r > 0)
+        rs = s_f[ok_s] / s_r[ok_s] - 1
+        err_disp = np.mean(np.abs(rs))
+        sesgo_disp = np.mean(rs)
+        floor_disp = np.sqrt(2 / np.pi) * np.sqrt(1 / (2 * (len(h_r) - 1)) + 1 / (2 * (len(h_f_todos) - 1)))
+
+        out = {"err_media": err_media, "floor_media": floor_media, "err_disp": err_disp, "floor_disp": floor_disp,
+               "sesgo_disp": sesgo_disp, "vacias_real": vacias_real, "vacias_gen": vacias_fake,
+               "neg_gen": neg_fake, "sobre_max_gen": sobre_fake}
+        if not guardar_figuras:
+            return out
+
+        # --- Bandas de dispersión entre cubos (todos los cubos)
+        lo_r, hi_r = np.percentile(h_r, [p_lo, p_hi], axis = 0)
+        lo_f, hi_f = np.percentile(h_f_todos, [p_lo, p_hi], axis = 0)
+
+        # --- Plot
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize = (8, 5.5), sharex = True,
+                                       gridspec_kw = {'height_ratios': [3, 1], 'hspace': 0.05})
+
+        ax1.fill_between(centers, lo_r, hi_r, color = 'blue', alpha = 0.2, lw = 0, label = r"$P_{%d}$–$P_{%d}$ real" % (p_lo, p_hi))
+        ax1.fill_between(centers, lo_f, hi_f, color = 'red', alpha = 0.2, lw = 0, label = r"$P_{%d}$–$P_{%d}$ fake" % (p_lo, p_hi))
+        ax1.plot(centers, m_r, '-', color = 'blue', lw = 1.8, label = "Real (mean)")
+        ax1.plot(centers, m_f, '--', color = 'red', lw = 1.8, label = "Fake (mean)")
+        ax1.set_xscale('log'); ax1.set_yscale('log')
+        ax1.set_ylim(0.1, 1e6 if data2[0].size <= 64**3 else 1e7)
+        ax1.set_ylabel("N", fontsize = 20)
+        z = float(np.ravel(redshift)[i])
+        z_str = f"{z:.1f}".rstrip("0").rstrip(".")
+        ax1.set_title(r"$z \sim " + z_str + r"$", fontsize = 26)
+        ax1.tick_params(axis = 'y', labelsize = 16)
+        txt = (f"below range (empty): real {vacias_real:.1e}, fake {vacias_fake:.1e}\n"
+               f"fake $1+\\delta<0$: {neg_fake:.1e};  fake $>$ real max: {sobre_fake:.1e}")
+        ax1.text(0.02, 0.97, txt, transform = ax1.transAxes, fontsize = 9, va = 'top')
+        if i == 0:
+            ax1.legend(fontsize = 12, loc = 'upper right')
+
+        ax2.fill_between(centers, -ruido, ruido, color = 'gray', alpha = 0.3, lw = 0)
+        ax2.axhline(0, color = 'gray', linewidth = 1)
+        ax2.plot(centers, res, '-', color = 'green', lw = 1.5)
+        ax2.set_ylabel(r'$\Delta N / N$', fontsize = 20)
+        ax2.set_xlabel(r"$1+\delta$", fontsize = 20)
+        ax2.grid(True, alpha = 0.3)
+        ax2.tick_params(axis = 'both', labelsize = 16)
+
+        os.makedirs(os.path.join(self.generated_images_folder, carpeta), exist_ok = True)
+        plt.savefig(os.path.join(self.generated_images_folder, carpeta, f"histo_{i:02d}.png"), dpi = 300, bbox_inches = 'tight')
+        plt.close(fig)
+
+        return out
+
+
+    def all_histogramas_curva(self, N, fake_agrupado, real_agrupado, tipo, epoch, redshift, carpeta, n_keep = 90, guardar_figuras = True):
+        """Figuras (opcional) y errores de los histogramas en todos los redshifts. Los errores solo se imprimen."""
+        res = [self.histograma_curva(fake_agrupado[i*N : N + N*i], real_agrupado[i*num_cv : num_cv + num_cv*i],
+                                      tipo, epoch, redshift, carpeta = carpeta, i = i, n_keep = n_keep,
+                                      guardar_figuras = guardar_figuras) for i in range(num_classes)]
+        z = np.ravel(redshift)[:num_classes].astype(float)
+
+        print(f"\n===== Errores de los histogramas ({N} generados, {num_cv} reales por redshift) =====")
+        print("    z   err_media     ruido   err_disp     ruido     sesgo")
+        for zi, r in zip(z, res):
+            print(f"{zi:5.2f} {r['err_media']:10.4f} {r['floor_media']:9.4f} {r['err_disp']:10.4f} {r['floor_disp']:9.4f} {r['sesgo_disp']:+9.3f}")
+
+        g = {k: float(np.mean([r[k] for r in res])) for k in res[0]}
+        print("\nMedia sobre los redshifts:")
+        print(f"  Error de la media:      {g['err_media']:.4f}   (ruido esperado {g['floor_media']:.4f})")
+        print(f"  Error de la dispersión: {g['err_disp']:.4f}   (ruido esperado {g['floor_disp']:.4f}), sesgo {g['sesgo_disp']:+.3f}")
+        print(f"  Fuera de rango (vacías): real {g['vacias_real']:.2e}, generados {g['vacias_gen']:.2e}")
+        print(f"  Generados con 1+delta < 0: {g['neg_gen']:.2e}; por encima del máximo real: {g['sobre_max_gen']:.2e}")
+        return res
 
 
 

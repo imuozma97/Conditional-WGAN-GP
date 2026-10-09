@@ -17,19 +17,12 @@ power = Power(image_size2)
 print("Cargo datos")
 n_part, red = datos.load_npart("Data3D-128.hdf5")
 delta = datos.delta(n_part)
-forw = forward_2(delta+1)
-print("Máx: ", np.max(norm), "Mín: ", np.min(norm))
+print("Máx: ", np.max(delta), "Mín: ", np.min(delta))
 
 
-k_values = power.compute_psd(np.squeeze(forw[0]))[1]
+k_values = power.compute_psd(np.squeeze(delta[1]))[1]
 
-print("PSD")
-
-#Habría que deshacerlo de la misma forma. Si hago psd de delta puede cambiar un poco de si hago los mismos pasos que en el generado
-delta_desnorm =  backward_2(forw) -1
-
-
-psd_delta = power.compute_all_psd(delta_desnorm)           
+psd_delta = power.compute_all_psd(delta)           
 psd_delta_agrupado = datos.reordenacion(num_cv, psd_delta)
                 
 all_mean = power.compute_all_mean(psd_delta_agrupado, num_cv)
@@ -40,4 +33,4 @@ sigma = np.tile(all_mean[3], (27, 1))
 sigma_log = np.tile(all_mean[4], (27, 1))
 
 
-np.savez("PSD_delta_128", psd = psd_delta, psd_agrupado = psd_delta_agrupado, mean = psd_mean, sigma = sigma, sigma_log = sigma_log, psd_max = psd_max, psd_min = psd_min, k_values = k_values)
+np.savez("PSD_delta-128.npz", psd = psd_delta, psd_agrupado = psd_delta_agrupado, mean = psd_mean, sigma = sigma, sigma_log = sigma_log, psd_max = psd_max, psd_min = psd_min, k_values = k_values)

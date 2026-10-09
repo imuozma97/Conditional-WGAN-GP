@@ -4,12 +4,13 @@ condor_logs/
 *.log
 *.out
 *.err
-*.npz
 Results3D/
 Training3D/
 Training128/
+Entrenamiento3D/
 *.h5
 *.sh
 *.sub
 *.hdf5
 *.png
+*.pdf

@@ -88,8 +88,7 @@ class Training(tf.keras.Model):
             loss_psd = psd_loss_log(psd_gen, psd_mean) 
 
             if self.use_psd_loss:
-                lambda_psd = self.lambda_psd(self.current_epoch)
-                gen_loss = loss_adv + lambda_psd*loss_psd
+                gen_loss = loss_adv + self.lambda_psd*loss_psd
             else:  
                 gen_loss = loss_adv
                 

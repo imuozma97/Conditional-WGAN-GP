@@ -8,8 +8,8 @@ import numpy as np
 
 from generate import Fake_images
 from preprocess_data import Dataset
-from power import Power
-from config import batch_size1, image_size, num_cv, n_bar
+from power_claude import Power
+from config import batch_size1, image_size_64, num_cv, n_bar_64
 from histo import Histogramas
 from gif import gif
 from transforms import forward_2,backward_2
@@ -19,8 +19,8 @@ generated_images_folder = "Training3D/17-images"
 epoch = "01823"
 N=100
 
-datos= Dataset(batch_size1, n_bar, buffer_size = 918)
-power = Power(image_size)
+datos= Dataset(batch_size1, buffer_size = 918)
+power = Power(image_size_64)
 
 indices = [4, 12, 25]
 mask = np.ones(34, dtype=bool)
@@ -29,7 +29,7 @@ mask[indices] = False
 
 #DATOS REALES
 n_part, red = datos.load_npart("Data3D-64.hdf5")
-delta = datos.delta(n_part)
+delta = datos.delta(n_part,n_bar_64)
 forw = forward_2(delta+1) #Esto es lo que recibe la red
 
 #Primero los datos del training
@@ -67,30 +67,29 @@ z_training = z_vals_reshape[:, mask].reshape(-1, 1)
 
 
 
-k_values = datos.load_k_values()
+k_values = power.k_centers
 
 
 #PSD DATOS REALES DESNORMALIZADOS 
-psd_max_desnorm, psd_min_desnorm, psd_mean_desnorm, psd_sigma_desnorm, all_psd = datos.load_psd("PSD_delta.npz")
+psd_max_desnorm, psd_min_desnorm, psd_mean_desnorm, psd_sigma_desnorm, all_psd = datos.load_psd("psd-data/PSD_delta_claude.npz")
 psd_mean_desnorm = psd_mean_desnorm[0:34]
 psd_sigma_desnorm = psd_sigma_desnorm[0:34]
 psd_max_desnorm = psd_max_desnorm[0:34]
+print("psd max shape", psd_max_desnorm.shape)
 psd_min_desnorm = psd_min_desnorm[0:34]
 
 psd_max_val = psd_max_desnorm[indices]
 psd_min_val = psd_min_desnorm[indices]
 psd_mean_val = psd_mean_desnorm[indices]
 
-psd_max_reshape = psd_max_desnorm.reshape(-1, 34, 32)
-psd_max_training = psd_max_reshape[:, mask].reshape(-1, 32)
+psd_max_reshape = psd_max_desnorm.reshape(-1, 34, 31)
+psd_max_training = psd_max_reshape[:, mask].reshape(-1, 31)
 
-psd_min_reshape = psd_min_desnorm.reshape(-1, 34, 32)
-psd_min_training = psd_min_reshape[:, mask].reshape(-1, 32)
+psd_min_reshape = psd_min_desnorm.reshape(-1, 34, 31)
+psd_min_training = psd_min_reshape[:, mask].reshape(-1, 31)
 
-mean_psd_reshape = psd_mean_desnorm.reshape(-1, 34, 32)
-mean_psd_training = mean_psd_reshape[:, mask].reshape(-1, 32)
-
-
+mean_psd_reshape = psd_mean_desnorm.reshape(-1, 34, 31)
+mean_psd_training = mean_psd_reshape[:, mask].reshape(-1, 31)
 
 
 """
@@ -164,7 +163,7 @@ histogramas.all_histogramas_medio_p90_nuevo(N, desnorm_fake_agrupados, desnorm_d
 """
 #GENERACIÓN DE LOS DATOS DEL CONJUNTO DE VALIDACIÓN, A VER SI INTERPOLA BIEN
 
-imagenes = Fake_images(N = N, trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder) 
+imagenes = Fake_images(N = N, image_size = image_size_64, trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder) 
 print("Generando imágenes falsas...")
 #gen_images = imagenes.generate_images_nuevo(z_validation, f"best_psd_generator/epoch_{epoch}", 3)
 #imagenes.save_data(f"datos_validation_{epoch}.npz", gen_images[0], gen_images[1])
@@ -187,13 +186,19 @@ psd_fake_desnorm_mean = psd_fake_desnorm_medio[0]
 psd_fake_desnorm_max = psd_fake_desnorm_medio[1]
 psd_fake_desnorm_min = psd_fake_desnorm_medio[2]
 
-
-print("Comparando PSD de los datos reales y falsos desnormalizados...")
-power.compare_psd_percentil_residuos(k_values, psd_mean_val, psd_fake_desnorm_mean, psd_fake_desnorm, psd_max_val, psd_min_val, red[indices], generated_images_folder, f"compare_psd_validation_{epoch}", "desnorm", N)
  
-print("Sacando histogramas ...")
-histogramas = Histogramas(generated_images_folder, red)
-histogramas.all_histogramas_medio_p90_nuevo(N, desnorm_fake_agrupados, desnorm_data_agrupados_val, "desnorm", epoch, red[indices], 3)
+print("Comparando PSD de los datos reales y falsos desnormalizados...")
+power.compare_psd_claude(k_values, psd_mean_val, psd_fake_desnorm_mean, psd_fake_desnorm, psd_max_val, psd_min_val, red[indices], generated_images_folder, f"compare_psd_claude_{epoch}", "desnorm", N)
+
+#ERRORES DEL PSD
+#Error de la media con los 90 más cercanos (coincide con compare_psd_percentil_residuos)
+power.error_media(k_values, psd_mean_desnorm, psd_fake_desnorm, psd_real_desnorm,  N)
+#Error de la dispersión con todos los generados
+power.error_dispersion(k_values, psd_fake_desnorm, psd_real_desnorm, psd_mean_desnorm, N)
+
+#print("Sacando histogramas ...")
+#histogramas = Histogramas(generated_images_folder, red)
+#histogramas.all_histogramas_medio_p90_nuevo(N, desnorm_fake_agrupados, desnorm_data_agrupados_val, "desnorm", epoch, red[indices], 3)
 
 
 

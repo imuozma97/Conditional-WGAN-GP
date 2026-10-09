@@ -12,7 +12,7 @@ import numpy as np
 from config import latent_dim
 from grad_pen import gradient_penalty
 from power import Power
-from psd_utils import psd_out_of_band_fraction, psd_loss
+from psd_utils import psd_out_of_band_fraction, psd_loss_log
 from loss_plot import plot_loss_graph
 from transforms import backward_2
 

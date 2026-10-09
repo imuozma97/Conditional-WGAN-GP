@@ -35,8 +35,8 @@ forw_agrupados = datos.reordenacion(num_cv, forw)
 desnorm_data = backward_2(forw) -1 #Esto es delta
 desnorm_data_agrupados = datos.reordenacion(num_cv, desnorm_data)
 
-
 """
+
 #PSD DATOS REALES NORMALIZADOS
 psd_max_norm, psd_min_norm, psd_mean_norm, psd_sigma_norm, _ = datos.load_psd("PSD_forw.npz")
 psd_mean_norm = psd_mean_norm[0:34]
@@ -74,10 +74,10 @@ desnorm_fake = backward_2(norm_fake) -1
 desnorm_fake_agrupados  = datos.reordenacion(N, desnorm_fake)
 
 
-
+"""
 
 #SACAMOS PSD DE LOS DATOS FALSOS
-"""
+
 print("Calculando PSD de los datos falsos normalizados...")
 psd_fake_norm = power.compute_all_psd(norm_fake_agrupados)
 psd_fake_norm_medio = power.compute_all_mean(psd_fake_norm, N)
@@ -85,8 +85,8 @@ psd_fake_norm_mean = psd_fake_norm_medio[0]
 psd_fake_norm_max = psd_fake_norm_medio[1]
 psd_fake_norm_min = psd_fake_norm_medio[2]
 psd_fake_norm_sigma = psd_fake_norm_medio[3]
-"""
 
+"""
 print("Calculando PSD de los datos falsos desnormalizados...")
 psd_fake_desnorm = power.compute_all_psd(desnorm_fake_agrupados)
 psd_fake_desnorm_medio = power.compute_all_mean(psd_fake_desnorm, N)
@@ -106,7 +106,7 @@ print("Comparando PSD de los datos reales y falsos desnormalizados...")
 #power.compare_psd_residuos(k_values, psd_mean_desnorm, psd_fake_desnorm_mean, psd_max_desnorm, psd_min_desnorm, psd_fake_desnorm_max, psd_fake_desnorm_min, red, generated_images_folder, f"compare_psd_residuos_{epoch}", "desnorm")
 
 #power.compare_psd_percentil(k_values, psd_mean_desnorm, psd_fake_desnorm_mean, psd_fake_desnorm, psd_max_desnorm, psd_min_desnorm, red, generated_images_folder, f"compare_psd_percentil90_{epoch}", "desnorm", N)
-#power.compare_psd_percentil_residuos(k_values, psd_mean_desnorm, psd_fake_desnorm_mean, psd_fake_desnorm, psd_max_desnorm, psd_min_desnorm, red, generated_images_folder, f"compare_psd_percentil90_residuos_{epoch}", "desnorm", N)
+power.compare_psd_percentil_residuos(k_values, psd_mean_desnorm, psd_fake_desnorm_mean, psd_fake_desnorm, psd_max_desnorm, psd_min_desnorm, red, generated_images_folder, f"compare_psd_paper_{epoch}", "desnorm", N)
  
 #power.compare_psd_individual(k_values, psd_mean_desnorm, psd_fake_desnorm_mean, psd_fake_desnorm, psd_max_desnorm, psd_min_desnorm, red, generated_images_folder, f"compare_psd_individual_{epoch}", "desnorm", N)
 
@@ -118,8 +118,8 @@ print("Sacando histogramas desnormalizados...")
 histogramas.all_histogramas_medio_residuos_p90(N, desnorm_fake_agrupados, desnorm_data_agrupados, "desnorm", epoch, red)
 
 
-
-#gif(os.path.join(generated_images_folder, f"compare_psd_desnorm_{epoch}"), f"psd_gif_{epoch}.gif")
+#gif(os.path.join(generated_images_folder, "Cubo4_1"), "cubo_gif.gif")
+#gif(os.path.join(generated_images_folder, f"compare_psd_percentil90_{epoch}"), f"psd_gif_{epoch}.gif")
 #gif(os.path.join(generated_images_folder, f"compare_psd_norm_{epoch}"), f"psd_gif_{epoch}.gif")
 #gif(os.path.join(generated_images_folder, f"compare_psd_individual_{epoch}"), f"psd_gif_{epoch}.gif")
 

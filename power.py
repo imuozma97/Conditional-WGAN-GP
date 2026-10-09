@@ -515,41 +515,34 @@ class Power(tf.keras.Model):
     
 
 
-    def compare_psd_percentil_residuos(self, k_values, mean_real, mean_fake, psd_fake, psd_max_real, psd_min_real, redshift, generated_images_folder, carpeta, tipo, samples):
+    def compare_psd_percentil_residuos(self, k_values, mean_real, mean_fake, psd_max_real, psd_min_real, psd_max_fake, psd_min_fake, redshift, generated_images_folder, carpeta, samples):
         num_classes = mean_real.shape[0]
         eps = 1e-12
         error_res = []
 
         for i in range(num_classes):
 
-            fig, (ax1, ax2) = plt.subplots(
-                2, 1,
-                figsize=(8, 5),
-                gridspec_kw={'height_ratios': [3, 1], 'hspace': 0.05},
-                sharex=True
-            )
+            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 5), gridspec_kw={'height_ratios': [3, 1], 'hspace': 0.05}, sharex=True )
 
-            psd_class = np.array(psd_fake[i * samples:(i + 1) * samples])
-            mean_real_i = np.array(mean_real[i])
-            mean_fake_i = np.array(mean_fake[i])
+            #psd_class = np.array(psd_fake[i * samples:(i + 1) * samples])
+            #mean_real_i = np.array(mean_real[i])
+            #mean_fake_i = np.array(mean_fake[i])
 
-            distances = np.linalg.norm(np.log10(psd_class + eps) - np.log10(mean_real_i + eps), axis=1)
+            #distances = np.linalg.norm(np.log10(psd_class + eps) - np.log10(mean_real_i + eps), axis=1)
 
-            n_keep = min(90, len(psd_class))
-            idx_sorted = np.argsort(distances)[:n_keep]
-            psd_top90 = psd_class[idx_sorted]
+            #n_keep = min(90, len(psd_class))
+            #idx_sorted = np.argsort(distances)[:n_keep]
+            #psd_top90 = psd_class[idx_sorted]
 
-            mean_top90 = psd_top90.mean(axis=0)
-            psd_max_top90 = psd_top90.max(axis=0)
-            psd_min_top90 = psd_top90.min(axis=0)
+            #mean_top90 = psd_top90.mean(axis=0)
+            #psd_max_top90 = psd_top90.max(axis=0)
+            #psd_min_top90 = psd_top90.min(axis=0)
 
-            residuals = (mean_top90 - mean_real_i) / (mean_real_i + eps)
-            error_res.append(np.mean(np.abs(residuals)))
-            
-            ax1.plot(k_values, mean_real_i, '-o', ms=4, color='blue', label=r"$\overline{\mathrm{PSD}}_{\mathrm{real}}$")
-            ax1.plot(k_values, mean_top90, '-o', ms=4, color='red', label=r"$\overline{\mathrm{PSD}}_{\mathrm{fake}}$")
+
+            ax1.plot(k_values, mean_real[i], '-o', ms=4, color='blue', label=r"$\overline{\mathrm{PSD}}_{\mathrm{real}}$")
+            ax1.plot(k_values, mean_fake[i], '-o', ms=4, color='red', label=r"$\overline{\mathrm{PSD}}_{\mathrm{fake}}$")
             ax1.fill_between(k_values, psd_min_real[i], psd_max_real[i], color='blue', alpha=0.2, label=r"$Range_{\mathrm{real}}$")
-            ax1.fill_between(k_values, psd_min_top90, psd_max_top90, color='red', alpha=0.25, label=r"$Range_{\mathrm{fake}}$")
+            ax1.fill_between(k_values, psd_min_fake[i], psd_max_fake[i], color='red', alpha=0.25, label=r"$Range_{\mathrm{fake}}$")
 
             ax1.set_yscale('log')
             ax1.set_ylabel("P(k)", fontsize=20)
@@ -559,9 +552,10 @@ class Power(tf.keras.Model):
             ax1.set_title(r"$z \sim " + z_str + r"$", fontsize=26)
             #ax1.set_title(r"PSD vs. $k$ at z$\sim${:.1f}".format(float(redshift[i])), fontsize=26)
             ax1.tick_params(axis = 'y', labelsize = 18)
+            ax1.set_ylim(1, 10**6)
 
             if i == 4:
-                ax1.legend(fontsize=17)
+                ax1.legend(fontsize=15)
 
             ax2.plot(k_values, residuals, color='green', linewidth=1.5)
             ax2.axhline(0, color='gray', linewidth=1)
@@ -569,22 +563,15 @@ class Power(tf.keras.Model):
             ax2.set_xlabel("$k$ [h/Mpc]", fontsize=20)
             ax2.tick_params(axis = 'both', labelsize = 16)
 
-            if tipo == "norm":
-                ax1.set_ylim(10**-4, 10**5)
-            elif tipo == "desnorm":
-                ax1.set_ylim(1, 10**6)
+            
 
             path = os.path.join(generated_images_folder, carpeta)
             if not os.path.exists(path):
                 os.makedirs(path)
 
-            #plt.savefig(os.path.join(path, f"psd_{i:02d}.png"), bbox_inches='tight', format='png')
-            #plt.show()
+            plt.savefig(os.path.join(path, f"psd_{i:02d}.png"), bbox_inches='tight', format='png')
+            plt.close(fig)
 
-        error_total = np.mean(error_res)
-        
-        print("Vector de residuos: ", error_res)
-        print("Media error: ", error_total)
 
 
 
