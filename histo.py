@@ -857,4 +857,3 @@ class Histogramas:
         return res
 
 
-
