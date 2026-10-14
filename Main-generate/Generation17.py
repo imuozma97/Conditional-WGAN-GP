@@ -20,7 +20,7 @@ epoch = "00620"
 N=100
 
 datos= Dataset(batch_size1, buffer_size = 918)
-power = Power(image_size_64)
+power = Power(image_size_64, physical_units=True)
 
 indices = [4, 12, 25]
 mask = np.ones(34, dtype=bool)
@@ -66,22 +66,6 @@ z_training = z_vals_reshape[:, mask].reshape(-1, 1)
 k_values = power.k_centers
 
 
-#PSD DATOS REALES DESNORMALIZADOS 
-psd_max_desnorm, psd_min_desnorm, psd_mean_desnorm, psd_sigma_desnorm, all_psd = datos.load_psd("psd-data/PSD_delta_claude.npz")
-psd_mean_desnorm = psd_mean_desnorm[0:34]
-psd_sigma_desnorm = psd_sigma_desnorm[0:34]
-psd_max_desnorm = psd_max_desnorm[0:34]
-psd_min_desnorm = psd_min_desnorm[0:34]
-
-psd_max_val = psd_max_desnorm[indices]
-psd_min_val = psd_min_desnorm[indices]
-psd_mean_val = psd_mean_desnorm[indices]
-
-mean_psd_reshape = psd_mean_desnorm.reshape(-1, 34, 31)
-mean_psd_training = mean_psd_reshape[:, mask].reshape(-1, 31)
-
-
-
 #GENERACIÓN DE LOS DATOS DEL CONJUNTO DE VALIDACIÓN, A VER SI INTERPOLA BIEN
 
 imagenes = Fake_images(N = N, image_size = image_size_64, trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder) 
@@ -109,6 +93,8 @@ psd_fake_desnorm_min = psd_fake_desnorm_medio[2]
 
 
 psd_real_val = power.compute_all_psd(desnorm_data_agrupados_val).numpy()
+psd_mean_val = power.compute_all_mean(psd_real_val, num_cv)[0]
+
 print("Comparando PSD de los datos reales y falsos desnormalizados...")
 power.compare_psd_claude(k_values, psd_mean_val, psd_fake_desnorm, psd_real_val, red[indices], generated_images_folder, f"compare_psd_claude_{epoch}", N)
 power.error_media(k_values, psd_mean_val, psd_fake_desnorm, psd_real_val, N)
