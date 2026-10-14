@@ -797,14 +797,14 @@ class Histogramas:
             return out
 
         # --- Bandas de dispersión entre cubos (todos los cubos)
-        lo_r, hi_r = np.percentile(h_r, [p_lo, p_hi], axis = 0)
+        lo_r, hi_r = h_r.min(axis = 0), h_r.max(axis = 0)                                  # todos los reales
         lo_f, hi_f = np.percentile(h_f_todos, [p_lo, p_hi], axis = 0)
 
         # --- Plot
         fig, (ax1, ax2) = plt.subplots(2, 1, figsize = (8, 5.5), sharex = True,
                                        gridspec_kw = {'height_ratios': [3, 1], 'hspace': 0.05})
 
-        ax1.fill_between(centers, lo_r, hi_r, color = 'blue', alpha = 0.2, lw = 0, label = r"$P_{%d}$–$P_{%d}$ real" % (p_lo, p_hi))
+        ax1.fill_between(centers, lo_r, hi_r, color = 'blue', alpha = 0.2, lw = 0, label=r"$\mathrm{Range}_{\mathrm{real}}$")
         ax1.fill_between(centers, lo_f, hi_f, color = 'red', alpha = 0.2, lw = 0, label = r"$P_{%d}$–$P_{%d}$ fake" % (p_lo, p_hi))
         ax1.plot(centers, m_r, '-', color = 'blue', lw = 1.8, label = "Real (mean)")
         ax1.plot(centers, m_f, '--', color = 'red', lw = 1.8, label = "Fake (mean)")
@@ -815,10 +815,8 @@ class Histogramas:
         z_str = f"{z:.1f}".rstrip("0").rstrip(".")
         ax1.set_title(r"$z \sim " + z_str + r"$", fontsize = 26)
         ax1.tick_params(axis = 'y', labelsize = 16)
-        txt = (f"below range (empty): real {vacias_real:.1e}, fake {vacias_fake:.1e}\n"
-               f"fake $1+\\delta<0$: {neg_fake:.1e};  fake $>$ real max: {sobre_fake:.1e}")
-        ax1.text(0.02, 0.97, txt, transform = ax1.transAxes, fontsize = 9, va = 'top')
-        if i == 0:
+    
+        if i == 4:
             ax1.legend(fontsize = 12, loc = 'upper right')
 
         ax2.fill_between(centers, -ruido, ruido, color = 'gray', alpha = 0.3, lw = 0)

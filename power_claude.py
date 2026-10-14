@@ -650,7 +650,7 @@ class Power(tf.keras.Model):
         eps = 1e-12
         error_res = []
 
-        for i in range(num_classes):
+        for i in range(len(mean_real)):
 
             fig, (ax1, ax2) = plt.subplots(
                 2, 1,
@@ -664,7 +664,7 @@ class Power(tf.keras.Model):
             mean_real_i = np.array(mean_real[i])
             mean_fake_i = psd_class.mean(axis=0)
 
-            lo_real, hi_real = np.percentile(psd_real_class, [p_lo, p_hi], axis=0)
+            lo_real, hi_real = psd_real_class.min(axis=0), psd_real_class.max(axis=0)     # todos los reales
             lo_fake, hi_fake = np.percentile(psd_class, [p_lo, p_hi], axis=0)
 
             residuals = (mean_fake_i - mean_real_i) / (mean_real_i + eps)
@@ -672,11 +672,12 @@ class Power(tf.keras.Model):
 
             ax1.plot(k_values, mean_real_i, '-o', ms=4, color='blue', label=r"$\overline{\mathrm{PSD}}_{\mathrm{real}}$")
             ax1.plot(k_values, mean_fake_i, '-o', ms=4, color='red', label=r"$\overline{\mathrm{PSD}}_{\mathrm{fake}}$")
-            ax1.fill_between(k_values, lo_real, hi_real, color='blue', alpha=0.2, label=r"$P_{%d}$–$P_{%d}$ real" % (p_lo, p_hi))
+            ax1.fill_between(k_values, lo_real, hi_real, color='blue', alpha=0.2, label=r"$\mathrm{Range}_{\mathrm{real}}$")
             ax1.fill_between(k_values, lo_fake, hi_fake, color='red', alpha=0.25, label=r"$P_{%d}$–$P_{%d}$ fake" % (p_lo, p_hi))
 
             ax1.set_yscale('log')
-            ax1.set_ylabel("P(k)", fontsize=20)
+            #ax1.set_ylabel("P(k)", fontsize=20)
+            ax1.set_ylabel(r"$P(k)$ [$(h^{-1}\,\mathrm{Mpc})^3$]", fontsize=20)
 
             z = float(np.ravel(redshift)[i])
             z_str = f"{z:.1f}".rstrip("0").rstrip(".")
@@ -689,10 +690,11 @@ class Power(tf.keras.Model):
             ax2.plot(k_values, residuals, color='green', linewidth=1.5)
             ax2.axhline(0, color='gray', linewidth=1)
             ax2.set_ylabel(r'$\Delta P / P$', fontsize=20)
-            ax2.set_xlabel("$k$ [h/Mpc]", fontsize=20)
+            ax2.set_xlabel(r"$k$ [$h\,\mathrm{Mpc}^{-1}$]", fontsize=20)
             ax2.tick_params(axis = 'both', labelsize = 16)
 
-            ax1.set_ylim(1, 10**6)
+            #ax1.set_ylim(1, 10**6)
+            ax1.set_ylim(1e-2, 1e4)
 
             path = os.path.join(generated_images_folder, carpeta)
             if not os.path.exists(path):
