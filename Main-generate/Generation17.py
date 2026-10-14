@@ -14,9 +14,9 @@ from histo import Histogramas
 from gif import gif
 from transforms import forward_2,backward_2
 
-trained_models_folder = "Training3D/17-models"
-generated_images_folder = "Training3D/17-images"
-epoch = "01823"
+trained_models_folder = "Training3D/17-models_dyn"
+generated_images_folder = "Training3D/17-images_dyn"
+epoch = "00620"
 N=100
 
 datos= Dataset(batch_size1, buffer_size = 918)
@@ -61,10 +61,6 @@ z_validation = z_vals[indices]
 
 z_vals_reshape = z_vals.reshape(-1, 34)
 z_training = z_vals_reshape[:, mask].reshape(-1, 1)
-
-
-
-
 
 
 k_values = power.k_centers
@@ -165,8 +161,8 @@ histogramas.all_histogramas_medio_p90_nuevo(N, desnorm_fake_agrupados, desnorm_d
 
 imagenes = Fake_images(N = N, image_size = image_size_64, trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder) 
 print("Generando imágenes falsas...")
-#gen_images = imagenes.generate_images_nuevo(z_validation, f"best_psd_generator/epoch_{epoch}", 3)
-#imagenes.save_data(f"datos_validation_{epoch}.npz", gen_images[0], gen_images[1])
+gen_images = imagenes.generate_images_nuevo(z_validation, f"best_psd_generator/epoch_{epoch}", 3)
+imagenes.save_data(f"datos_validation_{epoch}.npz", gen_images[0], gen_images[1])
 
 
 print("Cargando datos generados...")
