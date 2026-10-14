@@ -836,10 +836,11 @@ class Histogramas:
 
     def all_histogramas_curva(self, N, fake_agrupado, real_agrupado, tipo, epoch, redshift, carpeta, n_keep = 90, guardar_figuras = True):
         """Figuras (opcional) y errores de los histogramas en todos los redshifts. Los errores solo se imprimen."""
+        n_z = len(fake_agrupado) // N           # número de redshifts de los datos que se pasan
         res = [self.histograma_curva(fake_agrupado[i*N : N + N*i], real_agrupado[i*num_cv : num_cv + num_cv*i],
                                       tipo, epoch, redshift, carpeta = carpeta, i = i, n_keep = n_keep,
-                                      guardar_figuras = guardar_figuras) for i in range(num_classes)]
-        z = np.ravel(redshift)[:num_classes].astype(float)
+                                      guardar_figuras = guardar_figuras) for i in range(n_z)]
+        z = np.ravel(redshift)[:n_z].astype(float)
 
         print(f"\n===== Errores de los histogramas ({N} generados, {num_cv} reales por redshift) =====")
         print("    z   err_media     ruido   err_disp     ruido     sesgo")

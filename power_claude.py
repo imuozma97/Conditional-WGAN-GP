@@ -591,7 +591,7 @@ class Power(tf.keras.Model):
         eps = 1e-12
         error_res, floor_res, cobertura = [], [], []
 
-        for i in range(num_classes):
+        for i in range(len(mean_real)):
             psd_class = np.array(psd_fake[i * samples:(i + 1) * samples])
             psd_real_class = np.array(psd_real[i * num_cv:(i + 1) * num_cv])
             mean_real_i = np.array(mean_real[i])
@@ -624,7 +624,7 @@ class Power(tf.keras.Model):
         """
         eps = 1e-12
         residuals = []
-        for i in range(num_classes):
+        for i in range(len(mean_real)):
             psd_class = np.array(psd_fake[i * samples:(i + 1) * samples])
             psd_real_class = np.array(psd_real[i * num_cv:(i + 1) * num_cv])
             std_fake_i = np.std(np.log10(psd_class + eps), axis = 0, ddof = 1)
