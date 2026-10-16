@@ -9,9 +9,10 @@ image_size_64 = 64
 image_size_128 = 128
 
 latent_dim = 128
+latent_dim2 = 64
 num_cv = 27
 mass = 6.5e7 #Msol/h
-boxsize = 25 # (Mpc/h)^3
+boxsize = 25 #Poner unidades
 
 n_bar_64 = 256**3 / 64**3
 n_bar_128 = 256**3 / 128**3
@@ -20,7 +21,6 @@ embedding_dim = 32
 buffer_size = 918
 
 batch_size1 = 17
-batch_size2 = 34
 
 ncritic1 = 1
 ncritic2 = 2
@@ -28,14 +28,6 @@ ncritic3 = 3
 ncritic4 = 4
 ncritic5 = 5    
 
-#N = 27
+shift = 0.0001
+c = 300
 
-shift_1 = 0.1
-c_1 = 20000
-
-shift_2 = 0.0001
-c_2 = 300
-
-
-c_128 = 100
-#c = 7
