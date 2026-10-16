@@ -16,4 +16,5 @@ Training128/
 Real-images/
 download_sim.py
 graph_loss.py
+requirements.txt
 

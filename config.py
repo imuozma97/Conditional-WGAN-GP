@@ -20,7 +20,7 @@ n_bar_128 = 256**3 / 128**3
 embedding_dim = 32
 buffer_size = 918
 
-batch_size1 = 17
+batch_size = 17
 
 ncritic1 = 1
 ncritic2 = 2
