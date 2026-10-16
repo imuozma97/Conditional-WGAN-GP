@@ -70,7 +70,7 @@ k_values = power.k_centers
 
 imagenes = Fake_images(N = N, image_size = image_size_64, trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder) 
 print("Generando imágenes falsas...")
-#gen_images = imagenes.generate_images_nuevo(z_validation, f"best_psd_generator/epoch_{epoch}", 3)
+#gen_images = imagenes.generate_images_interpolated(z_validation, f"best_psd_generator/epoch_{epoch}", 3)
 #imagenes.save_data(f"datos_validation_{epoch}.npz", gen_images[0], gen_images[1])
 
 
