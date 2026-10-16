@@ -6,9 +6,7 @@ import tensorflow as tf
 import os
 import numpy as np
 import pyvista as pv
-
-from preprocess_data import Dataset
-from config import num_classes, latent_dim, num_cv, mass, boxsize
+from config import num_classes, latent_dim, mass, boxsize
 
 
 class Fake_images(tf.keras.Model):
@@ -53,7 +51,7 @@ class Fake_images(tf.keras.Model):
 
 
 
-    def generate_images_nuevo(self, z_values, name, n_classes): 
+    def generate_images_interpolated(self, z_values, name, n_classes): 
         """
         Genera imágenes cargando el modelo guardado.
         """
@@ -78,48 +76,12 @@ class Fake_images(tf.keras.Model):
                 
             j += 1
                     
-        generated_images = np.array(generated_images).reshape(self.N*n_classes, image_size, image_size, image_size, 1)
+        generated_images = np.array(generated_images).reshape(self.N*n_classes, self.image_size, self.image_size, self.image_size, 1)
         redshift = np.array(redshift)
 
         return generated_images, redshift
 
 
-
-
-    def generate_images_interpolated(self, name): 
-        """
-        Genera imágenes cargando el modelo guardado.
-        """
-        model_path = os.path.join(self.trained_models_folder, name)
-        generator = tf.keras.models.load_model(model_path, compile=False)
-
-        generated_images = []
-        redshift = []
-
-        z_values = np.linspace(0, 4, 34)
-        
-        
-        j = 1
-        while j < self.N + 1:
-            print('Evolución: ', j)
-            
-            noise = tf.random.normal([1, latent_dim])
-            
-            for i in range(num_classes):
-                z = np.expand_dims(np.expand_dims(z_values[i], 0), 0)
-                generated_data = generator([noise, z], training=False)
-                
-                generated_images.append(generated_data.numpy())
-                redshift.append(z_values[i])
-                
-            j += 1
-                    
-        generated_images = np.array(generated_images).reshape(self.N*num_classes, image_size, image_size, image_size, 1)
-        redshift = np.array(redshift)
-
-        return generated_images, redshift
-    
-    
     
     
     def density(self, data, red): #Esta es para sacar la densidad si se le dan los datos agrupados pero juntos, para que saque la densidad y separe
@@ -164,7 +126,7 @@ class Fake_images(tf.keras.Model):
 
     def save_generated_vtk(self, data, redshift, output_folder, base_name="Sim", log_scale=False):
 
-        pv.OFF_SCREEN = True  # importante en clusters
+        pv.OFF_SCREEN = True  
 
         data = np.squeeze(data, axis=-1)  # (918, 64,64,64)
 
@@ -186,19 +148,13 @@ class Fake_images(tf.keras.Model):
                     volume = np.clip(volume, -0.999, None)
                     volume = np.log1p(volume)
 
-                # 🔴 GRID VTK CORRECTO
                 grid = pv.ImageData()
 
-                # ✔️ dimensiones de puntos = voxels + 1
                 grid.dimensions = np.array(volume.shape) + 1
-
                 grid.origin = (0, 0, 0)
                 grid.spacing = (1, 1, 1)
 
-                # 🔴 CLAVE: datos como CELDAS (voxels)
                 grid.cell_data["density"] = volume.flatten(order="F")
-
-                # metadata útil
                 grid.field_data["redshift"] = np.array([redshift[idx]])
 
                 filename = os.path.join(carpeta_sim, f"z_{j:02d}.vti")
