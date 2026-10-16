@@ -5,18 +5,18 @@ import glob
 
 from generate import Fake_images
 from preprocess_data import Dataset
-from power_claude import Power
-from config import batch_size1, image_size_128, num_cv, n_bar_128, num_classes, boxsize
+from power import Power
+from config import batch_size, image_size_128, num_cv, n_bar_128, num_classes, boxsize
 from histo import Histogramas
-from transforms import backward_2        # LA MISMA inversa que en training128_dyn.py (línea 86)
+from transforms import backward      
 
-trained_models_folder = "Entrenamiento128/1-models"
-generated_images_folder = "Entrenamiento128/1-images"
+trained_models_folder = "Results128/baseline-models"
+generated_images_folder = "Results128/baseline-images"
 epoch = "00422"
 N = 27
 TROZO = 34
-print("Resultados para epoca 422, sin psd")
-datos = Dataset(batch_size1, buffer_size = 918)
+
+datos = Dataset(batch_size, buffer_size = 918)
 power = Power(image_size_128, physical_units=True)
 
 
@@ -45,9 +45,9 @@ psd_mean_desnorm = psd_real_desnorm.reshape(num_classes, num_cv, -1).mean(axis=1
 imagenes = Fake_images(N = N, image_size = image_size_128, trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder)
 
 print("Generando y guardando imágenes falsas tal cual ... falta hacer backward")
-#gen_images = imagenes.generate_images(z_vals, f"best_psd_generator/epoch_{epoch}")
-#imagenes.save_data(f"datos_gen_{epoch}.npz", gen_images[0], gen_images[1])
-#del gen_images
+gen_images = imagenes.generate_images(z_vals, f"best_psd_generator/epoch_{epoch}")
+imagenes.save_data(f"datos_gen_{epoch}.npz", gen_images[0], gen_images[1])
+del gen_images
 
 print("Cargando datos generados tal cual...")
 norm_fake, labels_fake = imagenes.load_data(os.path.join(trained_models_folder, f"datos_gen_{epoch}.npz"))
@@ -85,17 +85,17 @@ psd_fake_desnorm = psd_por_trozos(desnorm_fake_agrupados)
 
 #COMPARACIÓN DE LOS PSD
 print("Comparando PSD de los datos reales y falsos ...")
-power.compare_psd_claude(k_values, psd_mean_desnorm, psd_fake_desnorm, psd_real_desnorm, red, generated_images_folder, f"compare_psd_claude_percentil_{epoch}", N)
-
-#ERRORES DEL PSD
-#power.error_media(k_values, psd_mean_desnorm, psd_fake_desnorm, psd_real_desnorm, N)
-#power.error_dispersion(k_values, psd_fake_desnorm, psd_real_desnorm, psd_mean_desnorm, N)
+power.compare_psd_final(k_values, psd_mean_desnorm, psd_fake_desnorm, psd_real_desnorm, red, generated_images_folder, f"compare_psd_claude_percentil_{epoch}", N)
+power.error_media(k_values, psd_mean_desnorm, psd_fake_desnorm, psd_real_desnorm, N)
+power.error_dispersion(k_values, psd_fake_desnorm, psd_real_desnorm, psd_mean_desnorm, N)
 
 
 print("Sacando histogramas ...")
-#histogramas = Histogramas(generated_images_folder, red)
-#histogramas.all_histogramas_curva(N, desnorm_fake_agrupados, data_real_agrupados, "desnorm", epoch, red, f"compare_histo_claude_{epoch}")
+histogramas = Histogramas(generated_images_folder, red)
+histogramas.all_histogramas_curva(N, desnorm_fake_agrupados, data_real_agrupados, "desnorm", epoch, red, f"compare_histo_claude_{epoch}")
 
 
 #Coherencia temporal: pendiente de adaptar a 128^3 (coherencia_temp.py no está en el repositorio)
-#coherence(data_real, desnorm_fake, image_size = image_size_128, N = N)
+coherence(data_real, desnorm_fake, image_size = image_size_128, N = N)
+
+imagenes.save_generated_vtk(desnorm_fake, z_vals, output_folder=os.path.join(trained_models_folder, f"vtk_epoch_{epoch}"), log_scale=True)

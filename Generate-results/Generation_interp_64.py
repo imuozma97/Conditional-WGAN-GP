@@ -8,18 +8,18 @@ import numpy as np
 
 from generate import Fake_images
 from preprocess_data import Dataset
-from power_claude import Power
-from config import batch_size1, image_size_64, num_cv, n_bar_64
+from power import Power
+from config import batch_size, image_size_64, num_cv, n_bar_64
 from histo import Histogramas
 from gif import gif
-from transforms import forward_2,backward_2
+from transforms import forward, backward
 
-trained_models_folder = "Training3D/17-models_dyn"
-generated_images_folder = "Training3D/17-images_dyn"
+trained_models_folder = "Results-64/interp_dyn-models"
+generated_images_folder = "Training3D/interp_dyn-images"
 epoch = "00620"
 N=100
 
-datos= Dataset(batch_size1, buffer_size = 918)
+datos= Dataset(batch_size, buffer_size = 918)
 power = Power(image_size_64, physical_units=True)
 
 indices = [4, 12, 25]
@@ -30,7 +30,7 @@ mask[indices] = False
 #DATOS REALES
 n_part, red = datos.load_npart("Data3D-64.hdf5")
 delta = datos.delta(n_part,n_bar_64)
-forw = forward_2(delta+1) #Esto es lo que recibe la red
+forw = forward(delta+1) #Esto es lo que recibe la red
 
 #Primero los datos del training
 forw = forw.numpy()
@@ -70,8 +70,8 @@ k_values = power.k_centers
 
 imagenes = Fake_images(N = N, image_size = image_size_64, trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder) 
 print("Generando imágenes falsas...")
-#gen_images = imagenes.generate_images_interpolated(z_validation, f"best_psd_generator/epoch_{epoch}", 3)
-#imagenes.save_data(f"datos_validation_{epoch}.npz", gen_images[0], gen_images[1])
+gen_images = imagenes.generate_images_interpolated(z_validation, f"best_psd_generator/epoch_{epoch}", 3)
+imagenes.save_data(f"datos_validation_{epoch}.npz", gen_images[0], gen_images[1])
 
 
 print("Cargando datos generados...")
@@ -96,7 +96,7 @@ psd_real_val = power.compute_all_psd(desnorm_data_agrupados_val).numpy()
 psd_mean_val = power.compute_all_mean_nuevo(psd_real_val, num_cv, 3)[0]
 
 print("Comparando PSD de los datos reales y falsos desnormalizados...")
-power.compare_psd_claude(k_values, psd_mean_val, psd_fake_desnorm, psd_real_val, red[indices], generated_images_folder, f"compare_psd_claude_{epoch}", N)
+power.compare_psd_final(k_values, psd_mean_val, psd_fake_desnorm, psd_real_val, red[indices], generated_images_folder, f"compare_psd_claude_{epoch}", N)
 power.error_media(k_values, psd_mean_val, psd_fake_desnorm, psd_real_val, N)
 power.error_dispersion(k_values, psd_fake_desnorm, psd_real_val, psd_mean_val, N)
 
