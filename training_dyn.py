@@ -11,10 +11,10 @@ import numpy as np
 
 from config import latent_dim
 from grad_pen import gradient_penalty
-from power_claude import Power
+from power import Power
 from psd_utils import psd_out_of_band_fraction, psd_loss_log
 from loss_plot import plot_loss_graph
-from transforms import backward_2
+from transforms import backward
 
 
 class Training(tf.keras.Model):
@@ -85,7 +85,7 @@ class Training(tf.keras.Model):
         with tf.GradientTape(persistent=True) as gen_tape:
 
             generated_images = self.generator([noise, z_values], training=True)
-            delta = backward_2(generated_images) - 1
+            delta = backward(generated_images) - 1
             psd_gen = self.power.compute_all_psd(delta)
 
             fake_predictions = self.discriminator([generated_images, z_values], training=True)
