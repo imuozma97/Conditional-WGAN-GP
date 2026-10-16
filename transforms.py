@@ -1,15 +1,13 @@
 """
-Funciones forward y backward de momento. Mirar si aquó podría añdir más funciones que hagan alguna transformación
+Funciones forward y backward 
 """
 import tensorflow as tf
 from functools import partial
-
-from config import shift_1, shift_2, c_1, c_2#, c_128
+from config import c, shift
 
 
 
 def stat_forward_0(x, c):
-    print("stat forward 0")
     
     x = tf.convert_to_tensor(x, dtype=tf.float32)
     c = tf.cast(c, tf.float32)
@@ -17,7 +15,6 @@ def stat_forward_0(x, c):
     maski = tf.logical_not(mask)
     res = tf.zeros_like(x, dtype=tf.float32)
 
-    res = tf.where(maski, tf.math.log(x+1), res)
     res = tf.where(maski, tf.math.log(x + 1), res)
     res = tf.where(mask, tf.math.log(c + 1) + (x / c - 1), res)
 
@@ -35,7 +32,8 @@ def stat_backward_0(x, c):
 
     mask = x > mc
 
-    res_low = tf.math.exp(x) - 1.0
+    
+    res_low = tf.math.exp(tf.minimum(x, mc)) - 1.0
     res_high = c * (x - mc + 1.0)
     
     res = tf.where(mask, res_high, res_low)
@@ -44,46 +42,12 @@ def stat_backward_0(x, c):
 
 
 def stat_forward(x, c, shift):
-    print("star_forward")
     return stat_forward_0(x + shift, c=c) - stat_forward_0(shift, c=c)
 
 
 def stat_backward(x, c, shift):
-    # NUEVO: como en el código original (Perraudin et al., cosmotools/data/fmap.py), las salidas
-    # negativas se recortan a 0 antes de invertir. Como forward(0) = 0, equivale a interpretarlas
-    # como celdas vacías en lugar de densidades negativas.
-    x = tf.maximum(tf.cast(x, tf.float32), 0.0)
     return stat_backward_0(x + stat_forward_0(shift, c=c), c=c) - shift
 
 
-backward_1 = partial(stat_backward, shift=shift_1, c=c_1)
-forward_1 = partial(stat_forward, shift=shift_1, c=c_1)
-
-forward_2 = partial(stat_forward, shift=shift_2, c=c_2)
-backward_2 = partial(stat_backward, shift=shift_2, c=c_2)
-                     
-#forward_128 = partial(stat_forward, shift=shift_2, c=c_128)
-#backward_128 = partial(stat_backward, shift=shift_2, c=c_128)
-
-
-
-# NUEVO: la misma transformación aplicada a CONTEOS de partículas por celda (n = rho * n_bar), con
-# shift = 1 partícula, como en el original. Reciben y devuelven rho = 1 + delta, igual que forward_2 /
-# backward_2. c se da en unidades de rho y se pasa a conteos (c * n_bar), así que la rama lineal empieza
-# en la misma densidad que ahora. El cambio es que el desplazamiento dentro del logaritmo pasa de ~1
-# (la densidad media) a 2 / n_bar (dos partículas), y los vacíos dejan de estar comprimidos.
-
-def forward_conteos(rho, n_bar, c, shift = 1.0):
-    return stat_forward(rho * n_bar, shift = shift, c = c * n_bar)
-
-
-def backward_conteos(y, n_bar, c, shift = 1.0):
-    return stat_backward(y, shift = shift, c = c * n_bar) / n_bar
-
-
-forward_c64 = partial(forward_conteos, n_bar = 64, c = c_2)          # 256^3 partículas en 64^3 celdas
-backward_c64 = partial(backward_conteos, n_bar = 64, c = c_2)
-
-forward_c128 = partial(forward_conteos, n_bar = 8, c = c_2)        # 256^3 partículas en 128^3 celdas
-backward_c128 = partial(backward_conteos, n_bar = 8, c = c_2)
-
+backward = partial(stat_backward, shift = shift, c = c)
+forward = partial(stat_forward, shift = shift, c = c)
