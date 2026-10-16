@@ -12,7 +12,7 @@ from config import num_classes, num_cv
 class Dataset(tf.keras.Model):
     def __init__(self, batch_size, buffer_size):
         super().__init__()
-        self.batch_size = batch_size #Tiene que ser input porque no siempre es el mismo
+        self.batch_size = batch_size 
         self.buffer_size = buffer_size
 
         
@@ -29,27 +29,25 @@ class Dataset(tf.keras.Model):
         return maps, red
     
     
-    
     def delta(self, images, n_bar):
         
         delta = (images - n_bar)/n_bar
         #delta = np.expand_dims(delta, -1)
         return delta
 
+
     def deshacer_delta(self, delta, n_bar):
         images = delta * n_bar + n_bar
         return images
 
 
-    
-
     def normalizar_z(self, redshifts):
         return (redshifts - np.min(redshifts))/(np.max(redshifts)- np.min(redshifts)).astype("float32")
     
+
     def factor_escala(self, redshifts):
         return 1/(1+redshifts).astype("float32")
     
-
     
     def crea_dataset(self,  *data):
     
@@ -58,16 +56,19 @@ class Dataset(tf.keras.Model):
   
       return dataset
 
+
     def load_npart(self, file):
         output = os.path.join("Camels_data", file)
         images, red = self.data0(output)
 
         return images, red
 
+
     def transform_npart(self, images, k):
         rho_transf = 2*images/(images + k) -1 #Aquí ya están agrupados por redshift
         rho_transf = np.expand_dims(rho_transf, -1)
         return rho_transf
+
 
     def inverse_transform_npart(self, images, k):
         rho_original = k * (1 + images) / (1 - images)
@@ -89,7 +90,7 @@ class Dataset(tf.keras.Model):
 
     def load_k_values(self, image_size):
         if image_size == 64:
-            load_psd = np.load("psd-data/PSD_delta.npz")
+            load_psd = np.load("psd-data/PSD_delta_64.npz")
         if image_size == 128:
             load_psd = np.load("psd-data/PSD_delta_128.npz")
         k_values = load_psd["k_values"]
@@ -141,7 +142,6 @@ class Dataset(tf.keras.Model):
             return reordered[0]
 
         return tuple(reordered)
-
 
 
     def ordenar_datos_evoluciones(self, images, redshifts):
