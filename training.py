@@ -14,12 +14,12 @@ from grad_pen import gradient_penalty
 from power import Power
 from psd_utils import psd_out_of_band_fraction, psd_loss_log
 from loss_plot import plot_loss_graph
-from transforms import backward_2
+from transforms import backward
 
 
 class Training(tf.keras.Model):
 
-    def __init__(self, data_class, discriminator, generator, batch_size, ncritic, trained_models_folder, generated_images_folder, lambda_psd_schedule, lambda_term, image_size, use_psd=True, use_psd_loss = True):
+    def __init__(self, data_class, discriminator, generator, batch_size, ncritic, trained_models_folder, generated_images_folder, lambda_psd_schedule, lambda_term, image_size, use_psd_loss = True):
         super().__init__()
         self.discriminator = discriminator
         self.generator = generator
@@ -28,7 +28,6 @@ class Training(tf.keras.Model):
         self.generated_images_folder = generated_images_folder
         self.current_epoch = 0
         self.ncritic = ncritic
-        self.use_psd = use_psd
         self.use_psd_loss = use_psd_loss
         self.data_class = data_class
         self.lambda_psd_schedule = lambda_psd_schedule
@@ -36,6 +35,9 @@ class Training(tf.keras.Model):
         self.image_size = image_size
 
         self.power = Power(self.image_size)
+
+        self.lambda_psd = tf.Variable(0.0, trainable=False, dtype=tf.float32, name="lambda_psd")
+
 
 
     def compile(self, d_optimizer, g_optimizer):
@@ -55,14 +57,8 @@ class Training(tf.keras.Model):
             with tf.GradientTape() as disc_tape:
                 generated_images = self.generator([noise, z_values], training=True)
 
-                #Si el D tiene psd o no:
-                if self.use_psd:
-                    fake_predictions = self.discriminator([generated_images, z_values, psd_gen], training=True)
-                    real_predictions = self.discriminator([real_images, z_values, psd_mean], training=True)
-
-                else:
-                    fake_predictions = self.discriminator([generated_images, z_values], training=True)
-                    real_predictions = self.discriminator([real_images, z_values], training=True)
+                fake_predictions = self.discriminator([generated_images, z_values], training=True)
+                real_predictions = self.discriminator([real_images, z_values], training=True)
                 
                 gp, grads_norm_mean = gradient_penalty(real_images, generated_images, z_values, self.discriminator, self.batch_size)
                     
@@ -81,14 +77,10 @@ class Training(tf.keras.Model):
         with tf.GradientTape() as gen_tape:
                 
             generated_images = self.generator([noise, z_values], training=True)
-            delta = backward_2(generated_images) - 1
+            delta = backward(generated_images) - 1
             psd_gen = self.power.compute_all_psd(delta)
 
-            #Si el D tiene psd o no:
-            if self.use_psd:
-                fake_predictions = self.discriminator([generated_images, z_values, psd_gen], training=True)
-            else:
-                fake_predictions = self.discriminator([generated_images, z_values], training=True)
+            fake_predictions = self.discriminator([generated_images, z_values], training=True)
                     
             loss_adv = -tf.reduce_mean(fake_predictions)
             percent = psd_out_of_band_fraction(psd_gen, psd_min, psd_max)
@@ -96,8 +88,7 @@ class Training(tf.keras.Model):
             loss_psd = psd_loss_log(psd_gen, psd_mean) 
 
             if self.use_psd_loss:
-                lambda_psd = self.lambda_psd_schedule(self.current_epoch)
-                gen_loss = loss_adv + lambda_psd*loss_psd
+                gen_loss = loss_adv + self.lambda_psd*loss_psd
             else:  
                 gen_loss = loss_adv
                 
@@ -188,7 +179,7 @@ class Training(tf.keras.Model):
         
             
         for epoch in range(start_epoch, epochs):
-                
+            self.lambda_psd.assign(float(self.lambda_psd_schedule(epoch)))
             self.current_epoch = epoch
             batch_count = 0
             wass_loss, disc_loss_r, disc_loss_f  = 0, 0, 0
