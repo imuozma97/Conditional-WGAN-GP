@@ -17,24 +17,24 @@ def psd_loss_log(gen_psd, mean_psd):
     return loss
 
 
-"""
-def lambda_psd_schedule(epoch):  #De este hacer revisión cuando lo vaya a usar
+def psd_out_of_band_fraction(psd_gen, psd_min, psd_max):
+    """
+    Devuelve la fracción media de bins fuera de la banda.
+    """
+    below = psd_gen < psd_min
+    above = psd_gen > psd_max
+
+    out = tf.logical_or(below, above)
+    out = tf.cast(out, tf.float32)
         
-    if epoch < 150:
-        lambda_psd = 0.0
+    frac_per_sample = tf.reduce_mean(out, axis=1)
 
-    elif epoch < 350:
-        lambda_psd = 0.05 * (epoch - 150) / 200
-
-    elif epoch < 900:
-        lambda_psd = 0.05 + 0.10 * (epoch - 350) / 550
-
-    else:
-        lambda_psd = 0.15
         
-    return lambda_psd
-"""
+    return tf.reduce_mean(frac_per_sample)
 
+
+
+"""
 def lambda_psd_schedule(epoch):
 
     if epoch < 300:
@@ -50,20 +50,7 @@ def lambda_psd_schedule(epoch):
     return lambda_psd
 
 
-
-
 def lambda_psd_schedule2(epoch):
-
-    if epoch < 0:
-        lambda_psd = 0.5
-    else:
-        lambda_psd =  0.5
-
-    return lambda_psd
-
-
-
-def lambda_psd_schedule3(epoch):
 
     if epoch < 150:
         lambda_psd = 10
@@ -79,28 +66,6 @@ def lambda_psd_schedule3(epoch):
         lambda_psd = 5
 
     return lambda_psd
-
-
-
-def lambda_psd_schedule4(epoch):
-
-    if epoch < 150:
-        lambda_psd = 20
-
-    elif epoch < 400:
-        #lambda_psd = 0.5 + (1 - 0.5) * (epoch - 150) / (400 - 150)
-        lambda_psd = 10
-
-    elif epoch < 800:
-        #lambda_psd = 1 + (1.3 - 1) * (epoch - 400) / (800 - 400)
-        lambda_psd = 5
-    else:
-        lambda_psd = 10
-
-    return lambda_psd
-
-
-
 
 
 def lambda_psd_dynamic(epoch, start = 0.001, end = 1, end_epoch = 600):
@@ -117,20 +82,6 @@ def lambda_psd_dynamic2(epoch, start = 0.001, end = 2, end_epoch = 600):
     return start + (end - start)*alpha
 
 
+"""
 
 
-
-def psd_out_of_band_fraction(psd_gen, psd_min, psd_max):
-    """
-    Devuelve la fracción media de bins fuera de la banda.
-    """
-    below = psd_gen < psd_min
-    above = psd_gen > psd_max
-
-    out = tf.logical_or(below, above)
-    out = tf.cast(out, tf.float32)
-        
-    frac_per_sample = tf.reduce_mean(out, axis=1)
-
-        
-    return tf.reduce_mean(frac_per_sample)
