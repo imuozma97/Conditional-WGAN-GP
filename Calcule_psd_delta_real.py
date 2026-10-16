@@ -10,7 +10,7 @@ from power import Power
 from transforms import forward, backward
 from config import batch_size, num_cv, n_bar_64, n_bar_128, image_size_64, image_size_128
 
-SIZE = 64 #Cambio para 128
+SIZE = 128 #Cambio para 128
 n_bar = n_bar_64 if SIZE == 64 else n_bar_128
 image_size = image_size_64 if SIZE == 64 else image_size_128
 
