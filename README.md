@@ -54,3 +54,11 @@ E_μ = 0.32 · E_σ = 0.26 (epoch 422)
 | PSD | Histogram |
 |:---:|:---:|
 | ![PSD](assets/psd_128/psd.png) | ![Histogram](assets/psd_128/histo.png) |
+
+
+Los archivos que hay que ejecutar para realizar el entrenamiento se encuentran en la carpeta Models3D:
+- Model_baseline_64.py y Modelo_baseline_128: Para entrenar los modelos base del ambos grids
+- Model_psd_dyn_64.py y Model_psd_dyn_64.py: Para entrenar los modelos que incoporan PSD a la loss con el cociente de las normas de los gradiente para ambos grids.
+- Model_interp_dyn.py: Es el modelo que excluye ciertos redshifts durante el entrenamiento y así comprobar si el modelo es capaz de reproducirlo.
+
+Una vez se haya entrenado, se pueden generar los resultados mediante los escripts en la carpeta Generate-results: Hay que cambiar la época y el nombre del a carpeta según lo que se quira generar
