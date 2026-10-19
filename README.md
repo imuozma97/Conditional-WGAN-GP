@@ -17,7 +17,7 @@ E_μ = 1.2 · E_σ = 3.7 (epoch 683)
 
 | PSD | Histogram |
 |:---:|:---:|
-| ![PSD](assets/base_64/psd.png) | ![Histogram](assets/base_64/histo.png) |
+| ![PSD](gifs/gif_psd_683.gif) | ![Histogram](gifs/gif_histo_683.gif) |
 
 ### 64³ with PSD term
 E_μ = 0.13 · E_σ = 0.20 (epoch 663)
@@ -26,7 +26,7 @@ E_μ = 0.13 · E_σ = 0.20 (epoch 663)
 
 | PSD | Histogram |
 |:---:|:---:|
-| ![PSD](assets/psd_64/psd.png) | ![Histogram](assets/psd_64/histo.png) |
+| ![PSD](gifs/gif_psd_663.gif) | ![Histogram](gifs/gif_histo_663.gif) |
 
 ### 64³ with PSD term, interpolating unseen redshifts
 Trained without z = 3, 1.72 and 0.46. Errors at those redshifts: E_μ = 0.10 · E_σ = 0.25 (epoch 620)
