@@ -44,7 +44,7 @@ E_μ = 1.27 · E_σ = 4.70 (epoch 439)
 
 | PSD | Histogram |
 |:---:|:---:|
-| ![PSD](assets/base_128/psd.png) | ![Histogram](assets/base_128/histo.png) |
+| ![PSD](gifs/gif_psd_439.gif) | ![Histogram](gifs/gif_histo_439.gif) |
 
 ### 128³ with PSD term
 E_μ = 0.32 · E_σ = 0.26 (epoch 422)
@@ -53,7 +53,7 @@ E_μ = 0.32 · E_σ = 0.26 (epoch 422)
 
 | PSD | Histogram |
 |:---:|:---:|
-| ![PSD](assets/psd_128/psd.png) | ![Histogram](assets/psd_128/histo.png) |
+| ![PSD](gifs/gif_psd_422.gif) | ![Histogram](gifs/gif_histo_422.gif) |
 
 
 Los archivos que hay que ejecutar para realizar el entrenamiento se encuentran en la carpeta Models3D:
