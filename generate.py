@@ -86,7 +86,7 @@ class Fake_images(tf.keras.Model):
     
     def density(self, data, red): #Esta es para sacar la densidad si se le dan los datos agrupados pero juntos, para que saque la densidad y separe
         
-        density = data*mass/(boxsize/image_size)
+        density = data*mass/(boxsize/self.image_size)
         
         return density, red
   

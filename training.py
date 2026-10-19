@@ -326,7 +326,7 @@ class Training(tf.keras.Model):
                         'best_epoch_percent' : best_epoch_percent,
                         'ratio1' : ratios1, 
                         'norm_disc' : norms_disc, 
-                        'nom_gen' : norms_gen
+                        'norm_gen' : norms_gen
                     }, f)
             os.replace(tmp_file, loss_file)
 

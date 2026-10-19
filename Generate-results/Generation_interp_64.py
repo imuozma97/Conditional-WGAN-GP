@@ -37,7 +37,7 @@ forw = forw.numpy()
 cubos_final = forw.reshape(-1, 34, 64, 64, 64, 1)[:, mask]
 cubos_final = cubos_final.reshape(-1, 64, 64, 64, 1)
 
-desnorm_data = backward_2(cubos_final) -1 #Esto es delta
+desnorm_data = backward(cubos_final) -1 #Esto es delta
 print("desnorm shape", desnorm_data.shape)
 desnorm_data_agrupados = datos.reordenacion_nueva(num_cv, 31, desnorm_data)
 
@@ -51,7 +51,7 @@ for rep in range(27):
     indices_todos.extend([base + 4, base + 12, base + 25])
 
 forw_val = forw[indices_todos]
-desnorm_data_val = backward_2(forw_val) -1 #Esto es delta
+desnorm_data_val = backward(forw_val) -1 #Esto es delta
 print("shape:", desnorm_data_val.shape)
 desnorm_data_agrupados_val = datos.reordenacion_nueva(num_cv, 3, desnorm_data_val)
 
@@ -80,7 +80,7 @@ norm_fake_agrupados = datos.reordenacion_nueva(N, 3, norm_fake)
 
 #Desnormalizamos los datos generados
 
-desnorm_fake = backward_2(norm_fake) -1
+desnorm_fake = backward(norm_fake) -1
 desnorm_fake_agrupados  = datos.reordenacion_nueva(N, 3, desnorm_fake)
 
 

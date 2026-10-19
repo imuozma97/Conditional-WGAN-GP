@@ -91,7 +91,7 @@ histogramas.all_histogramas_curva(N, desnorm_fake_agrupados, desnorm_data_agrupa
 
 
 #print("Comparamos coherencia temporal")
-coherence(desnorm_data, desnorm_fake, image_size = image_size_64, N = N)
+coherence(delta, desnorm_fake, image_size = image_size_64, N = N)
 
 
 imagenes.save_generated_vtk(desnorm_fake, z_vals, output_folder=os.path.join(trained_models_folder, f"vtk_epoch_{epoch}"), log_scale=True)
