@@ -47,9 +47,9 @@ E_μ = 0.32 · E_σ = 0.26 (epoch 422)
 <img src="gifs/gif_psd_histo_422.gif" width="900">|
 
 
-Los archivos que hay que ejecutar para realizar el entrenamiento se encuentran en la carpeta Models3D:
-- Model_baseline_64.py y Modelo_baseline_128: Para entrenar los modelos base del ambos grids
-- Model_psd_dyn_64.py y Model_psd_dyn_64.py: Para entrenar los modelos que incoporan PSD a la loss con el cociente de las normas de los gradiente para ambos grids.
-- Model_interp_dyn.py: Es el modelo que excluye ciertos redshifts durante el entrenamiento y así comprobar si el modelo es capaz de reproducirlo.
+The files to run for training are located in the `Models3D` folder:
+* `Model_baseline_64.py` and `Model_baseline_128`: to train the baseline models for both grids.
+* `Model_psd_dyn_64.py` and `Model_psd_dyn_64.py`: to train the models that add the PSD term to the loss, weighted by the ratio of the gradient norms, for both grids.
+* `Model_interp_dyn.py`: the model that excludes certain redshifts during training, in order to check whether the model is able to reproduce them.
 
-Una vez se haya entrenado, se pueden generar los resultados mediante los escripts en la carpeta Generate-results: Hay que cambiar la época y el nombre del a carpeta según lo que se quira generar
+Once trained, the results can be generated with the scripts in the `Generate-results` folder. The epoch and the folder name must be changed depending on what you want to generate.
