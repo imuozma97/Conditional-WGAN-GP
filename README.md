@@ -17,18 +17,13 @@ E_μ = 1.2 · E_σ = 3.7 (epoch 683)
 
 <img src="gifs/gif_psd_histo_683.gif" width="900">
 
-| PSD | Histogram |
-|:---:|:---:|
-| ![PSD](gifs/gif_psd_683.gif) | ![Histogram](gifs/gif_histo_683.gif) |
 
 ### 64³ with PSD term
 E_μ = 0.13 · E_σ = 0.20 (epoch 663)
 
 ![Generated cube](assets/psd_64/cubo.gif)
 
-| PSD | Histogram |
-|:---:|:---:|
-| ![PSD](gifs/gif_psd_663.gif) | ![Histogram](gifs/gif_histo_663.gif) |
+<img src="gifs/gif_psd_histo_663.gif" width="900">
 
 ### 64³ with PSD term, interpolating unseen redshifts
 Trained without z = 3, 1.72 and 0.46. Errors at those redshifts: E_μ = 0.10 · E_σ = 0.25 (epoch 620)
@@ -44,18 +39,14 @@ E_μ = 1.27 · E_σ = 4.70 (epoch 439)
 
 ![Generated cube](assets/base_128/cubo.gif)
 
-| PSD | Histogram |
-|:---:|:---:|
-| ![PSD](gifs/gif_psd_439.gif) | ![Histogram](gifs/gif_histo_439.gif) |
+<img src="gifs/gif_psd_histo_439.gif" width="900">
 
 ### 128³ with PSD term
 E_μ = 0.32 · E_σ = 0.26 (epoch 422)
 
 ![Generated cube](assets/psd_128/cubo.gif)
 
-| PSD | Histogram |
-|:---:|:---:|
-| ![PSD](gifs/gif_psd_422.gif) | ![Histogram](gifs/gif_histo_422.gif) |
+<img src="gifs/gif_psd_histo_422.gif" width="900">|
 
 
 Los archivos que hay que ejecutar para realizar el entrenamiento se encuentran en la carpeta Models3D:
