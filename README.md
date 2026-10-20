@@ -30,9 +30,7 @@ Trained without z = 3, 1.72 and 0.46. Errors at those redshifts: E_μ = 0.10 · 
 
 ![Generated cube](assets/psd_64_interp/cubo.gif)
 
-| PSD | Histogram |
-|:---:|:---:|
-| ![PSD](assets/psd_64_interp/psd.png) | ![Histogram](assets/psd_64_interp/histo.png) |
+<img src="figuras_github/psd_histo_620.png" width="1000">
 
 ### 128³ baseline (no PSD term)
 E_μ = 1.27 · E_σ = 4.70 (epoch 439)
