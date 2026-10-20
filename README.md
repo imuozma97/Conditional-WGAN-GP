@@ -15,6 +15,8 @@ E_μ = 1.2 · E_σ = 3.7 (epoch 683)
 
 ![Generated cube](assets/base_64/cubo.gif)
 
+<img src="gifs/gif_psd_histo_683.gif" width="900">
+
 | PSD | Histogram |
 |:---:|:---:|
 | ![PSD](gifs/gif_psd_683.gif) | ![Histogram](gifs/gif_histo_683.gif) |
