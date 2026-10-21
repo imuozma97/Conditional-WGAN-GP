@@ -31,7 +31,6 @@ from architectures.generators128 import Generator_film_linear_swish
 from architectures.discriminators128 import Discriminator_projection_swish
 from training128_dyn import Training128
 from transforms import forward, backward
-from psd_utils import lambda_psd_schedule3
 
 
 trained_models_folder = "Entrenamiento128/0-models"
@@ -65,7 +64,7 @@ with np.load(file) as f:
     z_vals_final = f["labels"]
 
 
-psd_max, psd_min, mean_psd, psd_sigma, _ = datos.load_psd("psd-data/PSD_delta_claude_128.npz")
+psd_max, psd_min, mean_psd, psd_sigma, _ = datos.load_psd("psd-data/PSD_delta_128.npz")
 
 dataset = datos.crea_dataset(forw_final, z_vals_final, psd_max, psd_min, mean_psd)
 
@@ -76,7 +75,7 @@ discriminator = Discriminator_projection_swish(filter1 = 16, filter2 = 32, filte
 
 #Cargamos la red principal
 cgan = Training128(data_class = datos, discriminator = discriminator, generator = generator,  ncritic = ncritic3, 
-                trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder, lambda_psd_schedule = None,
+                trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder,
                 lambda_term = 40, image_size = image_size_128, use_psd_loss = False, grad_ratio = 0.5, warmup_epochs = 0)
 cgan.compile(d_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.00002, beta_1 = 0, beta_2 = 0.9),
              g_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.0001, beta_1 = 0, beta_2 = 0.9))

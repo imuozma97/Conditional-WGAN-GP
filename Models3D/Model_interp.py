@@ -30,7 +30,6 @@ from architectures.generators import Generator_film_linear_swish
 from architectures.discriminators import Discriminator_projection_swish
 from training import Training
 from transforms import forward
-from psd_utils import lambda_psd_schedule
 
 
 trained_models_folder = "Training3D/17-models"
@@ -63,7 +62,7 @@ cubos_final = forw.reshape(-1, 34, 64, 64, 64, 1)[:, mask]
 cubos_final = cubos_final.reshape(-1, 64, 64, 64, 1)
 
 
-psd_max, psd_min, mean_psd, psd_sigma, _ = datos.load_psd("PSD_delta.npz")
+psd_max, psd_min, mean_psd, psd_sigma, _ = datos.load_psd("psd-data/PSD_delta_64.npz")
 
 psd_max_reshape = psd_max.reshape(-1, 34, 32)
 psd_max_final = psd_max_reshape[:, mask].reshape(-1, 32)
@@ -88,7 +87,7 @@ discriminator = Discriminator_projection_swish(filter1 = 32, filter2 = 64, filte
 
 #Cargamos la red principal
 cgan = Training(data_class = datos, discriminator = discriminator, generator = generator, batch_size = 27, ncritic = ncritic3, 
-                trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder, lambda_psd_schedule = lambda_psd_schedule,
+                trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder,
                 lambda_term = 20, use_psd = False, use_psd_loss = True)
 cgan.compile(d_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.00005, beta_1 = 0, beta_2 = 0.9),
              g_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.0001, beta_1 = 0, beta_2 = 0.9))
