@@ -29,7 +29,7 @@ from config import batch_size1, ncritic3, n_bar
 from architectures.generators import Generator_film_linear_swish
 from architectures.discriminators import Discriminator_projection_swish
 from training import Training
-from transforms import forward_2
+from transforms import forward
 from psd_utils import lambda_psd_schedule
 
 
@@ -43,7 +43,7 @@ datos= Dataset(27, n_bar, buffer_size = 918)
 #Cargamos los datos: número de partículas y redshift
 n_part, red = datos.load_npart("Data3D-64.hdf5")
 delta = datos.delta(n_part)
-forw = forward_2(delta+1)
+forw = forward(delta+1)
 
 #Normalizamos el redshift
 z_vals = datos.factor_escala(red)

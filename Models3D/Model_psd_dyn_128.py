@@ -30,7 +30,7 @@ from config import ncritic3, n_bar_128, image_size_128, num_cv, num_classes
 from architectures.generators128 import Generator_film_linear_swish
 from architectures.discriminators128 import Discriminator_projection_swish
 from training128_dyn import Training128
-from transforms import forward_2, backward_2
+from transforms import forward, backward
 from psd_utils import lambda_psd_schedule3
 
 
@@ -44,7 +44,7 @@ datos= Dataset(batch_size1, n_bar2, buffer_size = 918)
 #Cargamos los datos: número de partículas y redshift
 n_part, red = datos.load_npart("Data3D-128.hdf5")
 delta = datos.delta(n_part)
-forw = forward_2(delta+1)
+forw = forward(delta+1)
 
 #Normalizamos el redshift
 z_vals = datos.factor_escala(red)
