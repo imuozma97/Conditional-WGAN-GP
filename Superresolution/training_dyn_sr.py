@@ -181,8 +181,8 @@ class Training(tf.keras.Model):
                 if lambdas:
                     self.lambda_psd.assign(lambdas[-1])
 
-                best_percent_metric = best_percent[-1]
-                best_psd_metric = best_psd[-1]
+                best_percent_metric = best_percent[-1] if best_percent else float("inf")
+                best_psd_metric = best_psd[-1] if best_psd else float("inf")
 
 
 
@@ -204,8 +204,8 @@ class Training(tf.keras.Model):
                 
             norms_disc, norms_gen= [], []
 
-            best_percent_metric = best_percent[-1] if best_percent else float("inf")
-            best_psd_metric = best_psd[-1] if best_psd else float("inf")
+            best_percent_metric = float("inf")
+            best_psd_metric = float("inf")
             best_psd, best_epoch_psd, best_percent, best_epoch_percent = [], [], [], []
 
             lambdas, norms_adv, norms_psd, cosines = [], [], [], []

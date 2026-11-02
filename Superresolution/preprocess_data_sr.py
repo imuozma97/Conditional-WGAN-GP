@@ -1,6 +1,8 @@
 import os
 import h5py
 import numpy as np
+import hdf5plugin
+import tensorflow as tf
 
 class Dataset_sr(tf.keras.Model):
     def __init__(self, batch_size, buffer_size):
@@ -94,7 +96,7 @@ class Dataset_sr(tf.keras.Model):
     def crea_dataset(self,  *data):
     
       dataset = tf.data.Dataset.from_tensor_slices(data)
-      dataset = dataset.shuffle(buffer_size = self.buffer_size).batch(self.batch_size)
+      dataset = dataset.shuffle(buffer_size = self.buffer_size).batch(self.batch_size, drop_reminder = True)
   
       return dataset
 

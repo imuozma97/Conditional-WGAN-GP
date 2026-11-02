@@ -7,7 +7,7 @@ boxsize = lado_recorte_HR * celda_HR
 embedding_dim = 32
 
 
-batch_size = 17
+batch_size = 4
 
 ncritic1 = 1
 ncritic2 = 2
@@ -16,4 +16,4 @@ ncritic4 = 4
 ncritic5 = 5    
 
 shift = 0.0001
-c = 300
+c = 10000

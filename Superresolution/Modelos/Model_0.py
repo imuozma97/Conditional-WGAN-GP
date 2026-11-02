@@ -1,12 +1,16 @@
 import os
+os.environ['TF_GPU_ALLOCATOR'] = 'cuda_malloc_async'
+os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
+os.environ['TF_GPU_THREAD_MODE'] = 'gpu_private'
+os.environ['TF_XLA_ENABLE'] = '0'
 import tensorflow as tf
 import tensorflow.keras as keras
 import numpy as np
 
 from preprocess_data_sr import Dataset_sr
 from config_sr import batch_size, ncritic3, boxsize
-from Architectures_sr.generators_sr import Generator_sr
-from Architectures_sr.discriminators_sr import Discriminator_sr
+from Architectures_sr.generator_sr import Generator_sr
+from Architectures_sr.discriminator_sr import Discriminator_sr
 from training_dyn_sr import Training
 from transforms_sr import forward
 
@@ -27,7 +31,8 @@ for gpu in gpus:
 
 trained_models_folder = "Results_SR/0-models"
 generated_images_folder = "Results_SR/0-images"
-
+os.makedirs(generated_images_folder, exist_ok = True)
+os.makedirs(trained_models_folder, exist_ok = True)
 
 #Cargamos las clases necesarias
 datos = Dataset_sr(batch_size, buffer_size = 200)

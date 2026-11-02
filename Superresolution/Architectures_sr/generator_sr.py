@@ -1,5 +1,6 @@
 import tensorflow as tf
 from config_sr import embedding_dim
+from architectures.generators import FiLMLayer
 
 
 class Generator_sr(tf.keras.Model):
