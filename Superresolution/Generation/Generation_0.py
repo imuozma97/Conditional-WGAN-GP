@@ -20,7 +20,7 @@ for gpu in gpus:
 
 trained_models_folder = "Results_SR/0-models"
 generated_images_folder = "Results_SR/0-images"
-epoch = "00000"
+epoch = "00172"
 carpeta_modelo = f"best_psd_generator/epoch_{epoch}"
 indices_test = range(90, 100)
 
@@ -34,4 +34,4 @@ generator = imagenes.cargar_generador(carpeta_modelo, filter1 = 64, filter2 = 32
 #Generamos y guardamos las cajas HR de cada simulación de test
 carpeta_salida = os.path.join(trained_models_folder, f"generados_{epoch}")
 for i in indices_test:
-    imagenes.generar_simulacion(generator, "mallas/fiducial", i, carpeta_salida, datos.factor_escala)
+    imagenes.generar_simulacion(generator, "Datos_quijote/mallas/fiducial", i, carpeta_salida, datos.factor_escala)
