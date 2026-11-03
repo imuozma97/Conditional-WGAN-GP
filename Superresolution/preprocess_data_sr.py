@@ -96,7 +96,7 @@ class Dataset_sr(tf.keras.Model):
     def crea_dataset(self,  *data):
     
       dataset = tf.data.Dataset.from_tensor_slices(data)
-      dataset = dataset.shuffle(buffer_size = self.buffer_size).batch(self.batch_size, drop_reminder = True)
+      dataset = dataset.shuffle(buffer_size = self.buffer_size).batch(self.batch_size, drop_remainder = True)
   
       return dataset
 
@@ -161,6 +161,7 @@ class Dataset_sr(tf.keras.Model):
                 sub_red.append(r)
             f_LR.close()
             f_HR.close()
+            print(f"Simulación {i} cargada", flush = True)
  
         sub_LR = np.concatenate(sub_LR).astype(np.float32)
         sub_HR = np.concatenate(sub_HR).astype(np.float32)

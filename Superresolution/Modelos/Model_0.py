@@ -12,12 +12,7 @@ from config_sr import batch_size, ncritic3, boxsize
 from Architectures_sr.generator_sr import Generator_sr
 from Architectures_sr.discriminator_sr import Discriminator_sr
 from training_dyn_sr import Training
-from transforms_sr import forward
-
-os.environ['TF_GPU_ALLOCATOR'] = 'cuda_malloc_async'
-os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
-os.environ['TF_GPU_THREAD_MODE'] = 'gpu_private'
-os.environ['TF_XLA_ENABLE'] = '0'
+from transforms_sr import forward_bloques
 
 # Optimizaciones de memoria
 tf.config.optimizer.set_jit(False)
@@ -37,18 +32,17 @@ os.makedirs(trained_models_folder, exist_ok = True)
 #Cargamos las clases necesarias
 datos = Dataset_sr(batch_size, buffer_size = 200)
 
-n_part_LR, n_part_HR, red = datos.load_pares("mallas/fiducial", "mallas/fiducial_HR", indices = range(0, 80), n_subcubos = 4, lado_LR = 64, semilla = 0)
+n_part_LR, n_part_HR, red = datos.load_pares("Datos_quijote/mallas/fiducial", "Datos_quijote/mallas/fiducial_HR", indices = range(0, 80), n_subcubos = 4, lado_LR = 64, semilla = 0)
 
-n_bar_LR = datos.n_bar("mallas/fiducial", agrupar = 1, indice = 0)
-n_bar_HR = datos.n_bar("mallas/fiducial_HR", agrupar = 1, indice = 0)
+n_bar_LR = datos.n_bar("Datos_quijote/mallas/fiducial", agrupar = 1, indice = 0)
+n_bar_HR = datos.n_bar("Datos_quijote/mallas/fiducial_HR", agrupar = 1, indice = 0)
 
 delta_LR = datos.delta(n_part_LR, n_bar_LR)
 delta_HR = datos.delta(n_part_HR, n_bar_HR)
 del n_part_LR, n_part_HR
 
-forw_LR = forward(delta_LR + 1)
-forw_HR = forward(delta_HR + 1)
-del delta_LR, delta_HR
+forw_LR = forward_bloques(delta_LR + 1)
+forw_HR = forward_bloques(delta_HR + 1)
 
 z_vals = datos.factor_escala(red)
 

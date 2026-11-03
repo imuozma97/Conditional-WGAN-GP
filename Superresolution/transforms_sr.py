@@ -50,5 +50,15 @@ def stat_backward(x, c, shift):
     return stat_backward_0(x + stat_forward_0(shift, c=c), c=c) - shift
 
 
+def forward_bloques(delta, bloque = 100):
+    """
+    forward(delta + 1) por bloques de cubos, en CPU y sobrescribiendo delta (para no duplicar memoria).
+    """
+    with tf.device('/CPU:0'):
+        for i in range(0, len(delta), bloque):
+            delta[i:i+bloque] = forward(delta[i:i+bloque] + 1).numpy()
+    return delta
+
+
 backward = partial(stat_backward, shift = shift, c = c)
 forward = partial(stat_forward, shift = shift, c = c)

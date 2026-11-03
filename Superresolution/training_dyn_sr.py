@@ -165,8 +165,8 @@ class Training(tf.keras.Model):
                 grad_pen = data.get('grad_pen', [])
                 percents = data.get('percents', [])
                 ratios1 = data.get('ratio1', [])
-                norms_disc = data.get('norms_disc', [])
-                norms_gen = data.get('norms_gen', [])
+                norms_disc = data.get('norm_disc', [])
+                norms_gen = data.get('norm_gen', [])
 
                 best_epoch = data.get('best_epoch', [])
                 best_psd = data.get('best_psd', [])
