@@ -22,8 +22,9 @@ class Generator_sr(tf.keras.Model):
         self.act1 = tf.keras.layers.ReLU()
 
         # Bloque 2
-        self.conv2 = tf.keras.layers.Conv3DTranspose(filter2, 4, strides = 2, padding = 'same', kernel_initializer = tf.keras.initializers.RandomNormal(0.0, 0.02),
+        self.conv2 = tf.keras.layers.Conv3D(filter2, 3, strides = 1, padding = 'same', kernel_initializer = tf.keras.initializers.RandomNormal(0.0, 0.02),
         use_bias = True)
+        self.up2 = tf.keras.layers.UpSampling3D(2)
         self.film2 = FiLMLayer(filter2)
         self.act2 = tf.keras.layers.ReLU()
 
@@ -51,6 +52,7 @@ class Generator_sr(tf.keras.Model):
         x = self.conv2(x)
         x = self.film2(x, z)
         x = self.act2(x)
+        x = self.up2(x)
 
         x = self.conv3(x)
         x = self.film3(x, z)

@@ -32,21 +32,8 @@ os.makedirs(trained_models_folder, exist_ok = True)
 #Cargamos las clases necesarias
 datos = Dataset_sr(batch_size, buffer_size = 200)
 
-n_part_LR, n_part_HR, red = datos.load_pares("Datos_quijote/mallas/fiducial", "Datos_quijote/mallas/fiducial_HR", indices = range(0, 80), n_subcubos = 4, lado_LR = 64, semilla = 0)
-
-n_bar_LR = datos.n_bar("Datos_quijote/mallas/fiducial", agrupar = 1, indice = 0)
-n_bar_HR = datos.n_bar("Datos_quijote/mallas/fiducial_HR", agrupar = 1, indice = 0)
-
-delta_LR = datos.delta(n_part_LR, n_bar_LR)
-delta_HR = datos.delta(n_part_HR, n_bar_HR)
-del n_part_LR, n_part_HR
-
-forw_LR = forward_bloques(delta_LR + 1)
-forw_HR = forward_bloques(delta_HR + 1)
-
-z_vals = datos.factor_escala(red)
-
-dataset = datos.crea_dataset(forw_LR, forw_HR, z_vals)
+dataset = datos.dataset_disco("Datos_quijote/mallas/fiducial", "Datos_quijote/mallas/fiducial_HR",
+                              indices = range(0, 80), pares_por_epoca = 1600, lado_LR = 64, semilla = 0)
 
 
 #Cargamos el Discriminador y Generador
@@ -57,7 +44,7 @@ discriminator = Discriminator_sr(filter1 = 16, filter2 = 32, filter3 = 64, layer
 #Cargamos la red principal
 cgan = Training(data_class = datos, discriminator = discriminator, generator = generator, batch_size = batch_size, ncritic = ncritic3, 
                 trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder,
-                lambda_term = 20, margen = 4, boxsize = boxsize, use_psd_loss = True, grad_ratio = 0.5, warmup_epochs = 0)
+                lambda_term = 20, margen = 4, boxsize = boxsize, use_psd_loss = True, lambda_masa = 0.0, grad_ratio = 0.5, warmup_epochs = 0)
 cgan.compile(d_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.00005, beta_1 = 0, beta_2 = 0.9),
              g_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.0001, beta_1 = 0, beta_2 = 0.9))
 

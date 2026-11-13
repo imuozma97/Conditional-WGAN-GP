@@ -4,6 +4,8 @@ import numpy as np
 import hdf5plugin
 import tensorflow as tf
 
+from transforms_sr import forward 
+
 class Dataset_sr(tf.keras.Model):
     def __init__(self, batch_size, buffer_size):
         super().__init__()
@@ -166,6 +168,54 @@ class Dataset_sr(tf.keras.Model):
         sub_LR = np.concatenate(sub_LR).astype(np.float32)
         sub_HR = np.concatenate(sub_HR).astype(np.float32)
         return sub_LR, sub_HR, np.concatenate(sub_red)
+
+
+
+    def dataset_disco(self, carpeta_LR, carpeta_HR, indices, pares_por_epoca, lado_LR = 64, semilla = None):
+        """
+        Dataset que lee los pares de subcubos del disco durante el entrenamiento (no los carga todos en memoria).
+        Cada época: pares_por_epoca pares nuevos, cada uno de una simulación, redshift y posición al azar.
+        Solo se leen del HDF5 los bloques que tocan el subcubo. Las posiciones no cruzan el borde de la caja.
+        Devuelve batches (LR, HR, z) ya con forward y factor de escala, como crea_dataset.
+        """
+        rng = np.random.default_rng(semilla)
+        indices = list(indices)
+        f = h5py.File(os.path.join(carpeta_LR, f"{indices[0]:04d}.hdf5"), 'r')
+        g = f['maps'].shape[1]
+        n_snap = f['maps'].shape[0]
+        f.close()
+        n_bar_LR = self.n_bar(carpeta_LR, indice = indices[0])
+        n_bar_HR = self.n_bar(carpeta_HR, indice = indices[0])
+        l = lado_LR
+
+        def pares():
+            archivos = {i: (h5py.File(os.path.join(carpeta_LR, f"{i:04d}.hdf5"), 'r'),
+                            h5py.File(os.path.join(carpeta_HR, f"{i:04d}.hdf5"), 'r')) for i in indices}
+            for _ in range(pares_por_epoca):
+                i = indices[rng.integers(len(indices))]
+                s = rng.integers(n_snap)
+                a, b, c = rng.integers(0, g - l + 1, size = 3)
+                f_LR, f_HR = archivos[i]
+                lr = f_LR['maps'][s, a:a+l, b:b+l, c:c+l]
+                hr = f_HR['maps'][s, 2*a:2*a+2*l, 2*b:2*b+2*l, 2*c:2*c+2*l]
+                z = np.array([f_LR['redshift'][s]], dtype = np.float32)
+                yield lr[..., np.newaxis], hr[..., np.newaxis], z
+            for f_LR, f_HR in archivos.values():
+                f_LR.close()
+                f_HR.close()
+
+        dataset = tf.data.Dataset.from_generator(pares, output_signature = (
+            tf.TensorSpec((l, l, l, 1), tf.uint16),
+            tf.TensorSpec((2*l, 2*l, 2*l, 1), tf.uint16),
+            tf.TensorSpec((1,), tf.float32)))
+
+        def transformar(lr, hr, z):
+            lr = forward(tf.cast(lr, tf.float32) / n_bar_LR)        # forward(delta + 1), con delta + 1 = n / n̄
+            hr = forward(tf.cast(hr, tf.float32) / n_bar_HR)
+            return lr, hr, 1 / (1 + z)                              # igual que factor_escala
+
+        dataset = dataset.map(transformar, num_parallel_calls = tf.data.AUTOTUNE)
+        return dataset.batch(self.batch_size, drop_remainder = True).prefetch(tf.data.AUTOTUNE)
  
 
 

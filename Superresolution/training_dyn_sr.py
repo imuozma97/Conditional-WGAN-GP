@@ -13,14 +13,14 @@ from grad_pen_sr import gradient_penalty
 from power_sr import Power
 from psd_utils import psd_loss_log_sr
 from loss_plot import plot_loss_graph
-from transforms_sr import backward
+from transforms_sr import backward, forward
 from config_sr import lado_recorte_HR
 
 
 class Training(tf.keras.Model):
 
     def __init__(self, data_class, discriminator, generator, batch_size, ncritic, trained_models_folder, generated_images_folder,
-                 lambda_term, margen, boxsize, use_psd_loss = True,
+                 lambda_term, margen, boxsize, use_psd_loss = True, lambda_masa = 1.0,
                  grad_ratio = 1.0, lambda_beta = 0.99, lambda_max = 1000.0, warmup_epochs = 0):
         super().__init__()
         self.discriminator = discriminator
@@ -35,6 +35,7 @@ class Training(tf.keras.Model):
         self.lambda_term = lambda_term
         self.margen = margen
         self.boxsize = boxsize
+        self.lambda_masa = lambda_masa
 
         self.power = Power(image_size=lado_recorte_HR, boxsize=self.boxsize)
 
@@ -103,10 +104,17 @@ class Training(tf.keras.Model):
             #percent = psd_out_of_band_fraction(psd_fake, psd_min_HR, psd_max_HR)
             loss_psd = psd_loss_log_sr(psd_fake, psd_real)
 
-        percent = tf.constant(0.0)
+            # Consistencia de masa: la HR generada promediada en bloques de 2x2x2 tiene que ser la LR (en 1 + delta)
+            b = tf.shape(fake_HR_c)[0]
+            l = fake_HR_c.shape[1] // 2
+            bloques = tf.reduce_mean(tf.reshape(backward(fake_HR_c), [b, l, 2, l, 2, l, 2, 1]), axis = [2, 4, 6])
+            loss_masa = tf.reduce_mean(tf.square(forward(bloques) - real_LR_c))
+
+        percent = loss_masa 
         g_vars = self.generator.trainable_variables
         grads_adv = gen_tape.gradient(loss_adv, g_vars)
         grads_psd = gen_tape.gradient(loss_psd, g_vars)
+        grads_masa = gen_tape.gradient(loss_masa, g_vars)
         del gen_tape
         grads_psd = [tf.zeros_like(v) if g is None else g for g, v in zip(grads_psd, g_vars)]
 
@@ -121,12 +129,12 @@ class Training(tf.keras.Model):
             lam = tf.where(self.lambda_psd < 0.0, lambda_t,
                            self.lambda_beta * self.lambda_psd + (1.0 - self.lambda_beta) * lambda_t)
             self.lambda_psd.assign(lam)
-            grads_gen = [g_a + lam * g_p for g_a, g_p in zip(grads_adv, grads_psd)]
-            gen_loss = loss_adv + lam * loss_psd
+            grads_gen = [g_a + lam * g_p + self.lambda_masa * g_m for g_a, g_p, g_m in zip(grads_adv, grads_psd, grads_masa)]
+            gen_loss = loss_adv + lam * loss_psd + self.lambda_masa * loss_masa
         else:
             lam = tf.constant(0.0)
-            grads_gen = grads_adv
-            gen_loss = loss_adv
+            grads_gen = [g_a + self.lambda_masa * g_m for g_a, g_m in zip(grads_adv, grads_masa)]
+            gen_loss = loss_adv + self.lambda_masa * loss_masa
 
         norm_gen = tf.linalg.global_norm(grads_gen)
         self.g_optimizer.apply_gradients(zip(grads_gen, g_vars))
