@@ -20,7 +20,7 @@ from transforms import backward
 class Training(tf.keras.Model):
 
     def __init__(self, data_class, discriminator, generator, batch_size, ncritic, trained_models_folder, generated_images_folder,
-                 lambda_psd_schedule, lambda_term, image_size, use_psd_loss = True,
+                 lambda_term, image_size, use_psd_loss = True,
                  grad_ratio = 1.0, lambda_beta = 0.99, lambda_max = 1000.0, warmup_epochs = 0):
         super().__init__()
         self.discriminator = discriminator
@@ -32,7 +32,6 @@ class Training(tf.keras.Model):
         self.ncritic = ncritic
         self.use_psd_loss = use_psd_loss
         self.data_class = data_class
-        self.lambda_psd_schedule = lambda_psd_schedule
         self.lambda_term = lambda_term
         self.image_size = image_size
 
