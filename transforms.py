@@ -4,6 +4,7 @@ Funciones forward y backward
 import tensorflow as tf
 from functools import partial
 from config import c, shift
+import numpy as np
 
 
 
@@ -51,3 +52,26 @@ def stat_backward(x, c, shift):
 
 backward = partial(stat_backward, shift = shift, c = c)
 forward = partial(stat_forward, shift = shift, c = c)
+
+
+EPS_RHO = 0.1
+
+def forward_eps(rho, eps = EPS_RHO, c = c):
+    return stat_forward(rho / eps, c = c / eps, shift = 0.0)
+
+
+def backward_eps(y, eps = EPS_RHO, c = c):
+    return stat_backward(y, c = c / eps, shift = 0.0) * eps
+
+
+def dequantizar(rho, n_bar, seed = 0):
+    """
+    Los cubos reales tienen un número entero de partículas por celda (rho = n / n_bar).
+    Se suma a cada celda un ruido uniforme de +-0.5 partículas (entre 0 y 0.5 en las vacías),
+    para que los reales dejen de ser discretos. No cambia la física: es menos de una partícula.
+    """
+    rng = np.random.default_rng(seed)
+    rho = np.asarray(rho, dtype = np.float32)
+    ruido_lleno = rng.uniform(-0.5, 0.5, rho.shape).astype(np.float32) / n_bar
+    ruido_vacio = rng.uniform(0.0, 0.5, rho.shape).astype(np.float32) / n_bar
+    return np.where(rho > 0, rho + ruido_lleno, ruido_vacio)

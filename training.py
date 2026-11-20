@@ -19,7 +19,7 @@ from transforms import backward
 
 class Training(tf.keras.Model):
 
-    def __init__(self, data_class, discriminator, generator, batch_size, ncritic, trained_models_folder, generated_images_folder, lambda_psd_schedule, lambda_term, image_size, use_psd_loss = True):
+    def __init__(self, data_class, discriminator, generator, batch_size, ncritic, trained_models_folder, generated_images_folder,  lambda_term, image_size, lambda_psd_schedule = None, use_psd_loss = True):
         super().__init__()
         self.discriminator = discriminator
         self.generator = generator

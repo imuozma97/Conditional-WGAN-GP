@@ -74,9 +74,9 @@ discriminator = Discriminator_projection_swish(filter1 = 16, filter2 = 32, filte
 
 
 #Cargamos la red principal
-cgan = Training128(data_class = datos, discriminator = discriminator, generator = generator,  ncritic = ncritic3, 
+cgan = Training128(data_class = datos, discriminator = discriminator, generator = generator, batch_size = batch_size1, ncritic = ncritic3, 
                 trained_models_folder = trained_models_folder, generated_images_folder = generated_images_folder,
-                lambda_term = 40, image_size = image_size_128, use_psd_loss = False, grad_ratio = 0.5, warmup_epochs = 0)
+                lambda_term = 40, image_size = image_size_128, use_psd_loss = False)
 cgan.compile(d_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.00002, beta_1 = 0, beta_2 = 0.9),
              g_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.0001, beta_1 = 0, beta_2 = 0.9))
 
