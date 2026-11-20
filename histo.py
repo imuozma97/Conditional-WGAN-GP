@@ -447,19 +447,18 @@ class Histogramas:
                                        gridspec_kw = {'height_ratios': [3, 1], 'hspace': 0.05})
 
         ax1.fill_between(centers, lo_r, hi_r, color = 'blue', alpha = 0.2, lw = 0, label=r"$\mathrm{Range}_{\mathrm{real}}$")
-        ax1.fill_between(centers, lo_f, hi_f, color = 'red', alpha = 0.2, lw = 0, label = r"$P_{%d}$–$P_{%d}$ fake" % (p_lo, p_hi))
+        ax1.fill_between(centers, lo_f, hi_f, color = 'red', alpha = 0.2, lw = 0, label = r"$P_{%d}$–$P_{%d}$ generated" % (p_lo, p_hi))
         ax1.plot(centers, m_r, '-', color = 'blue', lw = 1.8, label = "Real (mean)")
-        ax1.plot(centers, m_f, '--', color = 'red', lw = 1.8, label = "Fake (mean)")
+        ax1.plot(centers, m_f, '--', color = 'red', lw = 1.8, label = "Generated (mean)")
         ax1.set_xscale('log'); ax1.set_yscale('log')
         ax1.set_ylim(0.1, 1e6 if data2[0].size <= 64**3 else 1e7)
+        ax1.set_xlim(5e-2, 5e4)
         ax1.set_ylabel("N", fontsize = 20)
         z = float(np.ravel(redshift)[i])
         z_str = f"{z:.1f}".rstrip("0").rstrip(".")
         ax1.set_title(r"$z \sim " + z_str + r"$", fontsize = 26)
         ax1.tick_params(axis = 'y', labelsize = 16)
-    
-        if i == 0:
-            ax1.legend(fontsize = 12, loc = 'upper right')
+        ax1.legend(fontsize = 12, loc = 'upper right')
 
         ax2.fill_between(centers, -ruido, ruido, color = 'gray', alpha = 0.3, lw = 0)
         ax2.axhline(0, color = 'gray', linewidth = 1)

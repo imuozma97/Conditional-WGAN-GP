@@ -398,21 +398,20 @@ class Power(tf.keras.Model):
             residuals = (mean_fake_i - mean_real_i) / (mean_real_i + eps)
             error_res.append(np.mean(np.abs(residuals)))
 
-            ax1.plot(k_values, mean_real_i, '-o', ms=4, color='blue', label=r"$\overline{\mathrm{PSD}}_{\mathrm{real}}$")
-            ax1.plot(k_values, mean_fake_i, '-o', ms=4, color='red', label=r"$\overline{\mathrm{PSD}}_{\mathrm{fake}}$")
+            ax1.plot(k_values, mean_real_i, '-o', markevery = 2, ms=4, color='blue', label=r"$\overline{\mathrm{PSD}}_{\mathrm{real}}$")
+            ax1.plot(k_values, mean_fake_i, '-o', markevery = 2, ms=4, color='red', label=r"$\overline{\mathrm{PSD}}_{\mathrm{generated}}$")
             ax1.fill_between(k_values, lo_real, hi_real, color='blue', alpha=0.2, label=r"$\mathrm{Range}_{\mathrm{real}}$")
-            ax1.fill_between(k_values, lo_fake, hi_fake, color='red', alpha=0.25, label=r"$P_{%d}$–$P_{%d}$ fake" % (p_lo, p_hi))
+            ax1.fill_between(k_values, lo_fake, hi_fake, color='red', alpha=0.25, label=r"$P_{%d}$–$P_{%d}$ generated" % (p_lo, p_hi))
 
             ax1.set_yscale('log')
             ax1.set_ylabel(r"$P(k)$ [$(h^{-1}\,\mathrm{Mpc})^3$]", fontsize=20)
 
             z = float(np.ravel(redshift)[i])
-            z_str = f"{z:.1f}".rstrip("0").rstrip(".")
+            z_str = f"{z:.2f}".rstrip("0").rstrip(".")
             ax1.set_title(r"$z \sim " + z_str + r"$", fontsize=26)
             ax1.tick_params(axis = 'y', labelsize = 18)
 
-            if i == 0:
-                ax1.legend(fontsize=14)
+            ax1.legend(fontsize=14)
 
             ax2.plot(k_values, residuals, color='green', linewidth=1.5)
             ax2.axhline(0, color='gray', linewidth=1)

@@ -33,8 +33,8 @@ from training128_dyn import Training128
 from transforms import forward, backward
 
 
-trained_models_folder = "Entrenamiento128/0-models"
-generated_images_folder = "Entrenamiento128/0-images"
+trained_models_folder = "Results128/baseline-models"
+generated_images_folder = "Results128/baseline-images"
 
 """
 #Cargamos las clases necesarias

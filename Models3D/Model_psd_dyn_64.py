@@ -19,19 +19,19 @@ for gpu in gpus:
 
 
 from preprocess_data import Dataset
-from config import batch_size1, ncritic3, n_bar_64, image_size_64
+from config import batch_size, ncritic3, n_bar_64, image_size_64
 from architectures.generators import Generator_film_linear_swish
 from architectures.discriminators import Discriminator_projection_swish
 from training_dyn import Training
 from transforms import forward
 
 
-trained_models_folder = "Training3D/15-models_dyn"
-generated_images_folder = "Training3D/15-images_dyn"
+trained_models_folder = "Training3D/psd_dyn-models"
+generated_images_folder = "Training3D/psd_dyn-images"
 
 
 #Cargamos las clases necesarias
-datos= Dataset(batch_size1, buffer_size = 918)
+datos= Dataset(batch_size, buffer_size = 918)
 
 #Cargamos los datos: número de partículas y redshift
 n_part, red = datos.load_npart("Data3D-64.hdf5")
