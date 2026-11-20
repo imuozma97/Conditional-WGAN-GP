@@ -29,7 +29,7 @@ from generate import Fake_images
 from config import ncritic3, n_bar_128, image_size_128, num_cv, num_classes
 from architectures.generators128 import Generator_film_linear_swish
 from architectures.discriminators128 import Discriminator_projection_swish
-from training128_dyn import Training128
+from training import Training
 from transforms import forward, backward
 
 
